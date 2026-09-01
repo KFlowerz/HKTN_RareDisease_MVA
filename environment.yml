@@ -1,0 +1,17 @@
+name: mva-track2
+channels: [conda-forge, bioconda]
+dependencies:
+  - python=3.11
+  - pandas
+  - numpy
+  - scipy
+  - networkx
+  - scikit-learn
+  - pyyaml
+  - pysam
+  - bcftools
+  - jupyterlab
+  - pip
+  - pip:
+      - anthropic
+      - huggingface_hub

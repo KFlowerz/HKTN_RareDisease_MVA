@@ -1,0 +1,6 @@
+seed: 42
+data_dir: ./data
+results_dir: ./results
+causal_gene: null            # set after L0 / Track-1 reconciliation
+therapeutic_endpoint: null   # chemoprevention | symptomatic | mitotic_fidelity
+channels: {kg: true, proximity: true, signature: true, phenotype: true, prior: true}
