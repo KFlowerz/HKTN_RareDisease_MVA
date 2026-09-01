@@ -1,0 +1,37 @@
+# Line endings — pinned for reproducibility.
+#
+# Reproducibility is a stated requirement of this project: a judge must be able to
+# clone this repo on Linux or macOS and get byte-identical files to a Windows
+# checkout. Without this file, each machine's core.autocrlf setting decides, and
+# the same commit checks out differently per platform.
+#
+# `text=auto` normalizes text files to LF in the repository; `eol=lf` also checks
+# them out as LF on every platform, including Windows.
+* text=auto eol=lf
+
+# Binary — never normalize, never diff as text.
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.pdf      binary
+*.parquet  binary
+*.h5       binary
+*.npz      binary
+*.xlsx     binary
+*.pptx     binary
+
+# Genomic formats. These are gitignored and MUST NEVER be committed — see
+# .gitignore, DATA.md, and COMPLIANCE.md. Marked binary purely as defense in
+# depth: should one ever be force-added, git will not rewrite its line endings
+# or print patient-derived content into a diff or a PR view.
+*.bam      binary
+*.bai      binary
+*.cram     binary
+*.crai     binary
+*.vcf.gz   binary
+*.fastq.gz binary
+*.fq.gz    binary
+
+# Jupyter notebooks are JSON — text, but keep diffs honest.
+*.ipynb    text eol=lf
