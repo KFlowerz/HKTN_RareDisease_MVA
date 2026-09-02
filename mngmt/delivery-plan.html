@@ -1,0 +1,623 @@
+<title>MVA Track 2 Delivery Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Spectral:wght@500;600&display=swap">
+<style>
+  :root {
+    --paper:      #F2F4F4;
+    --surface:    #FBFCFC;
+    --sunk:       #E8ECEC;
+    --ink:        #16232A;
+    --ink-2:      #4A5C66;
+    --ink-3:      #74868E;
+    --rule:       #D3DCDE;
+    --rule-hard:  #B4C2C5;
+    --accent:     #0E6E73;
+    --accent-wash:#DDECEC;
+    --critical:   #A63446;
+    --crit-wash:  #F3E0E2;
+    --warn:       #8F5E17;
+    --warn-wash:  #F2E7D4;
+    --ok:         #3B7350;
+    --ok-wash:    #DEEBE2;
+    --gate-bg:    #16232A;
+    --gate-ink:   #E7EEEF;
+    --gate-ink-2: #9FB3B8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #0D1417;
+      --surface:    #131E22;
+      --sunk:       #182529;
+      --ink:        #E3EBEC;
+      --ink-2:      #9AAEB4;
+      --ink-3:      #74888F;
+      --rule:       #26363B;
+      --rule-hard:  #3A4E54;
+      --accent:     #4FBEC3;
+      --accent-wash:#122F33;
+      --critical:   #E08B97;
+      --crit-wash:  #3A1F25;
+      --warn:       #D0A250;
+      --warn-wash:  #33270F;
+      --ok:         #74B990;
+      --ok-wash:    #16301F;
+      --gate-bg:    #10292E;
+      --gate-ink:   #DCEAEB;
+      --gate-ink-2: #8AA6AC;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      #0D1417;
+    --surface:    #131E22;
+    --sunk:       #182529;
+    --ink:        #E3EBEC;
+    --ink-2:      #9AAEB4;
+    --ink-3:      #74888F;
+    --rule:       #26363B;
+    --rule-hard:  #3A4E54;
+    --accent:     #4FBEC3;
+    --accent-wash:#122F33;
+    --critical:   #E08B97;
+    --crit-wash:  #3A1F25;
+    --warn:       #D0A250;
+    --warn-wash:  #33270F;
+    --ok:         #74B990;
+    --ok-wash:    #16301F;
+    --gate-bg:    #10292E;
+    --gate-ink:   #DCEAEB;
+    --gate-ink-2: #8AA6AC;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 56px 28px 96px; }
+
+  h1, h2, h3, h4 { font-family: Spectral, ui-serif, Georgia, serif; font-weight: 600; text-wrap: balance; margin: 0; }
+  h1 { font-size: 40px; line-height: 1.12; letter-spacing: -.012em; }
+  h2 { font-size: 25px; line-height: 1.2; letter-spacing: -.008em; }
+  h3 { font-size: 18px; line-height: 1.3; }
+  p  { margin: 0; }
+  a  { color: var(--accent); text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; font-weight: 500; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace; }
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .87em;
+    background: var(--sunk); padding: 1px 5px; border-radius: 2px; color: var(--ink-2);
+    word-break: break-word;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead { display: flex; flex-direction: column; gap: 18px; padding-bottom: 26px; border-bottom: 2px solid var(--ink); }
+  .masthead .lede { font-size: 17px; line-height: 1.55; color: var(--ink-2); max-width: 63ch; }
+  .clock { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--rule); background: var(--surface); margin: 0; }
+  .clock > div { padding: 12px 18px; border-right: 1px solid var(--rule); flex: 1 1 auto; min-width: 150px; }
+  .clock > div:last-child { border-right: 0; }
+  .clock dt { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 3px; }
+  .clock dd { margin: 0; font-size: 15px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .clock .soften { color: var(--ink-3); font-weight: 400; }
+
+  .assume { margin-top: 22px; border-left: 3px solid var(--warn); background: var(--warn-wash); padding: 14px 18px; font-size: 13.5px; color: var(--ink-2); }
+  .assume strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- generic band ---------- */
+  .band { margin-top: 58px; }
+  .band > header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--rule-hard); margin-bottom: 24px; }
+  .band > header p { font-size: 13.5px; color: var(--ink-3); max-width: 58ch; }
+
+  /* ---------- schedule matrix ---------- */
+  .scroll-x { overflow-x: auto; }
+  table.matrix { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13px; }
+  table.matrix th, table.matrix td { border: 1px solid var(--rule); padding: 0; }
+  table.matrix thead th { background: var(--surface); padding: 9px 10px; text-align: left; vertical-align: top; font-weight: 500; color: var(--ink); }
+  table.matrix thead th .wk { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .08em; color: var(--accent); display: block; }
+  table.matrix thead th .dt { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; display: block; }
+  table.matrix tbody th { text-align: left; font-weight: 500; padding: 9px 12px; background: var(--surface); white-space: nowrap; font-size: 13px; color: var(--ink); }
+  table.matrix tbody th .ly { font-family: "IBM Plex Mono", monospace; color: var(--ink-3); margin-right: 7px; font-size: 11.5px; }
+  table.matrix td { height: 34px; }
+  td.on   { background: var(--accent); }
+  td.soft { background: var(--accent-wash); }
+  td.risk { background: repeating-linear-gradient(135deg, var(--crit-wash) 0 5px, transparent 5px 10px); }
+  td.gov  { background: var(--sunk); }
+  .legend { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 14px; font-size: 12px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 15px; height: 15px; border: 1px solid var(--rule-hard); flex: none; display: inline-block; }
+  .sw-on { background: var(--accent); }
+  .sw-soft { background: var(--accent-wash); }
+  .sw-risk { background: repeating-linear-gradient(135deg, var(--crit-wash) 0 5px, transparent 5px 10px); }
+  .sw-gov { background: var(--sunk); }
+
+  /* ---------- timeline spine ---------- */
+  .phase { display: grid; grid-template-columns: 132px 1fr; gap: 0; }
+  .spine { border-right: 2px solid var(--rule-hard); padding: 26px 20px 26px 0; text-align: right; }
+  .spine .wk { font-family: "IBM Plex Mono", monospace; font-size: 20px; font-weight: 600; color: var(--accent); letter-spacing: -.01em; }
+  .spine .dt { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .phase-body { padding: 26px 0 26px 26px; position: relative; }
+  .phase-body::before { content: ""; position: absolute; left: -5.5px; top: 33px; width: 9px; height: 9px; background: var(--accent); }
+  .phase-body h3 { margin-bottom: 4px; }
+  .phase-body .aim { font-size: 13.5px; color: var(--ink-3); margin-bottom: 16px; max-width: 68ch; }
+
+  ul.tasks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 11px; }
+  ul.tasks > li { display: grid; grid-template-columns: 82px 1fr; gap: 14px; align-items: start; font-size: 14px; }
+  ul.tasks > li > .tag {
+    font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    padding-top: 3px; color: var(--ink-3); text-align: right; line-height: 1.5;
+  }
+  ul.tasks > li.hot > .tag { color: var(--critical); font-weight: 600; }
+  ul.tasks .why { display: block; color: var(--ink-3); font-size: 13px; margin-top: 2px; max-width: 72ch; }
+
+  /* ---------- gate bars ---------- */
+  .phase-gates { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+  .gate { background: var(--gate-bg); color: var(--gate-ink); border-left: 4px solid var(--critical); padding: 20px 26px; }
+  .gate .gid { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .13em; color: var(--critical); font-weight: 600; }
+  .gate h3 { font-size: 17px; margin: 3px 0 8px; color: var(--gate-ink); }
+  .gate p { font-size: 13.5px; color: var(--gate-ink-2); max-width: 74ch; }
+  .gate p + p { margin-top: 8px; }
+  .gate strong { color: var(--gate-ink); font-weight: 600; }
+  .gate em { color: var(--gate-ink); font-style: italic; }
+  .gate code { background: rgba(127,160,168,.20); color: var(--gate-ink); }
+  .gate a { color: var(--gate-ink); }
+
+  /* ---------- data tables ---------- */
+  table.data { border-collapse: collapse; width: 100%; min-width: 660px; font-size: 13.5px; background: var(--surface); }
+  table.data th { text-align: left; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; padding: 10px 14px; border-bottom: 1px solid var(--rule-hard); white-space: nowrap; }
+  table.data td { padding: 12px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; color: var(--ink-2); }
+  table.data tbody tr:last-child td { border-bottom: 0; }
+  table.data td:first-child { font-weight: 500; color: var(--ink); }
+  table.data b { color: var(--ink); font-weight: 600; }
+  .pill { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border: 1px solid currentColor; white-space: nowrap; display: inline-block; }
+  .p-crit { color: var(--critical); background: var(--crit-wash); }
+  .p-warn { color: var(--warn); background: var(--warn-wash); }
+  .p-ok   { color: var(--ok);   background: var(--ok-wash); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- cut line ---------- */
+  .cutline { display: flex; align-items: center; gap: 14px; margin: 30px 0 26px; }
+  .cutline .rule { flex: 1; height: 0; border-top: 2px dashed var(--critical); }
+  .cutline .lbl { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--critical); font-weight: 600; }
+  .tier { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .tier > div { background: var(--surface); padding: 16px 18px; }
+  .tier h4 { margin-bottom: 10px; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .tier ul { margin: 0; padding-left: 17px; font-size: 13.5px; color: var(--ink-2); display: flex; flex-direction: column; gap: 6px; }
+  .tier.stretch h4 { color: var(--warn); }
+
+  footer { margin-top: 66px; padding-top: 22px; border-top: 1px solid var(--rule-hard); font-size: 12.5px; color: var(--ink-3); display: flex; flex-direction: column; gap: 8px; }
+  footer strong { color: var(--ink-2); font-weight: 600; }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 36px 18px 72px; }
+    h1 { font-size: 31px; }
+    .phase { grid-template-columns: 1fr; }
+    .spine { border-right: 0; border-bottom: 2px solid var(--rule-hard); text-align: left; padding: 20px 0 12px; display: flex; align-items: baseline; gap: 12px; }
+    .phase-body { padding: 18px 0 26px; }
+    .phase-body::before { display: none; }
+    ul.tasks > li { grid-template-columns: 1fr; gap: 2px; }
+    ul.tasks > li > .tag { text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Rare Disease, Real Kid &middot; MVA Hackathon 2026 &middot; Track 2</p>
+      <h1>Delivery plan: scaffold to submission</h1>
+    </div>
+    <p class="lede">Five weeks, one builder, and a dataset that is not downloaded yet. The plan sequences
+      L0&ndash;L5 around that constraint: work that cannot start until the data lands sits behind a
+      contingency, and everything else is built against a fixture contract in the meantime.</p>
+    <dl class="clock">
+      <div><dt>Today</dt><dd>2026-09-01</dd></div>
+      <div><dt>Target submission</dt><dd>2026-10-05</dd></div>
+      <div><dt>Working weeks</dt><dd>5 <span class="soften">(4 if buffer is spent)</span></dd></div>
+      <div><dt>Status</dt><dd>W1 closed &mdash; G0 passed early</dd></div>
+    </dl>
+  </header>
+
+  <section class="band" style="margin-top:40px">
+    <header>
+      <h2>Day 1: what actually happened</h2>
+      <p>Two findings reshaped the plan before a single layer was built.</p>
+    </header>
+    <div class="tier">
+      <div>
+        <h4>Resolved ahead of schedule</h4>
+        <ul>
+          <li>Gated access granted; VCF, index, phenotype doc and README down &mdash; 303&nbsp;MB, one minute, not the feared 85&nbsp;GB</li>
+          <li>Custody root live on WSL ext4 with <code>HF_HOME</code> set before the first byte; C1 and C2 registered <b>active</b></li>
+          <li>Miniconda in; <code>DATA.md</code>'s open question closed &mdash; <b>no expression data</b>, so Channel C is a confirmed proxy, not an assumed one</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Two things the plan had wrong</h4>
+        <ul>
+          <li><b>Windows cannot run this pipeline at all.</b> <code>pysam</code> and <code>bcftools</code> ship no Windows builds, so WSL2 Ubuntu is the target &mdash; not a preference, a requirement</li>
+          <li><b>There is no BAM.</b> The dataset is raw reads plus a called VCF. L0's Innovation hook had no executable input, and now derives burden from B-allele frequency instead</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <p class="assume"><strong>Assumption, stated because the repo does not record it.</strong> No submission
+    deadline appears anywhere in the repository, so this plan runs on a five-week horizon anchored at
+    2026-10-05. Every phase is week-relative rather than date-locked &mdash; if the real deadline differs,
+    shift W1 and the gates travel with it.</p>
+
+  <!-- ============ SCHEDULE MATRIX ============ -->
+  <section class="band">
+    <header>
+      <h2>The shape of five weeks</h2>
+      <p>Where each workstream is active, and where it is waiting on something outside your control.</p>
+    </header>
+
+    <div class="scroll-x">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th scope="col" style="width:26%">Workstream</th>
+            <th scope="col"><span class="wk">W1</span><span class="dt">Sep 1&ndash;7</span></th>
+            <th scope="col"><span class="wk">W2</span><span class="dt">Sep 8&ndash;14</span></th>
+            <th scope="col"><span class="wk">W3</span><span class="dt">Sep 15&ndash;21</span></th>
+            <th scope="col"><span class="wk">W4</span><span class="dt">Sep 22&ndash;28</span></th>
+            <th scope="col"><span class="wk">W5</span><span class="dt">Sep 29&ndash;Oct 5</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Data access &amp; inventory</th><td class="on"></td><td class="soft"></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row">Orchestrator &amp; fixtures</th><td class="on"></td><td class="soft"></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row"><span class="ly">L0</span>Genomics</th><td class="soft"></td><td class="on"></td><td class="soft"></td><td></td><td></td></tr>
+          <tr><th scope="row"><span class="ly">L1</span>Target definition</th><td></td><td class="on"></td><td class="soft"></td><td></td><td></td></tr>
+          <tr><th scope="row"><span class="ly">L2</span>Five channels</th><td></td><td></td><td class="on"></td><td class="soft"></td><td></td></tr>
+          <tr><th scope="row"><span class="ly">L3</span>Integration</th><td></td><td></td><td></td><td class="on"></td><td class="soft"></td></tr>
+          <tr><th scope="row"><span class="ly">L4</span>Validation &amp; safety</th><td></td><td></td><td></td><td class="on"></td><td class="soft"></td></tr>
+          <tr><th scope="row"><span class="ly">L5</span>Report, figures, video</th><td></td><td></td><td class="soft"></td><td class="soft"></td><td class="on"></td></tr>
+          <tr><th scope="row">Governance &amp; citations</th><td class="gov"></td><td class="gov"></td><td class="gov"></td><td class="gov"></td><td class="on"></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="legend">
+      <span><i class="swatch sw-on"></i>Primary build</span>
+      <span><i class="swatch sw-soft"></i>Carry-over or support</span>
+      <span><i class="swatch sw-risk"></i>Contingent (none remaining)</span>
+      <span><i class="swatch sw-gov"></i>Running discipline, not a task</span>
+    </div>
+  </section>
+
+  <!-- ============ TIMELINE ============ -->
+  <section class="band">
+    <header>
+      <h2>Phases and gates</h2>
+      <p>Five gates. Each one is a decision that changes what the next phase is allowed to assume.</p>
+    </header>
+
+    <!-- W1 -->
+    <div class="phase">
+      <div class="spine"><div class="wk">W1</div><div class="dt">Sep 1&ndash;7</div></div>
+      <div class="phase-body">
+        <h3>Unblock the data, build the spine</h3>
+        <p class="aim">Nothing in W2 can start without the dataset, and the approval clock is not yours. Start it today, then spend the week on what does not depend on it.</p>
+        <ul class="tasks">
+          <li class="hot"><span class="tag">Day 0</span><div><b>Request gated access</b> to <code>SageBio/mva-hackathon-2026-data</code> on Hugging Face, then begin the ~85&nbsp;GB pull.<span class="why">The only task here with an external approval latency. Everything else in this plan can be reordered; this one cannot be started later and caught up.</span></div></li>
+          <li><span class="tag">Data</span><div><b>Close the <code>DATA.md</code> TODO</b> &mdash; enumerate the 11 files and confirm whether any expression data exists.<span class="why">The answer decides whether Channel C runs on a LINCS knockdown proxy or a curated aneuploidy gene set. It is an input to W3, so settle it now.</span></div></li>
+          <li><span class="tag">Code</span><div><b>Implement <code>src/pipeline.py</code></b> &mdash; <code>load_config</code>, <code>seed_everything</code>, and a <code>run</code> that checkpoints after every layer.<span class="why">Per-layer checkpointing is not polish. It is what stops a failed L4 from forcing a re-run of the expensive L2 channels and the paid L3 reasoning step.</span></div></li>
+          <li><span class="tag">Code</span><div><b>Build the fixture contract</b> &mdash; small synthetic artifacts matching each layer's output shape, so L1&ndash;L5 can be developed while the download runs.<span class="why">Name them <code>.tsv</code> or <code>.json</code>, never <code>.vcf</code>: <code>test_no_patient_data_files_present</code> scans the whole repo for genomic extensions and will fail on a fixture named like real data.</span></div></li>
+          <li><span class="tag">Docs</span><div><b>Replace the L0 and L1 placeholders</b> in <code>docs/architecture.md</code> while the design reasoning is fresh.<span class="why">The written report is a graded deliverable. Assembling it in W5 from memory is how the Scientific Rigor score gets lost.</span></div></li>
+        </ul>
+
+        <div class="phase-gates">
+          <div class="gate">
+            <div class="gid">GATE G0 &mdash; PASSED 2026-09-02</div>
+            <h3>Data in hand and inventoried</h3>
+            <p>Access granted, revision pinned at <code>59e322d2&hellip;</code>, inventory written to
+              <code>DATA.md</code> by role rather than by filename &mdash; the VCF name embeds a lab accession
+              and a sequencer flowcell ID, so the custody rule against recording filenames turned out to be
+              load-bearing on day one rather than hypothetical.</p>
+            <p><strong>The gate passed, but not as designed.</strong> The dataset is 8 &times;
+              <code>.fastq.gz</code> (84.67&nbsp;GB), one single-sample <code>.vcf.gz</code> with index, a
+              phenotype <code>.docx</code>, and a README. <strong>No alignments.</strong> Only the 303&nbsp;MB
+              of non-FASTQ was fetched &mdash; L0 runs on the VCF, so 85&nbsp;GB stays out of the custody
+              register and out of the 30-day deletion obligation, still retrievable at the pinned revision if
+              alignment is ever revisited.</p>
+            <p>The contingency drafted for this gate &mdash; a literature-described stand-in genotype &mdash;
+              was never needed. What was needed instead was a different innovation hook, which is the sort of
+              thing only inventorying the data can tell you.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- W2 -->
+    <div class="phase">
+      <div class="spine"><div class="wk">W2</div><div class="dt">Sep 8&ndash;14</div></div>
+      <div class="phase-body">
+        <h3>L0 and L1 &mdash; establish the scientific premise</h3>
+        <p class="aim">Everything downstream inherits whatever this week concludes. Two config fields come off <code>null</code> here, and only here.</p>
+        <ul class="tasks">
+          <li><span class="tag">L0 &middot; 1-3</span><div><b>Ingest, annotate, resolve zygosity.</b> Open the VCF with <code>pysam.VariantFile</code>, restrict to the SAC panel plus a configurable extension set, run consequence prediction, then identify <em>biallelic</em> configurations.<span class="why">MVA is autosomal recessive &mdash; a single heterozygous LoF is not a causal call. Do not filter to one gene a priori.</span></div></li>
+          <li class="hot"><span class="tag">L0 &middot; 4</span><div><b>Aneuploidy burden from B-allele frequency.</b> BAF at heterozygous sites from <code>FORMAT/AD</code>; per chromosome, characterize deviation from 0.5 and convert it into a mosaic-fraction estimate.<span class="why">Revised after G0 &mdash; there is no BAM to read depth from. This is the stronger feature anyway: an allele ratio at one locus is self-normalizing, so the GC-bias and mappability corrections depth would need never arise, and the magnitude of the split estimates <em>mosaic fraction</em>, which is the quantity the disease is named for. Chromosomes with too few het sites emit <code>insufficient_sites</code>, never a burden of zero.</span></div></li>
+          <li><span class="tag">L0 &middot; 5</span><div><b>Reconcile against the Track-1 validated variant</b> and raise on disagreement rather than silently preferring either source.</div></li>
+          <li><span class="tag">L1</span><div><b>Disease module and target split.</b> Causal gene to UniProt to complex (Reactome/CORUM), seed STRING at a recorded confidence cutoff, expand by DIAMOnD or random-walk-with-restart, then partition into upstream and downstream sets by pathway membership.<span class="why">Record the algorithm, every parameter, and the cutoff beside the output. A hand-curated module boundary is unfalsifiable. This layer also carries the Scalability argument, so nothing MVA-specific may be hardcoded.</span></div></li>
+          <li><span class="tag">L1</span><div><b>Attach Open Targets tractability</b> per node so L2 can weight reachable targets. Annotate only &mdash; L4 owns every exclusion decision.</div></li>
+        </ul>
+
+        <div class="phase-gates">
+          <div class="gate">
+            <div class="gid">GATE G1 &mdash; CAUSAL GENE</div>
+            <h3>The premise is a finding, not a setting</h3>
+            <p>Only after L0 reconciles with Track 1 does <code>causal_gene</code> move off <code>null</code> in
+              <code>config/pipeline.yaml</code> &mdash; set from the L0 artifact, with that
+              artifact's path and seed recorded next to it.</p>
+            <p><strong>This gate breaks a test on purpose.</strong>
+              <code>test_open_decisions_are_still_open</code> asserts both fields are <code>None</code>. Update
+              it deliberately, so it asserts the value now matches the L0 output, rather than deleting it. The
+              test exists to catch a guess; it should survive the gate as one that catches a <em>changed</em>
+              guess.</p>
+          </div>
+          <div class="gate">
+            <div class="gid">GATE G2 &mdash; THERAPEUTIC ENDPOINT</div>
+            <h3>Decide, or pay for the indecision</h3>
+            <p>Choose among <code>chemoprevention</code>, <code>symptomatic</code>, and
+              <code>mitotic_fidelity</code> &mdash; the project's primary open scientific decision, and yours
+              to make rather than the pipeline's.</p>
+            <p><strong>The cost of leaving it null is concrete.</strong> L1 emits both target sets, L3 carries
+              both forward, and L4 annotates both &mdash; roughly doubling W4's openFDA extraction work in the
+              tightest week of the plan. If it is still open on Sep 14, pick a primary endpoint for the ranked
+              output and carry the others as discussion rather than as parallel pipelines.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- W3 -->
+    <div class="phase">
+      <div class="spine"><div class="wk">W3</div><div class="dt">Sep 15&ndash;21</div></div>
+      <div class="phase-body">
+        <h3>L2 &mdash; five channels, built in risk order</h3>
+        <p class="aim">Solo, one week, five generators. Build cheapest-and-most-robust first, so a week that goes badly still ends with candidates on the table.</p>
+        <ul class="tasks">
+          <li><span class="tag">1st &middot; B</span><div><b>Network proximity</b> (Guney/Barab&aacute;si) between drug-target sets and the disease module.<span class="why">First because it is the only channel needing neither a KG containing MVA, nor an expression signature, nor an LLM. It is the floor under the whole week &mdash; ship it Monday and W3 cannot end empty-handed. Degree-normalize: hub proteins are close to everything.</span></div></li>
+          <li><span class="tag">2nd &middot; D</span><div><b>Phenotype and HPO</b> via Monarch, Orphanet, and Open Targets, reaching the symptomatic candidates the mechanism-first channels structurally miss.</div></li>
+          <li><span class="tag">3rd &middot; E</span><div><b>Aneuploidy-stress literature prior</b> plus agentic mining, emitting PMID-level citations and an evidence grade per claim.<span class="why">Budget time for verification, not just extraction: every PMID resolves against a real record or the row is dropped. Queries carry gene symbols and public HPO terms only &mdash; no patient data reaches an external API.</span></div></li>
+          <li><span class="tag">4th &middot; A</span><div><b>Knowledge-graph link prediction</b>, anchored at the <em>gene</em> node.<span class="why">The expensive one. Timebox training to two days; if it has not converged, degrade to explainable meta-path counting. That keeps the traversable-path requirement, which is the part that is actually admissible, and drops only the learned score.</span></div></li>
+          <li><span class="tag">5th &middot; C</span><div><b>Signature reversion on a proxy signature</b>, per the W1 expression finding.<span class="why">Last because it is the most over-claimable channel and the most likely to be cut. If LINCS integration stalls, fall back to a curated aneuploidy-response gene set. Either way the proxy caveat travels on every row and every downstream figure.</span></div></li>
+        </ul>
+
+        <div class="phase-gates">
+          <div class="gate">
+            <div class="gid">GATE G3 &mdash; END OF W3</div>
+            <h3>Three channels producing, independently</h3>
+            <p>Pass condition: at least three channels have written ranked tables to
+              <code>results/l2/&lt;channel&gt;/</code> with per-candidate provenance. Below three, cross-channel
+              convergence is not a meaningful signal and L3's aggregation claim weakens &mdash; say so in the
+              report rather than aggregating anyway.</p>
+            <p><strong>Two invariants to hold under time pressure.</strong> Channels never read each other's
+              scores; leaked scores manufacture false consensus, which is the exact signal the whole design
+              rests on. And a channel that fails is recorded as <em>failed</em>, never as an empty result
+              &mdash; an empty list is a scientific claim, an exception is not.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- W4 -->
+    <div class="phase">
+      <div class="spine"><div class="wk">W4</div><div class="dt">Sep 22&ndash;28</div></div>
+      <div class="phase-body">
+        <h3>L3 and L4 &mdash; integrate, then refuse</h3>
+        <p class="aim">The densest week. Order inside it is not negotiable: identity before aggregation, aggregation before reasoning, reasoning before triage.</p>
+        <ul class="tasks">
+          <li><span class="tag">L3 &middot; 1</span><div><b>Harmonize to RxCUI first.</b> Resolve every candidate onto the RxNorm backbone before any aggregation runs.<span class="why">Aggregating on drug names splits one compound across channels under different synonyms and destroys precisely the convergence signal the ranking depends on. A correctness prerequisite, not a cleanup step.</span></div></li>
+          <li><span class="tag">L3 &middot; 2</span><div><b>Rank-aggregate</b> (RRA or Borda), rewarding cross-channel support, and carry <code>n_channels_supporting</code> on every row.</div></li>
+          <li><span class="tag">L3 &middot; 3</span><div><b>Claude reasoning over the top-N</b> &mdash; rationale synthesis, active contradiction search, calibrated confidence.<span class="why">Pin the model, record the temperature, cache by RxCUI, checkpoint either side. The reasoning step must never be re-run because a later step failed, and it must introduce no mechanism that no channel cited.</span></div></li>
+          <li class="hot"><span class="tag">L4 &middot; 1</span><div><b>Safety triage as hard gates.</b> Genotoxic and cancer-risk exclusion, then pediatric use &mdash; both drops, never down-weights.<span class="why">Build the genotoxic set from independent signals rather than one flag: ATC L01, MED-RT mechanism classes, IARC/NTP listings, and label Section 13.1 text. Fail closed &mdash; undeterminable status is <code>insufficient_evidence</code> and excludes. Absence of a warning is not evidence of safety.</span></div></li>
+          <li><span class="tag">L4 &middot; 2</span><div><b>Annotate from the CC-BY-clean core only</b> &mdash; openFDA label, FAERS, drugsfda, RxClass, MED-RT. NC and ShareAlike fields join by RxCUI into the segregated enrichment zone and never reach a redistributed path.<span class="why">Two currency traps to code around: FDA pregnancy letter categories are retired, so parse narrative Section 8; and the RxNav interaction API was discontinued 2024-01-02, so any DDI output needs a licensed source or SPL-NLP, labelled with its provenance.</span></div></li>
+          <li><span class="tag">L4 &middot; 3</span><div><b>Blinded benchmark</b> against known aneuploidy and SAC-relevant compounds with a degree-matched decoy set.<span class="why">Freeze the positive and decoy sets before scoring. There is no external ground truth for Track 2, which makes this benchmark the only honest evidence that the pipeline works &mdash; and worthless if it is tuned after the numbers are seen.</span></div></li>
+        </ul>
+
+        <div class="phase-gates">
+          <div class="gate">
+            <div class="gid">GATE G4 &mdash; END OF W4</div>
+            <h3>Results are auditable, whatever they say</h3>
+            <p>Pass condition: the surviving-candidate table and the <em>excluded</em> table both ship, each row
+              naming the rule that produced its verdict and the source field it was drawn from. The exclusions
+              table is a headline result, not an appendix &mdash; what the pipeline refused to propose for a
+              cancer-predisposed child is as informative as what it nominated.</p>
+            <p><strong>A benchmark at chance is a finding, and gets reported as one.</strong> The response is to
+              say so in the report, not to adjust the positive set until the curve improves. A submission that
+              honestly reports a null result is defensible; one that quietly retuned is not.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- W5 -->
+    <div class="phase">
+      <div class="spine"><div class="wk">W5</div><div class="dt">Sep 29&ndash;Oct 5</div></div>
+      <div class="phase-body">
+        <h3>L5 and submission</h3>
+        <p class="aim">Three deliverables, one compliance sweep, and two days that stay empty on purpose.</p>
+        <ul class="tasks">
+          <li class="hot"><span class="tag">15%</span><div><b>Run the pipeline on a second monogenic disease</b>, changing only the config.<span class="why">This is the entire Scalability criterion, it is cheap if the layers are genuinely disease-agnostic, and it is the only real test of whether they are. Do it Monday &mdash; if it fails, you learn that L1 has MVA baked in while there is still time to fix it.</span></div></li>
+          <li><span class="tag">Figures</span><div><b>One figure per claim.</b> Channel convergence, benchmark curves with confidence intervals, aneuploidy burden in aggregate form only, the contradiction-search trace, and the exclusions table.<span class="why">A ranking shown without its uncertainty is a recommendation in disguise. Every candidate table carries the hypothesis-only disclaimer, the Channel C proxy caveat, and the supporting-channel count.</span></div></li>
+          <li><span class="tag">Report</span><div><b>Assemble the written report</b> from the architecture doc you have been growing since W1, with every claim carrying either a <code>results/</code> artifact path plus seed, or an APA 7th citation with a resolvable DOI.</div></li>
+          <li><span class="tag">Video</span><div><b>Cut the 3-minute video.</b> Script it around the safety triage and the convergence figure &mdash; the two things that distinguish this from a ranked list.</div></li>
+          <li class="hot"><span class="tag">Sweep</span><div><b>Final governance pass</b>, four checks, in order.<span class="why">Re-resolve every DOI and PMID and re-run the retraction check, since status changes between drafting and submission &mdash; that is why <code>docs/references.md</code> keeps a dated verification log. Confirm <code>git ls-files</code> matches no genomic extension. Confirm no NC or ShareAlike field reached a redistributed output. Confirm the attribution block is present.</span></div></li>
+          <li><span class="tag">Buffer</span><div><b>Oct 4&ndash;5 hold no scheduled work.</b><span class="why">Not slack to be filled. On a solo build with an 85&nbsp;GB dependency and a paid API in the critical path, the buffer is the plan.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RISKS ============ -->
+  <section class="band">
+    <header>
+      <h2>Risk register</h2>
+      <p>Ordered by what would actually cost the submission, not by likelihood.</p>
+    </header>
+    <div class="scroll-x">
+      <table class="data">
+        <thead>
+          <tr><th scope="col">Risk</th><th scope="col">Exposure</th><th scope="col">Mitigation, and the trigger that fires it</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><s>Gated access latency</s> &mdash; <b>closed 2026-09-02</b></td>
+            <td><span class="pill p-ok">Retired</span></td>
+            <td>Access granted and the needed 303&nbsp;MB downloaded on day 1. The 85&nbsp;GB of FASTQ was deliberately left unfetched, which also removes it from the purge surface.</td>
+          </tr>
+          <tr>
+            <td><b>Realized:</b> the dataset does not match the design &mdash; no BAM</td>
+            <td><span class="pill p-warn">Occurred &middot; High</span></td>
+            <td>Absorbed the same day: burden now derives from BAF rather than depth, with citations verified via Crossref. <b>Standing lesson:</b> inventory before designing around an input. The remaining exposure is that the phenotype <code>.docx</code> and VCF may still differ from assumptions &mdash; read both before W2 rather than during it.</td>
+          </tr>
+          <tr>
+            <td>Toolchain &mdash; Windows cannot run this pipeline</td>
+            <td><span class="pill p-warn">Occurred &middot; Med</span></td>
+            <td><code>pysam</code> and <code>bcftools</code> publish no Windows builds, so everything runs in WSL2 Ubuntu with Miniconda. Resolved day 1; the residual risk is path confusion between <code>/mnt/d</code> (repo) and <code>~/mva-data</code> (data), which <code>MVA_DATA_ROOT</code> exists to prevent.</td>
+          </tr>
+          <tr>
+            <td>No patient RNA-seq, so Channel C is structurally a proxy</td>
+            <td><span class="pill p-warn">Certain &middot; Med</span></td>
+            <td>Name the proxy and its limits on every row, figure, and table derived from it. Never label proxy output as a patient signature; never impute expression from genotype. <b>Fallback:</b> curated aneuploidy set if LINCS stalls.</td>
+          </tr>
+          <tr>
+            <td>Fabricated citations entering the report from the LLM layers</td>
+            <td><span class="pill p-crit">Possible &middot; Critical</span></td>
+            <td>Resolve every DOI via Crossref and every PMID via Europe PMC, check retraction status, log the date. Drop what does not resolve. A fabricated reference in a rare-disease report is worse than a missing candidate.</td>
+          </tr>
+          <tr>
+            <td>Channel A consumes W3 and the other four slip</td>
+            <td><span class="pill p-warn">Possible &middot; High</span></td>
+            <td>Built fourth of five, timeboxed to two days, with meta-path counting as the documented degrade path. <b>Trigger:</b> no converged model by Thursday, so degrade rather than extend.</td>
+          </tr>
+          <tr>
+            <td>MVA is absent from public knowledge graphs (cold start)</td>
+            <td><span class="pill p-warn">Likely &middot; Med</span></td>
+            <td>Channel A anchors at the gene node, never the disease node; Channel B needs no KG at all. Already the documented guardrail &mdash; the live risk is refactoring it away under time pressure.</td>
+          </tr>
+          <tr>
+            <td>A published figure re-identifies the child</td>
+            <td><span class="pill p-crit">Unlikely &middot; Critical</span></td>
+            <td>In a ~50-patient worldwide population, a per-chromosome burden plot or an exact variant coordinate can identify on its own. Aggregate and categorical forms only; L5 reads from <code>results/</code> and never reaches back into <code>data/</code>.</td>
+          </tr>
+          <tr>
+            <td>L3 reasoning cost and non-reproducibility</td>
+            <td><span class="pill p-warn">Possible &middot; Med</span></td>
+            <td>Pin the model, record temperature, cache by RxCUI, checkpoint either side. A judge re-running on freshly downloaded data must reproduce the ranking exactly.</td>
+          </tr>
+          <tr>
+            <td>Solo builder &mdash; one illness or lost weekend is unrecoverable</td>
+            <td><span class="pill p-crit">Possible &middot; High</span></td>
+            <td>The cut line below, applied early rather than in W5. Two-day buffer held empty. Report written incrementally from W1 instead of assembled from memory at the end.</td>
+          </tr>
+          <tr>
+            <td>Framing drifts from hypothesis toward recommendation</td>
+            <td><span class="pill p-ok">Possible &middot; High</span></td>
+            <td>Disclaimer on every candidate table, exclusions shipped beside survivors, no efficacy language anywhere in report or video. A ranked list is read as advice however it is captioned.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ CUT LINE ============ -->
+  <section class="band">
+    <header>
+      <h2>The cut line</h2>
+      <p>Decided now, it is a design choice. Decided in W5, it is a panic.</p>
+    </header>
+
+    <div class="tier">
+      <div>
+        <h4>Ships &mdash; L0 through L3</h4>
+        <ul>
+          <li>Orchestrator with seeding and per-layer checkpointing</li>
+          <li>L0 genomics, or the documented G0 contingency</li>
+          <li>L0 aneuploidy burden vector &mdash; the Innovation claim</li>
+          <li>L1 disease module with recorded expansion parameters</li>
+          <li>Channels B, D, and E producing ranked tables</li>
+          <li>L3 RxCUI harmonization and rank aggregation</li>
+          <li>L3 Claude reasoning with contradiction search</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Ships &mdash; L4 through submission</h4>
+        <ul>
+          <li>L4 safety triage as hard gates, failing closed</li>
+          <li>The excluded table, shipped beside the survivors</li>
+          <li>Blinded benchmark with degree-matched decoys</li>
+          <li>Second-disease run &mdash; reducible to one config and one figure, but not droppable</li>
+          <li>Written report, candidate table, 3-minute video</li>
+          <li>Citation verification log and the compliance sweep</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cutline"><span class="lbl">Cut line</span><span class="rule"></span><span class="lbl">Below is optional</span></div>
+
+    <div class="tier stretch">
+      <div>
+        <h4>Cut first</h4>
+        <ul>
+          <li>Channel A as a trained GNN, degrading to explainable meta-paths</li>
+          <li>Channel C via LINCS L1000, degrading to a curated aneuploidy gene set</li>
+          <li>Both target sets carried in parallel, resolved by picking one endpoint at G2</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Cut without regret</h4>
+        <ul>
+          <li>Containerization &mdash; a pinned <code>environment.yml</code> already carries the reproducibility claim</li>
+          <li>DDI extraction via SPL-NLP &mdash; no clean source exists, so say that instead</li>
+          <li>Parental phasing in L0, if it is not among the 11 files</li>
+          <li>A third disease in the scalability run</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RUBRIC ============ -->
+  <section class="band">
+    <header>
+      <h2>What earns the score</h2>
+      <p>Each criterion traced to the artifact that carries it and the week it is produced.</p>
+    </header>
+    <div class="scroll-x">
+      <table class="data">
+        <thead>
+          <tr><th scope="col">Criterion</th><th scope="col" class="num">Weight</th><th scope="col">The artifact that earns it</th><th scope="col">Produced</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Scientific Rigor</td><td class="num">35%</td><td>Multi-channel convergence figure; blinded benchmark with confidence intervals; the proxy-signature caveat carried openly rather than buried; graded evidence per claim</td><td class="mono num">W3&ndash;W4</td></tr>
+          <tr><td>Impact</td><td class="num">25%</td><td>A safety-triaged shortlist of approved drugs for a disease with no therapy, each with rationale and provenance &mdash; and the exclusions table beside it</td><td class="mono num">W4&ndash;W5</td></tr>
+          <tr><td>Innovation</td><td class="num">25%</td><td>Aneuploidy burden derived from BAM depth; gene-level KG anchoring as a cold-start defense; the Claude contradiction-search trace</td><td class="mono num">W2, W3, W4</td></tr>
+          <tr><td>Scalability</td><td class="num">15%</td><td>The same pipeline run end to end on a second monogenic disease, with only the config changed</td><td class="mono num">W5</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Hypothesis generation only.</strong> Every output of this pipeline is a computational hypothesis
+      &mdash; n=1 in a population of roughly 50 patients worldwide. Nothing here is a treatment recommendation,
+      a claim of efficacy, or a substitute for clinical judgement.</p>
+    <p>Plan derived from <span class="mono">CLAUDE.md</span>, <span class="mono">SCAFFOLD_PROMPT.md</span>, and
+      the current scaffold at commit <span class="mono">e54391d</span>. Dates are week-relative and re-anchor by
+      shifting W1; the submission date is an assumption, not a repository fact.</p>
+  </footer>
+
+</div>
