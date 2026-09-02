@@ -1,0 +1,161 @@
+# Data custody and destruction evidence
+
+[COMPLIANCE.md](../COMPLIANCE.md) commits this project to deleting all data within 30 days of
+Hackathon close and emailing confirmation to the organizers. This document is how that confirmation
+is made *evidenced* rather than merely asserted.
+
+## Why this file exists before the data arrives
+
+A destruction record assembled at deletion time is reconstructed from memory, and memory omits
+things — the cache directory nobody set, the intermediate a layer wrote three weeks ago, the
+notebook cell that rendered a variant table. **Custody is therefore instrumented at creation time.**
+Every location that will hold patient-derived bytes is registered here the moment it is created, and
+the purge tool refuses to attest to anything the register does not list.
+
+The register is the contract. If a location is missing from it, the attestation is false — which is
+why adding a row is part of creating a location, not a cleanup step afterwards.
+
+---
+
+## What counts as patient-derived
+
+Not just the download. Anything computed from it that retains subject-specific signal:
+
+- variant coordinates, genotypes, and zygosity calls (L0)
+- per-chromosome read depth, bin-level coverage, and the aneuploidy burden vector (L0)
+- any phenotype narrative or identifier from the gated dataset
+- any figure rendered at a resolution that permits re-identification
+
+In a worldwide population of roughly 50 patients, a per-chromosome burden plot or a single exact
+variant coordinate can identify on its own. Aggregate and categorical forms are the only publishable
+derivatives; see the L5 guardrail in [../src/l5_report/run.py](../src/l5_report/run.py).
+
+---
+
+## Custody register
+
+Status values: `planned` (registered, not yet created) · `active` (holds bytes) · `purged`
+(deleted and verified empty).
+
+| ID | Location | Holds | Purge method | Status |
+|---|---|---|---|---|
+| `C1` | `$MVA_DATA_ROOT` (WSL ext4, outside the repo) | The gated dataset as downloaded | `rm -rf`, then `fstrim` on the mount | planned |
+| `C2` | `$MVA_DATA_ROOT/hf-cache` (`HF_HOME`) | Hub `blobs/` (the real bytes), `snapshots/` symlinks, `trees/`, `refs/`, `xet/` chunk cache, `.incomplete` partials | `hf cache rm` + `hf cache prune`, then `rm -rf` of the root | planned |
+| `C3` | `<repo>/results/` | Pipeline intermediates derived from C1 — L0 variant calls, depth vectors, burden | `rm -rf` contents, keep `.gitkeep` | planned |
+| `C4` | `<repo>/notebooks/` | Saved cell outputs, **if** any cell ever renders patient-derived rows | Strip outputs; verify no genomic content in tracked `.ipynb` | planned |
+| `C5` | WSL distro VHDX free space | Remnant blocks from deleted files (deletion is not overwriting) | `fstrim -av` inside WSL after C1–C3 | planned |
+| `C6` | Shell history, terminal scrollback, editor workspace state | Only if a record is ever printed | Prevented rather than purged — see below | n/a |
+
+`C6` is mitigated at the source: L0's guardrail forbids logging patient-derived values at INFO, and
+no channel sends patient data to an external API. It is listed because acknowledging an
+unpurgeable surface honestly is worth more than omitting it.
+
+### Two traps this register exists to catch
+
+**The Hugging Face cache splits data from its own directory listing.** `snapshots/` contains
+*symlinks*; the actual bytes live in `blobs/`, named by hash. Deleting a snapshot folder deletes
+pointers and leaves the payload. The default cache root is `~/.cache/huggingface` — outside any
+data directory — and `hf_xet` maintains a further chunk cache under it. Interrupted downloads leave
+`.incomplete` blobs that `hf cache rm` does not remove; only `hf cache prune` does.
+See the [caching guide](https://huggingface.co/docs/huggingface_hub/en/guides/manage-cache).
+
+**Mitigation, applied before the first download:** `HF_HOME` is set to `C2`, inside the custody
+root, so every cache surface lands in one registered tree instead of scattering into the home
+directory. This is why the environment must be configured before the download starts, not after.
+
+**`results/` is gitignored, which makes it feel safe.** It is not patient data in git, but it is
+patient-derived data on disk, and it is purged on the same schedule as `C1`.
+
+---
+
+## What the attestation must never contain
+
+The attestation is committed to this repository and emailed to the organizers. It must therefore
+carry no patient-derived content by construction:
+
+- **No filenames.** Dataset filenames may embed a sample or subject identifier.
+- **No per-file digests.** A file hash is a fingerprint: it lets a holder confirm they have the same
+  file, which is a re-identification aid, not a neutral integrity check.
+- **No variant coordinates, depths, phenotype text, or counts of anything subject-specific.**
+
+**What identifies the destroyed data instead: the dataset's Hub revision SHA.** That names the exact
+snapshot you were granted, is verifiable by the organizers against their own records, and reveals
+nothing about the child. Aggregate file counts and total bytes per location are recorded, because
+they evidence completeness without describing content.
+
+---
+
+## Attestation format
+
+Emitted by [../src/purge.py](../src/purge.py) as `docs/purge_attestation_<UTC date>.json`, with a
+rendered Markdown companion for the email body. Schema version `1.0`:
+
+```json
+{
+  "schema_version": "1.0",
+  "generated_utc": "2026-__-__T__:__:__Z",
+  "hackathon_close_date": null,
+  "deletion_deadline_utc": null,
+  "dataset": {
+    "repo_id": "SageBio/mva-hackathon-2026-data",
+    "repo_type": "dataset",
+    "revision_sha": "<full 40-char Hub commit hash>",
+    "identification_note": "Identified by Hub revision only. No filenames or per-file digests are recorded, by design."
+  },
+  "environment": {
+    "hostname": "<host>",
+    "platform": "<os and kernel>",
+    "wsl_distro": "<distro or null>",
+    "pipeline_commit": "<git SHA of this repo at purge time>",
+    "purge_tool_version": "1.0"
+  },
+  "locations": [
+    {
+      "id": "C1",
+      "path": "<absolute path>",
+      "method": "rm -rf; fstrim",
+      "before": { "exists": true, "file_count": 0, "total_bytes": 0 },
+      "after":  { "exists": false, "file_count": 0, "total_bytes": 0 },
+      "verified_utc": "2026-__-__T__:__:__Z"
+    }
+  ],
+  "checks": [
+    { "name": "custody_register_complete", "result": "pass", "detail": "every register row reached a terminal state" },
+    { "name": "repo_scan_genomic_extensions", "result": "pass", "matches": 0 },
+    { "name": "hf_cache_empty", "result": "pass", "repos_remaining": 0, "bytes_remaining": 0 },
+    { "name": "incomplete_blobs_removed", "result": "pass", "matches": 0 }
+  ],
+  "attested_by": {
+    "name": "<attestor>",
+    "role": "<role>",
+    "statement": "I verified each registered location was emptied on the date recorded above."
+  }
+}
+```
+
+## Verification performed at purge
+
+1. Record `before` state per registered location — existence, file count, total bytes.
+2. Delete by the method named in the register.
+3. Re-stat each location and record `after`. A location is `purged` only when it is absent, or
+   present and empty.
+4. Run `hf cache ls` and `hf cache prune` and confirm zero repos and zero `.incomplete` blobs remain.
+5. Re-run `tests/test_smoke.py::test_no_patient_data_files_present`, which scans the whole repository
+   for genomic extensions.
+6. `fstrim -av` so deleted blocks are discarded rather than merely unlinked.
+7. Emit the attestation, commit it, and attach it to the confirmation email.
+
+## Honest limits
+
+This attestation proves that the locations tracked in the register were emptied and verified. It
+cannot prove that no copy ever existed anywhere else — no destruction record can. Its credibility
+rests entirely on the custody surface being deliberately narrow and registered from the start, which
+is the argument for keeping all data in one tree under `$MVA_DATA_ROOT` and setting `HF_HOME` inside
+it before the first byte is fetched.
+
+## Open items
+
+- **Hackathon close date is unknown**, so the 30-day deletion deadline cannot yet be computed.
+  Fill `hackathon_close_date` and `deletion_deadline_utc` once the organizers announce it.
+- Confirm with the organizers whether they want the attestation JSON attached to the confirmation
+  email, or only the rendered summary.
