@@ -65,10 +65,15 @@ Multi-channel evidence design — parallel weak signals reconciled by consensus 
 method is fragile on a hyper-rare disease. Each `src/l*` package exposes a `run()` entry point and a
 docstring stating purpose / inputs / outputs / guardrail.
 
-- **L0 `l0_genomics`** — Ingest WGS **VCF** (+ **BAM**); annotate variants (VEP/OpenCRAVAT-style); focus on
-  biallelic SAC-gene variants; reconcile with the Track-1 validated causal variant. *Innovation hook:*
-  per-chromosome **BAM read depth** to quantify aneuploidy burden as a feature — MVA's phenotype literally
-  is mosaic aneuploidy. Output: causal gene + variant effect + affected pathway module.
+- **L0 `l0_genomics`** — Ingest the single-sample WGS **VCF**; annotate variants (VEP/OpenCRAVAT-style);
+  focus on biallelic SAC-gene variants; reconcile with the Track-1 validated causal variant.
+  *Innovation hook:* per-chromosome **B-allele frequency** from `FORMAT/AD` to quantify aneuploidy
+  burden **and estimate mosaic fraction** — MVA's phenotype literally is mosaic aneuploidy. Output:
+  causal gene + variant effect + affected pathway module.
+  **The dataset ships no BAM** (verified at revision `59e322d2…`, 2026-09-02): raw reads plus a called
+  VCF, no alignments. Do not reintroduce depth-from-BAM; an allele ratio at a single locus is
+  self-normalizing, so it needs none of the GC-bias and mappability correction depth would.
+  See [DATA.md](DATA.md) and [src/l0_genomics/run.py](src/l0_genomics/run.py).
 - **L1 `l1_target`** — Causal gene → protein/complex → interactome **disease module** (Reactome / STRING /
   Open Targets). Define an **upstream** target set (restore mitotic fidelity) and a **downstream** set
   (buffer aneuploidy stress / chemoprevention).
