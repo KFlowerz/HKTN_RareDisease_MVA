@@ -4,7 +4,7 @@ Purpose
     Nominate drugs whose transcriptional consequences *reverse* the disease signature --
     the classic connectivity-map logic.
 
-    **There is no patient RNA-seq.** The subject's dataset is WGS (VCF/BAM) plus
+    **There is no patient RNA-seq.** The subject's dataset is WGS (raw reads + called VCF) plus
     phenotype; no expression data exists to build a real disease signature from. This
     channel therefore runs on a **PROXY** signature, one of:
 

@@ -40,7 +40,7 @@ disease, so convergence across methods carries the signal rather than any one sc
 
 | Layer | Package | Responsibility |
 |---|---|---|
-| **L0** | [src/l0_genomics/](src/l0_genomics/) | Ingest WGS VCF (+ BAM), annotate variants, focus on biallelic SAC-gene variants, reconcile with the Track-1 validated causal variant. *Innovation hook:* per-chromosome BAM read depth quantifies **aneuploidy burden** as a feature. |
+| **L0** | [src/l0_genomics/](src/l0_genomics/) | Ingest the single-sample WGS VCF, annotate variants, focus on biallelic SAC-gene variants, reconcile with the Track-1 validated causal variant. *Innovation hook:* per-chromosome **B-allele frequency** from `FORMAT/AD` quantifies **aneuploidy burden** and estimates mosaic fraction. The dataset ships no BAM — see [DATA.md](DATA.md). |
 | **L1** | [src/l1_target/](src/l1_target/) | Causal gene → protein/complex → interactome **disease module**. Defines an **upstream** target set (restore mitotic fidelity) and a **downstream** set (buffer aneuploidy stress / chemoprevention). |
 | **L2** | [src/l2_channels/](src/l2_channels/) | Five parallel candidate generators — see below. |
 | **L3** | [src/l3_integrate/](src/l3_integrate/) | Harmonize drug identities on the **RxNorm RxCUI** backbone; rank-aggregate (RRA/Borda) preferring cross-channel convergence; a **Claude-in-the-loop** step that synthesizes each rationale, actively searches for contradicting evidence, and emits a calibrated confidence. |

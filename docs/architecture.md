@@ -16,9 +16,23 @@ trusted on its own.
 
 ## L0 — `l0_genomics`
 
-Ingest WGS VCF (+ BAM); annotate variants (VEP / OpenCRAVAT-style); focus on biallelic SAC-gene variants;
-reconcile with the Track-1 validated causal variant. Innovation hook: per-chromosome BAM read depth as an
-**aneuploidy burden** feature.
+Ingest the single-sample WGS VCF; annotate variants (VEP / OpenCRAVAT-style); focus on biallelic
+SAC-gene variants; reconcile with the Track-1 validated causal variant. Innovation hook:
+per-chromosome **B-allele frequency** as an **aneuploidy burden** feature.
+
+**Input correction (2026-09-02).** The design originally assumed a BAM and derived burden from
+per-chromosome read depth. The gated dataset ships raw reads and a called VCF, with no alignments
+(dataset revision `59e322d2…`; see [../DATA.md](../DATA.md)). Burden is therefore computed from
+`FORMAT/AD` at heterozygous sites: heterozygous BAF clusters near 0.5 in disomic regions, splits
+under a mosaic gain or loss, and the magnitude of the split estimates the mosaic fraction
+(Conlin et al., 2010; Loh et al., 2018).
+
+This is a stronger feature than the one it replaces, not a concession. An allele ratio is measured
+between two alleles at one locus, so depth, GC content, and mappability affect numerator and
+denominator identically and cancel — the corrections a depth-based caller requires never arise. And
+the statistic estimates *mosaic fraction*, which is the quantity MVA is named for, rather than mere
+over- or under-representation. Median normalized `FORMAT/DP` per chromosome is retained as a weaker
+secondary signal, never reported alone.
 
 *paste the architecture analysis here*
 
@@ -65,5 +79,5 @@ Rubric-aligned figures, candidate tables, video assets.
 |---|---|---|
 | Scientific Rigor | 35% | Multi-channel consensus, proxy-signature honesty, blinded benchmark (L2/L3/L4) |
 | Impact | 25% | Safety-triaged shortlist of approved drugs for a disease with no therapy (L4/L5) |
-| Innovation | 25% | Aneuploidy burden from BAM depth (L0), gene-level KG anchoring (L2A), Claude-in-the-loop contradiction search (L3) |
+| Innovation | 25% | Aneuploidy burden and mosaic fraction from B-allele frequency (L0), gene-level KG anchoring (L2A), Claude-in-the-loop contradiction search (L3) |
 | Scalability | 15% | Config-driven, disease-agnostic layer boundaries; nothing about MVA hardcoded |

@@ -39,9 +39,9 @@ Status values: `planned` (registered, not yet created) · `active` (holds bytes)
 
 | ID | Location | Holds | Purge method | Status |
 |---|---|---|---|---|
-| `C1` | `$MVA_DATA_ROOT` (WSL ext4, outside the repo) | The gated dataset as downloaded | `rm -rf`, then `fstrim` on the mount | planned |
-| `C2` | `$MVA_DATA_ROOT/hf-cache` (`HF_HOME`) | Hub `blobs/` (the real bytes), `snapshots/` symlinks, `trees/`, `refs/`, `xet/` chunk cache, `.incomplete` partials | `hf cache rm` + `hf cache prune`, then `rm -rf` of the root | planned |
-| `C3` | `<repo>/results/` | Pipeline intermediates derived from C1 — L0 variant calls, depth vectors, burden | `rm -rf` contents, keep `.gitkeep` | planned |
+| `C1` | `$MVA_DATA_ROOT/raw` (WSL ext4, outside the repo) | The gated dataset as downloaded — VCF, tabix index, phenotype `.docx`, README (5 files, 303 MB). FASTQ deliberately not fetched. | `rm -rf`, then `fstrim` on the mount | **active** |
+| `C2` | `$MVA_DATA_ROOT/hf-cache` (`HF_HOME`) | Hub `blobs/` (the real bytes), `snapshots/` symlinks, `trees/`, `refs/`, `xet/` chunk cache, `.incomplete` partials. Currently 468 KB / 4 files — `--local-dir` wrote real files without duplicating blobs here. | `hf cache rm` + `hf cache prune`, then `rm -rf` of the root | **active** |
+| `C3` | `<repo>/results/` | Pipeline intermediates derived from C1 — L0 variant calls, per-chromosome BAF and depth vectors, burden | `rm -rf` contents, keep `.gitkeep` | planned |
 | `C4` | `<repo>/notebooks/` | Saved cell outputs, **if** any cell ever renders patient-derived rows | Strip outputs; verify no genomic content in tracked `.ipynb` | planned |
 | `C5` | WSL distro VHDX free space | Remnant blocks from deleted files (deletion is not overwriting) | `fstrim -av` inside WSL after C1–C3 | planned |
 | `C6` | Shell history, terminal scrollback, editor workspace state | Only if a record is ever printed | Prevented rather than purged — see below | n/a |
@@ -73,7 +73,9 @@ patient-derived data on disk, and it is purged on the same schedule as `C1`.
 The attestation is committed to this repository and emailed to the organizers. It must therefore
 carry no patient-derived content by construction:
 
-- **No filenames.** Dataset filenames may embed a sample or subject identifier.
+- **No filenames.** Dataset filenames may embed a sample or subject identifier. **Confirmed on
+  2026-09-02:** the VCF filename embeds a lab accession and a sequencer flowcell identifier. This
+  rule is not hypothetical for this dataset.
 - **No per-file digests.** A file hash is a fingerprint: it lets a holder confirm they have the same
   file, which is a re-identification aid, not a neutral integrity check.
 - **No variant coordinates, depths, phenotype text, or counts of anything subject-specific.**
