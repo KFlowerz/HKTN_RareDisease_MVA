@@ -16,6 +16,13 @@ Outputs
       - an explicit ``excluded`` table -- what was dropped and on which rule
       - benchmark results (recovery of known aneuploidy/SAC-relevant compounds)
 
+    Verdict rows must satisfy the **per-candidate field contract** in
+    ``mngmt/decisions.md`` (decision D2): one row per candidate per rule, carrying the
+    rule name, the verdict, the source field it was drawn from, and a quotable snippet of
+    the label text. L5 renders these directly into the candidate dossier and the
+    exclusions page; it cannot reconstruct a verdict whose provenance was not recorded
+    here. The exclusions table carries the same provenance standard as the survivors.
+
 Guardrail
     Exclusions are **hard gates, not weights**. A candidate that fails the genotoxic or
     pediatric rule is dropped, never merely down-ranked -- MVA is cancer-predisposing,

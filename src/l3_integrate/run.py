@@ -13,6 +13,13 @@ Outputs
     supporting it, a synthesized rationale, contradicting evidence, and a calibrated
     confidence.
 
+    These rows must satisfy the **per-candidate field contract** in
+    ``mngmt/decisions.md`` (decision D2), because L5 renders the candidate dossier from
+    them and is forbidden to compute anything itself. A field discovered missing at
+    render time in W5 means re-running the reasoning step below -- which costs API spend
+    and defeats the checkpointing this layer exists to protect. Emit the full contract
+    the first time.
+
 Guardrail
     Identity harmonization happens **before** aggregation. Aggregating on drug names
     would split the same compound across channels under different synonyms and destroy

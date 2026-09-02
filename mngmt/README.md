@@ -6,6 +6,7 @@ patient-derived content.
 | File | What it is |
 |---|---|
 | [delivery-plan.html](delivery-plan.html) | Scaffold-to-submission delivery plan: schedule matrix, phase timeline with gates G0–G4, risk register, cut line, and rubric map. Updated as gates pass and findings land. |
+| [decisions.md](decisions.md) | Choices that shape what gets built and the reasoning behind them — product form, output form, audience — plus what each one obliges downstream. Read before changing L3/L4 output fields. |
 
 ## Keeping it current
 

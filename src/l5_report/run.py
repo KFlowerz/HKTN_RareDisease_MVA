@@ -12,7 +12,21 @@ Inputs
 
 Outputs
     Written under ``config["results_dir"]/l5/``: figures, the candidate table in
-    report-ready form, the exclusions table, and video stills/assets.
+    report-ready form, the exclusions table, video stills/assets, and the
+    **candidate dossier** -- one static page per surviving candidate, plus a companion
+    exclusions page.
+
+    The dossier is the human-facing deliverable (decision D2 in ``mngmt/decisions.md``).
+    It is static by design: an interactive drug-filtering tool presents as a clinical
+    decision aid whatever disclaimer is attached to it, and clinical recommendation is
+    out of scope. A dated, citation-bearing document is read as an argument; a filterable
+    app is read as advice.
+
+    **This layer renders; it does not compute.** Every field the dossier shows must
+    already exist in an L3 or L4 artifact, so the dossier can be regenerated without
+    re-running the paid reasoning step. The per-candidate field contract L3 and L4 are
+    obliged to emit is in ``mngmt/decisions.md`` -- if a field is missing at render time
+    that is an upstream bug, not something to compute here.
 
 Guardrail
     **Nothing published may re-identify the child or family.** In a ~50-patient
@@ -43,8 +57,13 @@ def run(config: dict) -> None:
     # TODO: emit, at minimum:
     #  - Rigor: the multi-channel convergence figure (per-channel ranks vs. consensus)
     #    and the blinded benchmark curves with confidence intervals.
-    #  - Impact: the safety-triaged candidate table with rationale, provenance, and the
-    #    companion exclusions table.
+    #  - Impact: the candidate dossier -- one static page per surviving candidate
+    #    rendering the D2 field contract (rationale, contradicting evidence, calibrated
+    #    confidence, per-rule safety verdict with its source field and quotable snippet,
+    #    per-claim references, provenance, caveats), plus the companion exclusions page
+    #    carrying the same provenance standard. Render only; never compute a missing
+    #    field. `contradicting_evidence` that is empty renders as "searched, none found",
+    #    never as a blank -- a blank reads as "not looked for".
     #  - Innovation: the aneuploidy-burden feature (aggregate form only) and the
     #    Claude-in-the-loop contradiction-search trace.
     #  - Scalability: the same pipeline run end-to-end on a second monogenic disease,
