@@ -63,6 +63,13 @@ See the [caching guide](https://huggingface.co/docs/huggingface_hub/en/guides/ma
 root, so every cache surface lands in one registered tree instead of scattering into the home
 directory. This is why the environment must be configured before the download starts, not after.
 
+**Where the environment file lives (2026-09-07).** `~/.config/mva/env`, mode `600`, **outside the
+repository**. Credentials inside the repo tree are read by editors, file-watchers, and agents that
+surface changed files, which put a token into a session transcript three times before this was
+fixed. Moving the file out removes that channel rather than relying on `.gitignore` to hold the
+line — `.gitignore` was working correctly each time; it was never the failure. `.env.example` in the
+repo remains a secret-free template.
+
 **`results/` is gitignored, which makes it feel safe.** It is not patient data in git, but it is
 patient-derived data on disk, and it is purged on the same schedule as `C1`.
 
