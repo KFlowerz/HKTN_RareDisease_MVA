@@ -44,8 +44,28 @@ Notes on the API surface (current as of this scaffold)
 
 from __future__ import annotations
 
-#: Pinned so a rerun is comparable; recorded alongside every rationale.
-MODEL = "claude-opus-5"
+#: Fallback only. The model is config-driven -- read it with :func:`resolve_model` so a
+#: judge re-running the pipeline gets the model the report names, and so the choice is
+#: recorded in `results/_manifest.json` rather than buried in source. Do not read this
+#: constant directly.
+DEFAULT_MODEL = "claude-opus-5"
+
+
+def resolve_model(config: dict) -> str:
+    """Return the model id for this run.
+
+    Args:
+        config: Parsed pipeline configuration; reads ``model``.
+
+    Returns:
+        The configured model id, or :data:`DEFAULT_MODEL` when unset.
+
+    Note:
+        Model ids are complete as written -- never append a date suffix. Changing the
+        model changes the rationales, so the value is persisted per candidate and in the
+        run manifest; a rationale whose model is unknown is not reproducible evidence.
+    """
+    return str(config.get("model") or DEFAULT_MODEL)
 
 
 def reason_over_candidates(config: dict) -> None:

@@ -1,5 +1,14 @@
 name: mva-track2
-channels: [conda-forge, bioconda]
+
+# `nodefaults` removes Anaconda's `defaults` channels (repo.anaconda.com/pkgs/*), which
+# conda otherwise merges in from base config. Two reasons, both deliberate:
+#   1. Nothing here comes from them -- pysam and bcftools are bioconda, the rest
+#      conda-forge -- so they add a resolver surface the project does not use.
+#   2. They carry Anaconda's Terms of Service, which conda now blocks on until accepted.
+#      A judge rebuilding this environment should not hit a licensing prompt to reproduce
+#      a CC-BY-4.0 result. conda-forge and bioconda are community channels with no such
+#      condition.
+channels: [conda-forge, bioconda, nodefaults]
 dependencies:
   - python=3.11
   - pandas
@@ -11,6 +20,7 @@ dependencies:
   - pysam
   - bcftools
   - jupyterlab
+  - pytest          # README quickstart runs `pytest -q`; declared so it is not implicit
   - pip
   - pip:
       - anthropic

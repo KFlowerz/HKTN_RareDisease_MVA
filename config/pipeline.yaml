@@ -1,6 +1,18 @@
 seed: 42
+
+# Overridden by $MVA_DATA_ROOT, which resolves to $MVA_DATA_ROOT/raw (custody location
+# C1, docs/data_custody.md). This committed fallback stays machine-independent on
+# purpose: the real path is outside the repo and differs per machine, so hardcoding an
+# absolute home directory here would break a judge rebuilding from the repo alone.
 data_dir: ./data
 results_dir: ./results
+
 causal_gene: null            # set after L0 / Track-1 reconciliation
 therapeutic_endpoint: null   # chemoprevention | symptomatic | mitotic_fidelity
+
+# Model for the L3 Claude-in-the-loop reasoning step. Config-driven so the value the
+# report names is the value that ran, and so it lands in results/_manifest.json rather
+# than being buried in source. Ids are complete as written -- never append a date suffix.
+model: claude-opus-5
+
 channels: {kg: true, proximity: true, signature: true, phenotype: true, prior: true}
