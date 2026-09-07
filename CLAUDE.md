@@ -23,8 +23,17 @@ Read the hard constraints before writing anything.
    uncited mechanistic assertions anywhere: code comments, docstrings, docs, rationales, the report,
    or the video. See [Evidence and citations](#evidence-and-citations).
 
+7. **Clinical phenotype is patient data.** The dataset's phenotype document is HPO-coded; parse it
+   from `data_dir` at runtime. **Never** write HPO term sets into config, source, tests, or any
+   committed file — a specific combination of features is identifying in a ~50-patient population.
+   Tests that need phenotype terms use invented ones.
+8. **Read the supplied phenotype; do not assume the textbook one.** This proband's presentation is
+   *not* the classic MVA description in the needs analysis below — building against remembered
+   features would target manifestations the child does not have and miss the documented ones.
+
 Also: no recontact with the subject, family, or MVA Society contacts. Publish nothing that could
-re-identify the child or family.
+re-identify the child or family — and specifically, nothing beyond what the family already shares
+publicly through their own blog posts, which is the boundary the dataset's own documentation sets.
 
 ---
 

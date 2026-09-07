@@ -43,6 +43,23 @@ arise. See [src/l0_genomics/run.py](src/l0_genomics/run.py) for the implementati
 The FASTQ files remain available at the pinned revision if alignment is ever revisited. Not
 downloading them keeps 85 GB out of the custody register and out of the deletion obligation.
 
+**The VCF is GRCh38 with no `chr` prefix, and declares 2,580 contigs** (verified 2026-09-07):
+`GCA_000001405.15_..._plus_hs38d1`, GATK `VariantFiltration`-hardened, single sample, ~5.0M records
+carrying `FORMAT/AD` and `FORMAT/DP`. Two consequences for L0: annotation resources using `chr`
+must be translated in one documented place, and per-chromosome statistics must be restricted to the
+primary contigs so decoys and alts do not enter the burden vector. Heterozygous-site density at
+`DP >= 10` is ample on every autosome, so the per-sample autosomal distribution supplies the diploid
+baseline directly — no external calibration constant is needed.
+
+**The phenotype document is already HPO-coded** (verified 2026-09-07), so Channel D needs no text
+mining. *The terms themselves are not recorded here.* They are clinical facts about a living child
+and a specific combination is identifying in a population of roughly 50 patients; they are parsed
+from `data_dir` at runtime and never committed. See [COMPLIANCE.md](COMPLIANCE.md).
+
+**No causal gene is named anywhere in the dataset.** The reconciliation step L0 was specified around
+has no counterpart — there is no Track-1 answer to check against — so L0 must make the call
+independently and ship the evidence that supports it, including what it rejected.
+
 **There is no expression data** — resolved, and this closes the original open question. Channel C
 therefore runs on a **PROXY** signature (LINCS L1000 knockdown of the causal gene, or a curated
 aneuploidy-response gene set). The substitution and its limits travel with every row, figure, and

@@ -2,14 +2,22 @@
 
 Purpose
     Nominate candidates from the *phenotype* rather than the mechanism: map the subject's
-    HPO terms, read from the phenotype document at run time, to drugs indicated for those manifestations or for
-    phenotypically-overlapping diseases.
+    HPO terms to drugs indicated for those manifestations or for phenotypically
+    overlapping diseases.
 
     This is the channel that reaches **symptomatic** candidates -- the ones a purely
     mechanism-first pipeline structurally cannot see.
 
 Inputs
-    Phenotype terms from the dataset (HPO-coded); Monarch, Orphanet, Open Targets.
+    Phenotype terms from the dataset, already HPO-coded (verified 2026-09-07), parsed
+    from ``config["data_dir"]`` at runtime; Monarch, Orphanet, Open Targets.
+
+    **Read the terms; do not assume them.** This proband's presentation is not the
+    textbook MVA description, and an earlier version of this docstring listed the
+    literature phenotype (microcephaly, developmental delay, seizures) as though it were
+    the subject's. Building against remembered features rather than the supplied ones
+    would generate candidates for manifestations this child does not have, while missing
+    the ones documented. The dataset is the only admissible source for which terms apply.
 
 Outputs
     Ranked candidates annotated with the HPO term(s) that produced them and the
@@ -22,8 +30,14 @@ Guardrail
     ``endpoint="symptomatic"`` so L3 and L5 cannot present it as mechanistic.
 
     Phenotype terms are patient-derived: use HPO codes and aggregate counts only. Never
-    write free-text clinical narrative, ages, dates, or anything else that could
-    contribute to re-identification of a child in a ~50-patient population.
+    write free-text clinical narrative, ages, dates, birth weights, or anything else that
+    could contribute to re-identification of a child in a ~50-patient population.
+
+    **The term set itself never enters the repository** -- not config, not source, not a
+    test fixture, not a committed example. A specific combination of features is
+    identifying even without a name attached, and the family's own publications set the
+    boundary for what is public about them (``COMPLIANCE.md``). Parse from ``data_dir``
+    on every run; a test that needs terms uses invented ones.
 """
 
 from __future__ import annotations

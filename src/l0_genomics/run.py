@@ -9,13 +9,28 @@ Purpose
 
 Inputs
     A single-sample WGS **VCF** (bgzipped, with tabix index), read from
-    ``config["data_dir"]``. The Track-1 validated causal variant, for reconciliation.
+    ``config["data_dir"]``.
 
     **There is no BAM.** The gated dataset ships raw reads (``.fastq.gz``) and a called
     VCF, not alignments -- verified against dataset revision
     ``59e322d27f399006b398d366d33e703e48a29914`` on 2026-09-02; see ``DATA.md``. Any
     depth-based method requiring alignments would first have to align ~85 GB of FASTQ,
     which is out of scope. This layer is therefore **VCF-only**.
+
+    **There is no Track-1 answer to reconcile against.** The dataset's phenotype document
+    names no causal gene (verified 2026-09-07), so the reconciliation step this layer was
+    originally specified around has no counterpart. L0 must make the call independently
+    and report it as a *finding with its supporting evidence*, not as agreement with an
+    external source. If a Track-1 result is published later, reconcile then and fail
+    loudly on disagreement -- but do not block on a source that does not exist.
+
+VCF facts this layer must accommodate (verified 2026-09-07)
+    - **GRCh38**, ``GCA_000001405.15_..._plus_hs38d1``, GATK ``VariantFiltration``-hardened.
+    - **Contig names carry no ``chr`` prefix** (``1``, ``2``, ... ``X``, ``Y``). Any
+      annotation resource that uses ``chr`` must be translated, in one documented place.
+    - **2,580 contigs**, including decoys and alts from ``hs38d1``. Restrict every
+      per-chromosome statistic to the primary set or the burden vector fills with noise
+      from contigs that carry no meaningful allelic signal.
 
 Outputs
     Written under ``config["results_dir"]``:
@@ -41,6 +56,25 @@ Method note -- aneuploidy burden without alignments
     to the autosomal median, is retained only as a weaker secondary signal; it is
     confounded by variant density and capture behaviour and must never be reported alone.
 
+    **Calibrate the null from the sample itself.** The autosomes supply tens of thousands
+    of informative heterozygous sites each at ``DP >= 10``, so the per-sample distribution
+    of |BAF - 0.5| over the bulk of the genome *is* the diploid baseline. Score each
+    chromosome against that internal baseline rather than against a literature constant:
+    it absorbs this sample's coverage, contamination, and reference-bias behaviour, which
+    an external threshold cannot.
+
+    **Sex chromosomes need their own model, and Y needs masking.** A hemizygous X produces
+    almost no heterozygous calls, so the autosomal BAF model does not apply to it and must
+    not be run there by default. Y is worse: apparent heterozygosity on a hemizygous contig
+    is mismapping, concentrated in pseudoautosomal and repetitive regions, and an unmasked
+    Y will report the largest apparent burden in the genome -- a pure artifact presented as
+    the headline finding. Mask PAR and low-complexity regions, infer sex from X
+    heterozygosity, and handle X and Y explicitly or exclude them with the reason recorded.
+
+    **Segment; do not average whole chromosomes.** Mosaic events are frequently segmental,
+    and a whole-chromosome mean dilutes a strong local signal into the surrounding diploid
+    genome. Segment along each chromosome and report the segment, not just the chromosome.
+
 Guardrail
     Reads **only** from ``config["data_dir"]`` and writes **only** under
     ``config["results_dir"]`` -- both outside the repository and registered in
@@ -50,8 +84,17 @@ Guardrail
     minor's genome, and the source filenames themselves embed a lab accession and a
     sequencer flowcell identifier -- never propagate them into an artifact.
 
-    The causal gene is a *finding*, never an assumption: if reconciliation with Track 1
-    disagrees, fail loudly rather than proceeding on the config value.
+    The causal gene is a *finding*, never an assumption. With no Track-1 answer available,
+    it must ship with the evidence that produced it -- the variants, their consequences,
+    their zygosity, and what was considered and rejected -- so a reader can disagree with
+    the call rather than take it on trust.
+
+    **Phenotype is patient data and is read at runtime only.** The dataset's phenotype
+    document is HPO-coded; parse it from ``config["data_dir"]`` when needed. Never write
+    HPO term sets into config, source, a test fixture, or any committed file: a specific
+    combination of features is identifying in a population of roughly 50 patients, and the
+    family's own publications set the boundary for what is public about them
+    (``COMPLIANCE.md``).
 
     BAF is uninformative where a chromosome has too few heterozygous sites to populate the
     distribution. Emit an explicit ``insufficient_sites`` verdict for such a chromosome --
@@ -83,14 +126,26 @@ def run(config: dict) -> None:
     #     inferred). MVA is autosomal recessive -- a single het LoF is not a causal call.
     #     Note the dataset is single-sample: no parental data, so comp-het phasing must
     #     rely on read-backed phasing or be reported as unphased with that caveat.
-    #  4. Aneuploidy burden (VCF-only, see the method note above): select high-confidence
-    #     biallelic SNVs with adequate `FORMAT/DP`; compute BAF = AD[alt]/(AD[ref]+AD[alt])
-    #     at heterozygous sites; per chromosome, characterize the BAF distribution
-    #     (deviation from 0.5, modality, dispersion) and convert the deviation into a
-    #     mosaic-fraction estimate. Emit the per-chromosome vector plus a scalar summary
-    #     as an L2/L4 feature. Carry median normalized `FORMAT/DP` per chromosome as a
-    #     secondary signal only. Chromosomes with too few informative het sites are
-    #     `insufficient_sites`, never zero.
-    # Finally: reconcile the called gene against the Track-1 validated variant and raise
-    # on disagreement rather than silently preferring one source.
+    #  4. Aneuploidy burden (VCF-only, see the method note above):
+    #     a. Restrict to the primary contigs -- 1-22, X, Y with no `chr` prefix. The VCF
+    #        declares 2,580 contigs; decoys and alts must not enter the burden vector.
+    #     b. Keep FILTER=PASS biallelic SNVs with adequate `FORMAT/DP` (>=10 is workable;
+    #        make the floor configurable and record it). Exclude PAR and low-complexity
+    #        regions before anything is scored.
+    #     c. BAF = AD[alt] / (AD[ref] + AD[alt]) at heterozygous sites.
+    #     d. Build the per-sample diploid baseline from the autosomal bulk, then score
+    #        each segment against it -- an internal null, not a literature constant.
+    #     e. Segment along each chromosome; report segments, not chromosome-wide means.
+    #        Convert deviation magnitude into a mosaic-fraction estimate with an interval,
+    #        not a point value: at low fractions the estimate is not well determined.
+    #     f. Infer sex from X heterozygosity and branch. Do not apply the autosomal model
+    #        to a hemizygous contig; record the exclusion rather than emitting a number.
+    #     g. Rule out contamination before calling anything mosaic -- low-level sample
+    #        contamination and low-fraction mosaicism look alike in BAF, and calling the
+    #        wrong one would misstate the central feature of this child's disease.
+    #     Carry median normalized `FORMAT/DP` per chromosome as a secondary signal only.
+    #     Segments with too few informative het sites are `insufficient_sites`, never zero.
+    # Finally: emit the causal-gene call with its supporting and rejected evidence. There
+    # is no Track-1 result to reconcile against; if one is published later, reconcile then
+    # and raise on disagreement rather than silently preferring either source.
     raise NotImplementedError("l0_genomics.run is a scaffold stub")
