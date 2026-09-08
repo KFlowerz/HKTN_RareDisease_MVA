@@ -58,6 +58,12 @@ def run(config: dict) -> None:
     #  4. Attach druggability evidence per node from Open Targets (tractability buckets)
     #     so L2 channels can weight reachable targets -- but do NOT filter here; L4 owns
     #     exclusion decisions.
-    # If `therapeutic_endpoint` is None, emit BOTH target sets and let L3 carry them
-    # forward; do not silently pick one.
+    # `therapeutic_endpoint` is `chemoprevention` (gate G2, mngmt/decisions.md D4), so the
+    # DOWNSTREAM set -- aneuploidy-stress buffering: proteostasis, replication stress,
+    # p53/senescence, autophagy -- is the primary target set for ranking. Still emit the
+    # upstream set: it is carried into the report as the honest discussion of why
+    # restoring the checkpoint itself has no approved-drug route. Do not drop it, and do
+    # not merge the two -- they answer different questions and L5 presents them apart.
+    # If the endpoint is ever None again, emit both and let L3 carry them; never pick
+    # one silently.
     raise NotImplementedError("l1_target.run is a scaffold stub")

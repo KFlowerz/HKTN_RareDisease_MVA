@@ -32,7 +32,13 @@ Guardrail
     **Nothing published may re-identify the child or family.** In a ~50-patient
     worldwide population, a plot of per-chromosome aneuploidy burden, an exact variant
     coordinate, or a phenotype narrative can be identifying on its own. Publish
-    aggregate or categorical forms; never raw per-sample genomic detail.
+    aggregate or categorical forms; never raw per-sample genomic detail. The boundary is
+    set by what the family already shares publicly through their own blog posts
+    (``COMPLIANCE.md``) -- this work must not widen it.
+
+    **Say "secondary prevention", not "chemoprevention", wherever the endpoint is named.**
+    The ranked list addresses recurrence and second-primary risk -- not prevention of a first cancer (``mngmt/decisions.md`` D4).
+    The unqualified word overstates the claim, and this is a report about a child.
 
     Every candidate table carries the **hypothesis-generation-only** disclaimer, the
     Channel C proxy-signature caveat, and the ``n_channels_supporting`` count. A figure

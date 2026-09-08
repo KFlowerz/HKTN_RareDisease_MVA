@@ -89,17 +89,39 @@ def test_channel_registry_covers_config_channels() -> None:
     assert set(config["channels"]) == set(CHANNEL_REGISTRY)
 
 
-def test_open_decisions_are_still_open() -> None:
-    """``causal_gene`` and ``therapeutic_endpoint`` must not be hardcoded.
+def test_causal_gene_is_still_a_finding() -> None:
+    """``causal_gene`` must not be hardcoded.
 
-    The causal gene is a finding from L0 / Track-1 reconciliation, and the therapeutic
-    endpoint is the project's primary open scientific decision. A value here means
-    someone guessed.
+    It is a finding from L0, not a setting. A value here before L0 has run means
+    someone guessed, which would silently fabricate the scientific premise of the run.
+    When L0 does produce a call, this test changes to assert the config matches L0's
+    output artifact -- it does not get deleted.
     """
     config = yaml.safe_load((REPO_ROOT / "config" / "pipeline.yaml").read_text())
     assert config["causal_gene"] is None
-    assert config["therapeutic_endpoint"] is None
     assert config["seed"] == 42
+
+
+def test_therapeutic_endpoint_is_decided_and_documented() -> None:
+    """``therapeutic_endpoint`` holds a valid value, recorded in the decision log.
+
+    This replaces an assertion that it was ``None``. Gate G2 passed on 2026-09-08, so
+    "still null" is no longer the invariant -- but the reason the original test existed
+    has not gone away, so it is tightened rather than removed: the value must be one of
+    the three admissible endpoints, and it must be traceable to a written decision.
+    An endpoint nobody recorded is indistinguishable from an endpoint someone guessed.
+    """
+    config = yaml.safe_load((REPO_ROOT / "config" / "pipeline.yaml").read_text())
+    endpoint = config["therapeutic_endpoint"]
+
+    assert endpoint in {"chemoprevention", "symptomatic", "mitotic_fidelity"}, (
+        f"{endpoint!r} is not an admissible therapeutic endpoint"
+    )
+
+    decisions = (REPO_ROOT / "mngmt" / "decisions.md").read_text(encoding="utf-8")
+    assert endpoint in decisions, (
+        f"therapeutic_endpoint is {endpoint!r} but mngmt/decisions.md does not record it"
+    )
 
 
 def test_no_patient_data_files_present() -> None:

@@ -16,8 +16,12 @@ Read the hard constraints before writing anything.
 4. Governance files — `.gitignore`, [DATA.md](DATA.md), [COMPLIANCE.md](COMPLIANCE.md) — must exist and
    must never be weakened. When touching `.gitignore`, verify every required pattern is still present and
    only ever add.
-5. Leave `causal_gene` and `therapeutic_endpoint` as `null` in [config/pipeline.yaml](config/pipeline.yaml).
-   **Do not invent them.** `causal_gene` is set only after L0 / Track-1 reconciliation.
+5. Leave `causal_gene` as `null` in [config/pipeline.yaml](config/pipeline.yaml). **Do not invent it.**
+   It is a finding from L0, never a setting, and there is no Track-1 answer to reconcile against.
+   `therapeutic_endpoint` **was decided at gate G2 on 2026-09-08** — `chemoprevention`, meaning
+   *secondary* prevention. See
+   [mngmt/decisions.md](mngmt/decisions.md) D4. Do not revert it to `null`; do not restate it as
+   primary prevention.
 6. **Every claim must be supported by evidence** — either a data result produced by this pipeline,
    or a scientific source cited in **APA 7th edition** with a resolvable link (DOI preferred). No
    uncited mechanistic assertions anywhere: code comments, docstrings, docs, rationales, the report,

@@ -45,9 +45,16 @@ from __future__ import annotations
 TRIAGE_RULES = (
     "genotoxic_or_cancer_risk",  # hard exclusion -- non-negotiable for MVA
     "pediatric_use",             # hard exclusion
-    "bbb_penetration",           # endpoint-dependent, recorded
+    "bbb_penetration",           # endpoint-dependent -- see below; not applicable here
     "clinical_status",           # recorded
 )
+
+#: `bbb_penetration` is scored only when the endpoint calls for CNS exposure. Under
+#: `chemoprevention` (gate G2) it does **not**: The documented phenotype does not establish a CNS requirement so the scaffold's
+#: assumption of CNS involvement does not hold for this subject. Record the rule as
+#: `not_applicable` with that reason rather than scoring it, and never let a
+#: BBB-penetrant agent outrank a non-penetrant one on a criterion that does not apply.
+ENDPOINTS_REQUIRING_CNS_EXPOSURE = frozenset()
 
 
 def triage(config: dict) -> None:

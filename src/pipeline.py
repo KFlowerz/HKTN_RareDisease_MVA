@@ -125,11 +125,16 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> dict:
 
     # Warn, never default. These are findings and decisions, not settings.
     if config.get("causal_gene") is None:
-        LOGGER.warning("causal_gene is null -- set only from the L0 / Track-1 reconciliation")
+        LOGGER.warning(
+            "causal_gene is null -- it is a finding from L0, never a setting. The dataset "
+            "names no gene and there is no Track-1 answer to reconcile against, so L0 must "
+            "call it independently and ship the evidence (gate G1)"
+        )
     if config.get("therapeutic_endpoint") is None:
         LOGGER.warning(
             "therapeutic_endpoint is null -- L1 will emit BOTH target sets and L3 will "
-            "carry both forward, roughly doubling L4 annotation work (gate G2)"
+            "carry both forward, roughly doubling L4 annotation work (gate G2). It was "
+            "decided on 2026-09-08; see mngmt/decisions.md D4 before setting it back to null"
         )
 
     return config
