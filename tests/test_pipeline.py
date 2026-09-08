@@ -119,16 +119,32 @@ def test_stub_layer_records_not_implemented_and_stops(tmp_path: Path, data_root:
 
     The distinction matters: a layer that ran and produced nothing is a scientific claim;
     a layer that was never implemented is not.
+
+    Targets L1 explicitly. L0 is no longer a pure stub -- its burden half needs a real
+    VCF -- so this asserts the manifest behaviour on a layer that genuinely is one.
     """
     config = pipeline.load_config(_write_config(tmp_path))
-    pipeline.run(config)
+    pipeline.run(config, only="l1_target")
 
     manifest = json.loads((config["results_dir"] / pipeline.MANIFEST_NAME).read_text(encoding="utf-8"))
-    assert manifest["layers"]["l0_genomics"]["status"] == "not_implemented"
-    # Execution stopped at L0; later layers must not appear as complete.
-    assert "l1_target" not in manifest["layers"]
+    assert manifest["layers"]["l1_target"]["status"] == "not_implemented"
     assert manifest["seed"] == 42
     assert manifest["causal_gene"] is None
+
+
+def test_layer_failure_is_recorded_before_it_propagates(tmp_path: Path, data_root: Path) -> None:
+    """A layer that raises must leave a manifest entry, so a re-run can resume.
+
+    L0 with an empty data directory raises FileNotFoundError -- a real failure, not an
+    unimplemented body. The manifest must capture it rather than losing the run's state.
+    """
+    config = pipeline.load_config(_write_config(tmp_path))
+    with pytest.raises(FileNotFoundError):
+        pipeline.run(config, only="l0_genomics")
+
+    manifest = json.loads((config["results_dir"] / pipeline.MANIFEST_NAME).read_text(encoding="utf-8"))
+    assert manifest["layers"]["l0_genomics"]["status"] == "failed"
+    assert "FileNotFoundError" in manifest["layers"]["l0_genomics"]["detail"]
 
 
 def test_manifest_records_model_choice(tmp_path: Path, data_root: Path) -> None:

@@ -33,11 +33,23 @@ VCF facts this layer must accommodate (verified 2026-09-07)
       from contigs that carry no meaningful allelic signal.
 
 Outputs
-    Written under ``config["results_dir"]``:
+    Written under ``config["results_dir"]/l0_genomics/``.
+
+    **Implemented:**
+      - ``aneuploidy_burden.json`` -- the sample's own diploid baseline, inferred sex, a
+        contamination screen, and per-contig verdicts with mosaic-fraction estimates
+        under both the gain and loss models
+      - ``windows.json`` -- per-window statistics with z-scores against that baseline
+
+    **Not implemented** (see the TODO in :func:`run`):
       - causal gene symbol + the biallelic variant pair supporting the call
-      - predicted variant effect (VEP / OpenCRAVAT-style consequence, LoF confidence)
+      - predicted variant effect (consequence, LoF confidence)
       - the affected pathway module identifier handed to L1
-      - a per-chromosome aneuploidy burden vector + a scalar summary
+
+    The layer therefore raises ``NotImplementedError`` *after* writing the burden
+    artifacts. That is deliberate: the burden result is complete and usable on its own,
+    and discarding it because a later step is unfinished would waste a full scan of a
+    5-million-record VCF on every run.
 
 Method note -- aneuploidy burden without alignments
     Burden is derived from **B-allele frequency (BAF) at heterozygous sites**, using
@@ -104,6 +116,94 @@ Guardrail
 
 from __future__ import annotations
 
+import json
+import logging
+from dataclasses import asdict
+from pathlib import Path
+
+from . import burden as _burden
+from .scan import DEFAULT_WINDOW, scan_vcf
+
+LOGGER = logging.getLogger(__name__)
+
+#: Spindle-assembly-checkpoint panel. Symbols only -- coordinates are resolved from a
+#: local annotation source at analysis time. Symbols are public identifiers and may be
+#: sent to a public service to resolve; the subject's variants may not.
+SAC_PANEL = ("BUB1B", "CEP57", "TRIP13", "BUB1", "BUB3", "CEP192")
+
+
+def _find_vcf(data_dir: Path) -> Path:
+    """Locate the single-sample VCF in the data directory."""
+    candidates = sorted(p for p in data_dir.rglob("*.vcf.gz") if not p.name.endswith(".tbi"))
+    if not candidates:
+        raise FileNotFoundError(f"no .vcf.gz found under {data_dir}")
+    if len(candidates) > 1:
+        raise ValueError(
+            f"expected exactly one VCF under {data_dir}, found {len(candidates)}. "
+            "Name the intended one in config rather than guessing."
+        )
+    return candidates[0]
+
+
+def compute_burden(vcf_path: Path, *, min_dp: int, window: int) -> _burden.BurdenResult:
+    """Run the aneuploidy-burden analysis over a VCF.
+
+    Args:
+        vcf_path: The single-sample VCF.
+        min_dp: Minimum depth for an informative site.
+        window: Segmentation window size in bases.
+
+    Returns:
+        A :class:`~src.l0_genomics.burden.BurdenResult`.
+    """
+    windows, het_fraction = scan_vcf(vcf_path, min_dp=min_dp, window=window)
+
+    baseline_mean, baseline_sd = _burden.summarize(windows)
+    scored = _burden.score_windows(windows, baseline_mean, baseline_sd)
+    contamination = _burden.contamination_indicator(baseline_mean, baseline_sd)
+
+    x_sites = sum(w.n_sites for w in scored if w.contig == "X")
+    sex = _burden.infer_sex(het_fraction.get("X", 0.0), x_sites)
+
+    notes = []
+    if contamination == "suspect":
+        notes.append(
+            "Genome-wide baseline deviation is elevated on every chromosome, which is the "
+            "signature of sample contamination rather than mosaicism. No window may be "
+            "called mosaic until this is resolved."
+        )
+
+    # Per-contig rollup. X is scored only when diploid; Y never is -- apparent
+    # heterozygosity on a hemizygous contig is mismapping in PAR and repetitive regions,
+    # and an unmasked Y reports the largest apparent burden in the genome.
+    contigs: dict = {}
+    for contig in sorted({w.contig for w in scored}):
+        ws = [w for w in scored if w.contig == contig]
+        informative = [w for w in ws if w.informative and w.mean_abs_dev is not None]
+
+        if contig == "Y":
+            contigs[contig] = {"verdict": "excluded", "reason": "hemizygous_mismapping"}
+            continue
+        if contig == "X" and sex != "XX":
+            contigs[contig] = {
+                "verdict": "excluded",
+                "reason": f"not_diploid_under_inferred_sex_{sex}",
+            }
+            continue
+        contigs[contig] = _burden.rollup_contig(
+            sorted(ws, key=lambda w: w.start), baseline_mean
+        )
+
+    return _burden.BurdenResult(
+        baseline_mean_dev=baseline_mean,
+        baseline_sd=baseline_sd,
+        inferred_sex=sex,
+        windows=scored,
+        contigs=contigs,
+        contamination=contamination,
+        notes=notes,
+    )
+
 
 def run(config: dict) -> None:
     """Execute layer L0.
@@ -113,8 +213,70 @@ def run(config: dict) -> None:
             ``seed``, and (for cross-checking only) ``causal_gene``.
 
     Raises:
-        NotImplementedError: Always -- this is a scaffold.
+        NotImplementedError: The variant-annotation half is not implemented -- see below.
     """
+    data_dir = Path(config["data_dir"])
+    out_dir = Path(config["results_dir"]) / "l0_genomics"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    vcf_path = _find_vcf(data_dir)
+    LOGGER.info("scanning VCF for aneuploidy burden (this reads ~5M records)")
+
+    result = compute_burden(
+        vcf_path,
+        min_dp=int(config.get("l0_min_dp", _burden.DEFAULT_MIN_DP)),
+        window=int(config.get("l0_window", DEFAULT_WINDOW)),
+    )
+
+    payload = {
+        "baseline_mean_abs_dev": result.baseline_mean_dev,
+        "baseline_sd": result.baseline_sd,
+        "inferred_sex": result.inferred_sex,
+        "contamination_screen": result.contamination,
+        "notes": result.notes,
+        "per_contig": result.contigs,
+        "method": {
+            "statistic": "mean |BAF - 0.5| at heterozygous biallelic SNVs",
+            "baseline": "sample's own autosomal windows, median + scaled MAD",
+            "window_bp": int(config.get("l0_window", DEFAULT_WINDOW)),
+            "min_dp": int(config.get("l0_min_dp", _burden.DEFAULT_MIN_DP)),
+            "citations": ["conlin2010 doi:10.1093/hmg/ddq003", "loh2018 doi:10.1038/s41586-018-0321-x"],
+        },
+        "seed": config["seed"],
+    }
+    (out_dir / "aneuploidy_burden.json").write_text(
+        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+    )
+    (out_dir / "windows.json").write_text(
+        json.dumps([asdict(w) for w in result.windows], indent=2), encoding="utf-8"
+    )
+    LOGGER.info(
+        "burden written: sex=%s contamination=%s baseline=%.4f",
+        result.inferred_sex, result.contamination, result.baseline_mean_dev,
+    )
+
+    # TODO: the causal-gene half. Steps 1-3 of the method note above -- restrict to the
+    # SAC_PANEL regions, predict consequence, resolve zygosity -- are NOT implemented,
+    # and must not be faked from position alone.
+    #
+    # The blocker is deliberate, not incidental. Consequence prediction needs a
+    # transcript-aware annotator, and the only ones available are either a local install
+    # (VEP with a cache, or snpEff with its GRCh38 database) or a remote API. **The remote
+    # option is forbidden**: Ensembl's VEP REST endpoint would put this child's variants on
+    # a third-party server, which COMPLIANCE.md prohibits and no convenience justifies.
+    # Gene *symbols* may be sent out to resolve coordinates -- they are public identifiers
+    # -- but never a variant.
+    #
+    # So: install a local annotator, run it offline over the SAC panel regions, then
+    # classify LoF (nonsense, frameshift, canonical splice), then resolve biallelic
+    # configurations. MVA is autosomal recessive, so a single het LoF is not a causal
+    # call; and this dataset is single-sample, so comp-het phasing has no parental data
+    # and must either be read-backed or reported as unphased with that caveat attached.
+    raise NotImplementedError(
+        "l0_genomics: aneuploidy burden is implemented and written to results/l0_genomics/; "
+        "the causal-gene call needs a LOCAL variant annotator (VEP cache or snpEff). "
+        "Do not use a remote annotation API -- that would send patient variants off-machine."
+    )
     # TODO: implement L0 as four steps.
     #  1. Ingest: open the VCF with `pysam.VariantFile` (bgzipped + .tbi, so region
     #     queries work); restrict to the SAC gene panel (BUB1B, CEP57, TRIP13, BUB1,

@@ -41,13 +41,36 @@ HELPER_MODULES = [
 ]
 
 
-@pytest.mark.parametrize("module_name", LAYER_MODULES)
+#: Layers still unimplemented end to end. L0 is absent: its aneuploidy-burden half is
+#: implemented and needs a real VCF, so calling it with an empty config now raises
+#: KeyError before reaching the NotImplementedError its causal-gene half still carries.
+#: Layers move off this list as they are built, one at a time and deliberately.
+STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m != "src.l0_genomics.run"]
+
+
+@pytest.mark.parametrize("module_name", STUB_LAYER_MODULES)
 def test_layer_run_is_a_stub(module_name: str) -> None:
-    """Each layer exposes a callable ``run`` that raises ``NotImplementedError``."""
+    """Each unimplemented layer exposes a callable ``run`` that raises."""
     module = importlib.import_module(module_name)
     assert callable(module.run)
     with pytest.raises(NotImplementedError):
         module.run({})
+
+
+def test_l0_is_partially_implemented() -> None:
+    """L0 requires real config: it is no longer a stub that ignores its input.
+
+    The burden half reads a VCF from ``data_dir``, so an empty config fails on the
+    missing key rather than on an unimplemented body. Asserting this keeps the smoke
+    suite honest about which layers are built.
+    """
+    # import_module, not `from src.l0_genomics import run` -- the package's __init__
+    # re-exports the function under that name, so the latter binds the function.
+    l0 = importlib.import_module("src.l0_genomics.run")
+
+    assert callable(l0.run)
+    with pytest.raises(KeyError):
+        l0.run({})
 
 
 @pytest.mark.parametrize("module_name", CHANNEL_MODULES)

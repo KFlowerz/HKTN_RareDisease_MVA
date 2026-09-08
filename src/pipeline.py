@@ -245,7 +245,10 @@ def run(config: dict, *, resume: bool = False, only: str | None = None) -> None:
                 "finished_utc": datetime.now(timezone.utc).isoformat(),
             }
             _write_manifest(results_dir, manifest)
-            LOGGER.warning("%s is a scaffold stub; stopping here", name)
+            # A layer may raise this *after* doing real work -- L0 writes its burden
+            # artifacts, then stops because its causal-gene half needs a local annotator.
+            # Report the layer's own message rather than calling everything a stub.
+            LOGGER.warning("%s stopped: %s", name, exc)
             return
         except Exception as exc:
             manifest["layers"][name] = {
