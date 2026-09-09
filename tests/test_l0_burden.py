@@ -214,18 +214,99 @@ def test_flat_genome_produces_no_calls() -> None:
     assert not any(w.verdict == "imbalanced" for w in scored)
 
 
-def test_effect_below_reportable_fraction_is_not_called() -> None:
-    """A 5% mosaic is below what this method claims to resolve, so it is not claimed."""
-    dev_5pct = 0.05 / (2 * (2 + 0.05))
-    w = _win("1", 0, 0.07 + dev_5pct)
-    assert burden.score_windows([w], 0.07, 0.0005)[0].verdict != "imbalanced"
-
-
 def test_real_effect_is_still_detected() -> None:
-    """The floor must not blind the method to an event it should find."""
+    """The threshold must not blind the method to an event it should find."""
     dev_30pct = 0.30 / (2 * (2 + 0.30))
     w = _win("1", 0, 0.07 + dev_30pct)
     assert burden.score_windows([w], 0.07, 0.0005)[0].verdict == "imbalanced"
+
+
+# ------------------------------------------------------- noise model and inversion
+
+
+def test_folded_mean_is_the_noise_floor_at_zero_shift() -> None:
+    """With no shift, the statistic still equals sigma·sqrt(2/pi) -- not zero.
+
+    This is the fact the first inversion ignored, and the reason it under-reported
+    every mosaic fraction.
+    """
+    sigma = burden.sigma_at_depth(44)
+    assert burden.folded_mean(0.0, sigma) == pytest.approx(sigma * math.sqrt(2 / math.pi))
+
+
+def test_folded_mean_is_monotonic_in_shift() -> None:
+    sigma = burden.sigma_at_depth(44)
+    values = [burden.folded_mean(d, sigma) for d in (0.0, 0.02, 0.05, 0.10, 0.20)]
+    assert values == sorted(values)
+
+
+@pytest.mark.parametrize("delta", [0.005, 0.02, 0.05, 0.10, 0.20, 0.40])
+def test_deconvolution_round_trips(delta: float) -> None:
+    """Inverting the folded mean must recover the shift that produced it."""
+    sigma = burden.sigma_at_depth(44)
+    assert burden.deconvolve_shift(burden.folded_mean(delta, sigma), sigma) == pytest.approx(
+        delta, abs=1e-6
+    )
+
+
+def test_statistic_at_or_below_noise_floor_means_no_shift() -> None:
+    sigma = burden.sigma_at_depth(44)
+    assert burden.deconvolve_shift(burden.folded_mean(0.0, sigma) * 0.9, sigma) == 0.0
+
+
+@pytest.mark.parametrize("true_f", [0.10, 0.20, 0.40, 0.80])
+def test_noise_aware_fraction_recovers_truth(true_f: float) -> None:
+    """End to end: true fraction -> expected statistic -> reported fraction.
+
+    The naive path (treating excess-over-baseline as the shift) returns roughly a third
+    of the truth at f=0.40 and zero at f=0.10. This asserts the corrected path does not.
+    """
+    sigma = burden.sigma_at_depth(44)
+    delta = true_f / (2 * (2 + true_f))
+    observed = burden.folded_mean(delta, sigma)
+    recovered = burden.mosaic_fraction(burden.deconvolve_shift(observed, sigma), "gain")
+    assert recovered == pytest.approx(true_f, rel=0.01)
+
+
+def test_detection_limit_is_measured_not_assumed() -> None:
+    """The sensitivity claim is derived from this sample's depth and scatter.
+
+    The band is deliberately loose. The limit is model-dependent -- it assumes the
+    baseline excess and a mosaic shift add in shift space -- and computing it without
+    that assumption gives a value ~2.5x higher. Asserting a tight range would encode a
+    precision the method does not have.
+    """
+    sigma = burden.sigma_at_depth(44)
+    limit = burden.detection_limit(0.0671, 0.00222, sigma)
+    assert limit is not None
+    assert 0.05 < limit < 0.50
+
+
+def test_baseline_relative_deconvolution_zeroes_the_baseline() -> None:
+    """A region sitting exactly at baseline must imply no excess shift.
+
+    Deconvolving the raw statistic from zero instead assigns the sample's systematic
+    excess to mosaicism, and reports a fraction near 0.17 for every chromosome including
+    ones plainly at baseline.
+    """
+    sigma = burden.sigma_at_depth(44)
+    assert burden.excess_shift(0.0671, 0.0671, sigma) == pytest.approx(0.0, abs=1e-9)
+    assert burden.excess_shift(0.0600, 0.0671, sigma) == 0.0  # below baseline, floored
+
+
+def test_excess_shift_grows_with_the_observation() -> None:
+    sigma = burden.sigma_at_depth(44)
+    a = burden.excess_shift(0.075, 0.0671, sigma)
+    b = burden.excess_shift(0.090, 0.0671, sigma)
+    assert 0 < a < b
+
+
+def test_detection_limit_improves_with_tighter_scatter() -> None:
+    """Less window-to-window noise must mean better sensitivity, not worse."""
+    sigma = burden.sigma_at_depth(44)
+    assert burden.detection_limit(0.0671, 0.0005, sigma) < burden.detection_limit(
+        0.0671, 0.0040, sigma
+    )
 
 
 def test_contig_rollup_uses_median_not_max() -> None:
@@ -245,11 +326,27 @@ def test_contig_rollup_uses_median_not_max() -> None:
 
 
 def test_contiguous_windows_make_a_call() -> None:
-    """A genuine segmental event spans neighbouring windows and is called."""
-    dev_40pct = 0.40 / (2 * (2 + 0.40))
-    ws = [_win("21", i, 0.07 + dev_40pct) for i in range(8)]
-    scored = burden.score_windows(ws, 0.07, 0.0005)
-    roll = burden.rollup_contig(scored, 0.07)
+    """A genuine segmental event spans neighbouring windows, is called, and is sized right.
+
+    The window statistic is built as the *expected observation* for a 40% mosaic at this
+    depth -- ``folded_mean(delta, sigma)`` -- not as ``baseline + delta``. That
+    distinction is the whole correction: the observed statistic already sits at the noise
+    floor when the shift is zero, so adding a shift to a baseline describes no real
+    measurement.
+    """
+    depth = 30.0
+    sigma = burden.sigma_at_depth(depth)
+    delta = 0.40 / (2 * (2 + 0.40))
+    observed = burden.folded_mean(delta, sigma)
+    baseline = burden.folded_mean(0.0, sigma)
+
+    ws = [
+        burden.WindowStat("21", i * 10, (i + 1) * 10, 5000, 5000, observed, depth)
+        for i in range(8)
+    ]
+    scored = burden.score_windows(ws, baseline, 0.0005)
+    roll = burden.rollup_contig(scored, baseline, sigma)
+
     assert roll["verdict"] == "imbalanced"
     assert roll["longest_contiguous_flagged"] >= burden.MIN_SUPPORTING_WINDOWS
-    assert roll["mosaic_fraction_if_gain"] == pytest.approx(0.40, abs=0.02)
+    assert roll["mosaic_fraction_if_gain"] == pytest.approx(0.40, rel=0.02)

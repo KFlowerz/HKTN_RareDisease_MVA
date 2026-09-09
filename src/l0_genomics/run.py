@@ -118,6 +118,7 @@ from __future__ import annotations
 
 import json
 import logging
+import statistics
 from dataclasses import asdict
 from pathlib import Path
 
@@ -162,6 +163,13 @@ def compute_burden(vcf_path: Path, *, min_dp: int, window: int) -> _burden.Burde
     scored = _burden.score_windows(windows, baseline_mean, baseline_sd)
     contamination = _burden.contamination_indicator(baseline_mean, baseline_sd)
 
+    # Per-site BAF noise at this sample's own depth. Everything downstream -- the
+    # fraction estimates and the sensitivity claim -- is calibrated against it.
+    depths = [w.median_dp for w in scored if w.median_dp]
+    median_depth = statistics.median(depths) if depths else None
+    sigma = _burden.sigma_at_depth(median_depth) if median_depth else None
+    limit = _burden.detection_limit(baseline_mean, baseline_sd, sigma) if sigma else None
+
     x_sites = sum(w.n_sites for w in scored if w.contig == "X")
     sex = _burden.infer_sex(het_fraction.get("X", 0.0), x_sites)
 
@@ -191,10 +199,10 @@ def compute_burden(vcf_path: Path, *, min_dp: int, window: int) -> _burden.Burde
             }
             continue
         contigs[contig] = _burden.rollup_contig(
-            sorted(ws, key=lambda w: w.start), baseline_mean
+            sorted(ws, key=lambda w: w.start), baseline_mean, sigma, limit
         )
 
-    return _burden.BurdenResult(
+    result = _burden.BurdenResult(
         baseline_mean_dev=baseline_mean,
         baseline_sd=baseline_sd,
         inferred_sex=sex,
@@ -203,6 +211,10 @@ def compute_burden(vcf_path: Path, *, min_dp: int, window: int) -> _burden.Burde
         contamination=contamination,
         notes=notes,
     )
+    result.median_depth = median_depth
+    result.sigma = sigma
+    result.detection_limit = limit
+    return result
 
 
 def run(config: dict) -> None:
@@ -235,9 +247,35 @@ def run(config: dict) -> None:
         "contamination_screen": result.contamination,
         "notes": result.notes,
         "per_contig": result.contigs,
+        "sensitivity": {
+            "median_depth": result.median_depth,
+            "per_site_baf_sd": result.sigma,
+            "min_detectable_mosaic_fraction": result.detection_limit,
+            "min_detectable_mosaic_fraction_conservative": (
+                None if result.detection_limit is None else result.detection_limit * 2.5
+            ),
+            "z_threshold": _burden.Z_THRESHOLD,
+            "interpretation": (
+                "Measured from this sample's own depth and window-to-window scatter, not "
+                "configured. A negative result means no event above this fraction was "
+                "detected -- it does not mean no event is present."
+            ),
+            "caveat": (
+                "Model-dependent. The optimistic figure assumes the sample's systematic "
+                "baseline excess and a mosaic shift add in shift space; dropping that "
+                "assumption gives roughly the conservative figure, and a spike-in "
+                "simulation at this depth put the crossing near 0.25. Calibrate against "
+                "simulated spike-ins before quoting a single number."
+            ),
+        },
         "method": {
             "statistic": "mean |BAF - 0.5| at heterozygous biallelic SNVs",
             "baseline": "sample's own autosomal windows, median + scaled MAD",
+            "fraction_estimate": (
+                "noise-deconvolved: the folded-normal mean is inverted for the true BAF "
+                "shift before conversion, because the raw statistic sits at the noise "
+                "floor when the shift is zero and responds quadratically to small shifts"
+            ),
             "window_bp": int(config.get("l0_window", DEFAULT_WINDOW)),
             "min_dp": int(config.get("l0_min_dp", _burden.DEFAULT_MIN_DP)),
             "citations": ["conlin2010 doi:10.1093/hmg/ddq003", "loh2018 doi:10.1038/s41586-018-0321-x"],

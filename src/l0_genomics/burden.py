@@ -37,6 +37,7 @@ Guardrail
 
 from __future__ import annotations
 
+import math
 import statistics
 from dataclasses import dataclass, field
 
@@ -97,6 +98,12 @@ class BurdenResult:
     contigs: dict = field(default_factory=dict)
     contamination: str = "unknown"
     notes: list = field(default_factory=list)
+    median_depth: float | None = None
+    sigma: float | None = None
+    #: Smallest mosaic fraction this sample can resolve, measured from its own depth and
+    #: scatter. Travels with the result so the report states what the method could have
+    #: seen, rather than leaving a null finding to be read as "nothing is there".
+    detection_limit: float | None = None
 
 
 def baf(ref_depth: int, alt_depth: int) -> float | None:
@@ -224,16 +231,8 @@ def summarize(windows: list) -> tuple:
     return (centre, mad * 1.4826)
 
 
-#: Smallest mosaic fraction this method claims to resolve. Below it, BAF deviation is not
-#: separable from reference bias and mapping noise in a VCF without alignments.
-MIN_REPORTABLE_FRACTION = 0.10
-
-#: The absolute BAF deviation MIN_REPORTABLE_FRACTION implies under the gain model:
-#: dev = f / (2(2+f)). An effect-size floor is required alongside any z-score, because
-#: each window averages thousands of sites, so the window-mean SD is ~0.002 and a
-#: biologically trivial difference clears any z threshold. Statistical significance and
-#: biological meaning come apart badly here, and only the effect size tracks the latter.
-MIN_EFFECT = MIN_REPORTABLE_FRACTION / (2 * (2 + MIN_REPORTABLE_FRACTION))
+#: z above the sample's own window-to-window scatter required to call a window.
+Z_THRESHOLD = 5.0
 
 #: Contiguous informative windows a chromosome needs before it is called imbalanced.
 #: A real segmental event spans neighbouring windows; a lone spike is far more often a
@@ -241,19 +240,159 @@ MIN_EFFECT = MIN_REPORTABLE_FRACTION / (2 * (2 + MIN_REPORTABLE_FRACTION))
 MIN_SUPPORTING_WINDOWS = 2
 
 
+def sigma_at_depth(depth: float) -> float:
+    """Per-site standard deviation of BAF at a given read depth.
+
+    For ``X ~ Binomial(d, 1/2)`` and ``BAF = X/d``, ``sd(BAF) = 0.5/sqrt(d)``.
+    """
+    return 0.5 / math.sqrt(depth) if depth and depth > 0 else float("nan")
+
+
+def folded_mean(delta: float, sigma: float) -> float:
+    """Expected ``|BAF - 0.5|`` when the true shift is ``delta`` and noise is ``sigma``.
+
+    For ``X ~ Normal(0.5 ± delta, sigma)``::
+
+        E|X - 0.5| = sigma·sqrt(2/pi)·exp(-delta²/2sigma²) + delta·erf(delta/(sigma·sqrt2))
+
+    Note:
+        This is the relationship the naive inversion ignored. The measured statistic is
+        **not** the true shift: at ``delta = 0`` it already equals ``sigma·sqrt(2/pi)``
+        -- the noise floor -- and it responds *quadratically* to small shifts, because
+        sampling noise dominates them. Treating the excess over baseline as the shift
+        therefore under-reports the mosaic fraction badly: at a true fraction of 0.40 it
+        gives 0.12, and at 0.10 it gives 0.
+    """
+    if sigma <= 0:
+        return abs(delta)
+    z = delta / (sigma * math.sqrt(2.0))
+    return sigma * math.sqrt(2.0 / math.pi) * math.exp(-(z * z)) + delta * math.erf(z)
+
+
+def deconvolve_shift(statistic: float, sigma: float, *, tol: float = 1e-9) -> float | None:
+    """Recover the true BAF shift from an observed folded mean.
+
+    Args:
+        statistic: Observed mean ``|BAF - 0.5|`` over a window.
+        sigma: Per-site BAF standard deviation, from :func:`sigma_at_depth`.
+
+    Returns:
+        The shift ``delta`` in [0, 0.5), or None when the statistic lies below the noise
+        floor (no shift can explain a value *smaller* than pure noise) or above 0.5.
+
+    Note:
+        Solved by bisection rather than SciPy's root finders, to keep this module free of
+        heavy dependencies -- it is the numeric core and is exercised in every test run.
+    """
+    if sigma <= 0 or not math.isfinite(statistic):
+        return None
+    floor = folded_mean(0.0, sigma)
+    if statistic <= floor:
+        return 0.0
+    hi = 0.4999
+    if statistic >= folded_mean(hi, sigma):
+        return None
+    lo = 0.0
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if folded_mean(mid, sigma) < statistic:
+            lo = mid
+        else:
+            hi = mid
+        if hi - lo < tol:
+            break
+    return (lo + hi) / 2
+
+
+def excess_shift(statistic: float, baseline: float, sigma: float) -> float | None:
+    """Shift attributable to a region, over and above the sample's own floor.
+
+    Args:
+        statistic: The region's observed mean ``|BAF - 0.5|``.
+        baseline: The sample's diploid baseline statistic.
+        sigma: Per-site BAF standard deviation at this sample's depth.
+
+    Returns:
+        ``delta`` in excess of baseline, floored at 0, or None if undeterminable.
+
+    Note:
+        Deconvolving the raw statistic from zero is wrong, and wrong in a way that looks
+        plausible: the baseline itself sits *above* the pure-binomial floor -- 0.0671
+        observed against 0.0602 predicted in this dataset -- because of reference bias
+        and mapping behaviour. Inverting the raw value therefore assigns that systematic
+        excess to mosaicism and reports a fraction near 0.17 for **every** chromosome,
+        including ones that are plainly at baseline.
+
+        Both quantities are converted to shift space first, then subtracted. Subtracting
+        in statistic space instead would be the original error over again, since the
+        statistic is not linear in the shift.
+    """
+    if sigma is None or sigma <= 0:
+        return None
+    d_obs = deconvolve_shift(statistic, sigma)
+    d_base = deconvolve_shift(baseline, sigma)
+    if d_obs is None or d_base is None:
+        return None
+    return max(0.0, d_obs - d_base)
+
+
+def detection_limit(baseline: float, sd: float, sigma: float, *, z: float = Z_THRESHOLD) -> float | None:
+    """Smallest mosaic fraction (gain model) this sample can actually resolve.
+
+    Args:
+        baseline: The sample's diploid baseline statistic.
+        sd: Window-to-window scatter of that statistic.
+        sigma: Per-site BAF standard deviation at this sample's depth.
+        z: Detection threshold in units of ``sd``.
+
+    Returns:
+        The fraction at which a window would just reach ``z``, or None if undeterminable.
+
+    Note:
+        Derived from **this sample's** depth and scatter rather than configured as a
+        constant. A hardcoded sensitivity claim is a claim about a dataset nobody
+        measured; this one is measured, and it belongs in the output so the report can
+        state what the method could and could not have seen.
+
+        **Model-dependent, and known to be so.** This assumes the sample's systematic
+        baseline excess and a mosaic shift combine additively *in shift space*. That is
+        an approximation: reference bias perturbs individual sites, while a mosaic gain
+        shifts every heterozygous site in a region, and the two are not the same physical
+        process. Computed without the additivity assumption the limit comes out roughly
+        2.5x higher, and a spike-in simulation at this sample's depth put the z = 5
+        crossing near 0.25. Treat the returned value as the optimistic end of a range
+        whose pessimistic end is ~2.5x larger, and calibrate against simulated spike-ins
+        before quoting a single number in the report.
+    """
+    if sd <= 0 or sigma <= 0:
+        return None
+    delta = excess_shift(baseline + z * sd, baseline, sigma)
+    if delta is None:
+        return None
+    return mosaic_fraction(delta, "gain")
+
+
 def score_windows(
     windows: list,
     baseline_mean: float,
     baseline_sd: float,
     *,
-    min_effect: float = MIN_EFFECT,
+    z_threshold: float = Z_THRESHOLD,
 ) -> list:
     """Attach a z-score and verdict to each window, against the sample's own baseline.
 
-    A window is ``imbalanced`` only if it clears **both** the statistical test and the
-    effect-size floor. Requiring both is the point: with thousands of sites per window
-    the z-score alone flags differences far too small to be a mosaic event, and an
-    effect size alone ignores how well-determined the window is.
+    Note:
+        A single criterion is correct here now, where it was not before. The earlier
+        version needed a separate effect-size floor because the statistic was being read
+        as if it were the true shift, so statistical significance and biological meaning
+        had come apart. With the noise model in place, ``z >= z_threshold`` corresponds
+        to a specific, computable mosaic fraction -- :func:`detection_limit` reports
+        which -- so the threshold *is* the biological floor rather than standing next to
+        one.
+
+        The multiple-comparisons discipline still lives in :func:`rollup_contig`: window
+        scoring is deliberately permissive, and contiguity plus a median statistic decide
+        what becomes a chromosome-level finding.
     """
     scored = []
     for w in windows:
@@ -266,17 +405,8 @@ def score_windows(
             )
             continue
 
-        effect = w.mean_abs_dev - baseline_mean
-        z = (effect / baseline_sd) if baseline_sd > 0 else None
-
-        if z is None:
-            verdict = "unscored"
-        elif effect >= min_effect and z >= 5:
-            verdict = "imbalanced"
-        elif effect >= min_effect / 2 and z >= 5:
-            verdict = "equivocal"
-        else:
-            verdict = "baseline"
+        z = ((w.mean_abs_dev - baseline_mean) / baseline_sd) if baseline_sd > 0 else None
+        verdict = "unscored" if z is None else ("imbalanced" if z >= z_threshold else "baseline")
 
         scored.append(
             WindowStat(
@@ -296,7 +426,12 @@ def _longest_run(flags: list) -> int:
     return best
 
 
-def rollup_contig(windows: list, baseline_mean: float) -> dict:
+def rollup_contig(
+    windows: list,
+    baseline_mean: float,
+    sigma: float | None = None,
+    limit: float | None = None,
+) -> dict:
     """Summarize one contig from its scored windows.
 
     Args:
@@ -334,12 +469,26 @@ def rollup_contig(windows: list, baseline_mean: float) -> dict:
     # letting one flag make a chromosome "equivocal" restates the multiple-comparisons
     # error one notch quieter. The flagged count is still reported, so an isolated
     # window is visible without being promoted to a finding.
+    # Deconvolve the noise floor out of the median statistic before converting to a cell
+    # fraction. Reading `excess` as the shift under-reports by 2-3x; see `folded_mean`.
+    if sigma is None:
+        dps = [w.median_dp for w in informative if w.median_dp]
+        sigma = sigma_at_depth(statistics.median(dps)) if dps else None
+
+    delta = excess_shift(mid, baseline_mean, sigma) if sigma else None
+    f_gain = mosaic_fraction(delta, "gain") if delta is not None else None
+    f_loss = mosaic_fraction(delta, "loss") if delta is not None else None
+
+    # A chromosome is only called when its own estimated fraction clears the sensitivity
+    # the method actually has. Without this, verdicts and the reported detection limit
+    # contradict each other -- calling a chromosome imbalanced at f = 0.19 while stating
+    # the method cannot resolve below f = 0.27 is not a finding anyone can act on.
     if run < MIN_SUPPORTING_WINDOWS:
         verdict = "baseline"
-    elif excess >= MIN_EFFECT:
-        verdict = "imbalanced"
+    elif limit is not None and (f_gain is None or f_gain < limit):
+        verdict = "below_detection_limit"
     else:
-        verdict = "segmental_only"
+        verdict = "imbalanced"
 
     return {
         "verdict": verdict,
@@ -349,6 +498,7 @@ def rollup_contig(windows: list, baseline_mean: float) -> dict:
         "longest_contiguous_flagged": run,
         "median_abs_dev": mid,
         "excess_over_baseline": excess,
-        "mosaic_fraction_if_gain": mosaic_fraction(excess, "gain"),
-        "mosaic_fraction_if_loss": mosaic_fraction(excess, "loss"),
+        "deconvolved_shift": delta,
+        "mosaic_fraction_if_gain": f_gain,
+        "mosaic_fraction_if_loss": f_loss,
     }
