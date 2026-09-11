@@ -73,6 +73,10 @@ algorithms are implemented, no APIs are called, and no data is present.
 conda env create -f environment.yml
 conda activate mva-track2
 
+# L0's local variant annotator database (public reference data, not patient data).
+# -noLog stops snpEff reporting usage statistics to its server -- pass it on every call.
+snpEff download -noLog GRCh38.115
+
 # data/ and results/ are gitignored, so they do not survive a clone — create them:
 mkdir -p data results
 

@@ -305,14 +305,30 @@ def run(config: dict) -> None:
     # Gene *symbols* may be sent out to resolve coordinates -- they are public identifiers
     # -- but never a variant.
     #
-    # So: install a local annotator, run it offline over the SAC panel regions, then
+    # The local annotator is installed (2026-09-11): snpEff 5.4c, pinned in
+    # environment.yml, with the `config["annotator"]["database"]` database (GRCh38.115) in
+    # the conda env's default data dir. Every invocation must pass:
+    #   -noLog      snpEff otherwise reports usage statistics to its server
+    #   -nodownload otherwise a missing database is silently fetched mid-run
+    #   -noStats, or -stats <path under results_dir>
+    #               otherwise snpEff_summary.html / snpEff_genes.txt land in the CWD
+    #   -Xmx<config["annotator"]["java_heap"]>
+    #               the bioconda wrapper defaults to -Xmx1g, which OOMs loading this DB
+    # The DB carries every Ensembl transcript, so one variant gets several consequences
+    # (e.g. 5'UTR on one BUB1B transcript, upstream on others). Decide the transcript
+    # policy (-canon, or MANE Select) before calling LoF, and record it with the output.
+    # Pipe the region-restricted records through stdin rather than naming the VCF on the
+    # command line, so no dataset filename appears in a process listing or log.
+    #
+    # So: run it offline over the SAC panel regions, then
     # classify LoF (nonsense, frameshift, canonical splice), then resolve biallelic
     # configurations. MVA is autosomal recessive, so a single het LoF is not a causal
     # call; and this dataset is single-sample, so comp-het phasing has no parental data
     # and must either be read-backed or reported as unphased with that caveat attached.
     raise NotImplementedError(
         "l0_genomics: aneuploidy burden is implemented and written to results/l0_genomics/; "
-        "the causal-gene call needs a LOCAL variant annotator (VEP cache or snpEff). "
+        "the causal-gene call is not implemented yet. It must use the LOCAL snpEff "
+        "(config['annotator'], with -noLog -nodownload -noStats). "
         "Do not use a remote annotation API -- that would send patient variants off-machine."
     )
     # TODO: implement L0 as four steps.

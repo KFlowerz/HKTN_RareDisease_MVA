@@ -19,6 +19,9 @@ dependencies:
   - pyyaml
   - pysam
   - bcftools
+  - snpeff=5.4.0c   # L0's LOCAL variant annotator. Pinned: its databases are built per
+                    # snpEff version. Brings its own openjdk. See the README for the
+                    # database download and the flags every invocation must carry.
   - jupyterlab
   - pytest          # README quickstart runs `pytest -q`; declared so it is not implicit
   - pip

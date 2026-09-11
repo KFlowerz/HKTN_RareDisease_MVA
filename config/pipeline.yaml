@@ -9,6 +9,17 @@ results_dir: ./results
 
 causal_gene: null            # still open -- set only from L0's call, never guessed
 
+# L0 variant annotation runs LOCALLY -- no patient variant may leave the machine
+# (COMPLIANCE.md), which rules out Ensembl's VEP REST API. The snpEff version is pinned in
+# environment.yml. Every invocation must pass -noLog (snpEff otherwise reports usage
+# statistics to its server), -nodownload (otherwise a missing database is fetched mid-run),
+# and -noStats or -stats under results_dir (otherwise it writes summary files into the
+# working directory -- here, the repo).
+annotator:
+  tool: snpeff
+  database: GRCh38.115       # Ensembl 115; bare contig names (1..22, X, Y), matching the VCF
+  java_heap: 8g              # passed as -Xmx; the bioconda wrapper's 1g default OOMs on this DB
+
 # Gate G2, decided 2026-09-08 (mngmt/decisions.md D4).
 # chemoprevention | symptomatic | mitotic_fidelity
 #

@@ -14,6 +14,10 @@ results/
 *.parquet
 *.h5
 *.npz
+# snpEff writes these into the working directory unless -noStats/-stats is passed;
+# they summarize the annotated sample, so they are patient-derived.
+snpEff_summary.html
+snpEff_genes.txt
 .env
 .env.*
 !.env.example
