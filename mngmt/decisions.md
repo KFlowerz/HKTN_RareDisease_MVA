@@ -131,6 +131,60 @@ without guessing the causal gene.
 
 ---
 
+## D5 — LoF calls are made on MANE Select; LoF on other transcripts is kept, flagged (2026-09-11)
+
+`annotator.transcript_policy: mane_select_tiered` in
+[config/pipeline.yaml](../config/pipeline.yaml), implemented in
+[src/l0_genomics/transcripts.py](../src/l0_genomics/transcripts.py).
+
+**What it means.** L0 annotates twice. The **primary** pass uses only the MANE Select transcript
+(`-tag MANE_Select`); a LoF consequence there is the call (`lof_tier = mane_select`). The
+**secondary** pass uses every transcript; a variant that is LoF only there is kept as
+`lof_tier = non_mane`, naming the transcript, and never becomes a call on its own.
+
+**Why.** The review and data are in
+[docs/research/transcript-policy-lof.md](../docs/research/transcript-policy-lof.md). In short:
+
+- MANE Select is the transcript set designed as the default for clinical reporting (Morales et
+  al., 2022), and all but 67 of 33,736 PubMed-supported pathogenic variants map to it (Pozo et
+  al., 2022).
+- LoF confined to a subset of a gene's transcripts is common and enriched for false positives
+  (MacArthur et al., 2012; Singer-Berk et al., 2023), and PVS1 is not applied when the affected
+  exon is missing from biologically relevant transcripts (Abou Tayoun et al., 2018).
+- On this panel, 448 bp can receive a LoF call only from a non-MANE transcript
+  (`results/transcript_policy/territory.tsv`, seed=42). Too much to promote to calls — but in an
+  n=1 search the causal allele could sit there, so it is demoted rather than dropped.
+
+**Why not the alternatives.**
+
+- `-canon` — snpEff's canonical is the longest CDS, not MANE (SnpEff & SnpSift documentation,
+  n.d.). On this panel it picks a different transcript for BUB1, BUB1B and CEP192, and leaves
+  20 bp of MANE Select sequence in BUB1B unable to receive a LoF call (`picks.tsv`,
+  `territory.tsv`). Refused by name in code.
+- All transcripts as the call — promotes the partial-LoF territory above to calls.
+- MANE Select alone — defensible, but silently discards the rare pathogenic allele that lies
+  outside MANE, which is the costliest possible miss for one child.
+
+**What it does not rest on.** Known pathogenic variants could not discriminate: all 118 public
+ClinVar P/LP variants in the panel get the same call under every policy
+(`results/transcript_policy/clinvar_summary.tsv`). The decision rests on the literature and on
+the territory measurement, not on a benchmark win.
+
+**Obliges.**
+
+- Every L0 variant call is a `VariantCall` carrying `transcript`, `mane_release`, `lof_tier`,
+  `annotation_pass` and `transcript_policy`. A `non_mane` tier can only come from the secondary
+  pass and `mane_select` only from the primary — enforced in code and tested.
+- `annotator.mane_release` names the MANE release the database's tags were checked against.
+  Re-run `scripts/transcript_policy_check.py` on any snpEff database change.
+- NMD escape — a stop in the last exon or the 3′-most 50 nt of the penultimate exon (Abou Tayoun
+  et al., 2018) — is flagged, not treated as equivalent to an early truncation.
+- L0 is not LoF-only. 6 of the 118 known pathogenic panel variants are not LoF under any policy;
+  "no biallelic LoF found" is reported as exactly that, never as "no causal variant".
+- A new policy needs a new decision here. Code refuses unknown values rather than defaulting.
+
+---
+
 ## Open
 
 - **`causal_gene`** (gate G1) — still `null`. A finding from L0, never a setting.

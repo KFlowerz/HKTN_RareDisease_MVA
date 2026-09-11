@@ -315,8 +315,12 @@ def run(config: dict) -> None:
     #   -Xmx<config["annotator"]["java_heap"]>
     #               the bioconda wrapper defaults to -Xmx1g, which OOMs loading this DB
     # The DB carries every Ensembl transcript, so one variant gets several consequences
-    # (e.g. 5'UTR on one BUB1B transcript, upstream on others). Decide the transcript
-    # policy (-canon, or MANE Select) before calling LoF, and record it with the output.
+    # (e.g. 5'UTR on one BUB1B transcript, upstream on others). Which transcripts may make
+    # a call is decision D5 (mngmt/decisions.md): run the passes from
+    # transcripts.snpeff_passes(config) -- MANE Select first, then all transcripts -- tier
+    # each variant with transcripts.lof_tier(), and emit transcripts.VariantCall records,
+    # which carry the transcript, the MANE release and the tier. -canon is refused there.
+    # Evidence: docs/research/transcript-policy-lof.md.
     # Pipe the region-restricted records through stdin rather than naming the VCF on the
     # command line, so no dataset filename appears in a process listing or log.
     #

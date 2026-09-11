@@ -19,6 +19,13 @@ annotator:
   tool: snpeff
   database: GRCh38.115       # Ensembl 115; bare contig names (1..22, X, Y), matching the VCF
   java_heap: 8g              # passed as -Xmx; the bioconda wrapper's 1g default OOMs on this DB
+  # Decision D5 (mngmt/decisions.md): MANE Select makes the LoF call; an all-transcript pass
+  # keeps LoF found only on non-MANE transcripts as lof_tier=non_mane, never as a call.
+  # snpEff -canon is refused (longest CDS, not MANE). No default -- src/l0_genomics/transcripts.py.
+  transcript_policy: mane_select_tiered
+  # MANE release the database's MANE_Select tags were cross-checked against for the SAC
+  # panel (scripts/transcript_policy_check.py). Re-run that check on any database change.
+  mane_release: MANE.GRCh38.v1.5
 
 # Gate G2, decided 2026-09-08 (mngmt/decisions.md D4).
 # chemoprevention | symptomatic | mitotic_fidelity
