@@ -41,3 +41,28 @@ therapeutic_endpoint: chemoprevention
 model: claude-opus-5
 
 channels: {kg: true, proximity: true, signature: true, phenotype: true, prior: true}
+
+# L1 disease module. Both sources are licence-clean for a redistributed CC-BY-4.0 output:
+# STRING is CC BY 4.0 (its attribution travels in module.json) and Reactome data is CC0.
+# Every value here is written into results/l1_target/module.json beside the result, because
+# a module boundary that is not recorded cannot be argued with.
+l1:
+  species: Homo sapiens
+  taxon: 9606
+  string_version: "12.0"
+  string_score_min: 700    # STRING "high confidence" -- the graph the walk runs on
+  seed_score_min: 900      # STRING "highest confidence", physical subnetwork -- complex proxy
+  rwr_restart: 0.7         # higher keeps the module tighter around the seed set
+  module_size: 200
+  max_pathway_size: 200    # bigger pathways are too generic to define "upstream"
+  reference_dir: ./reference   # cached public source files; gitignored, not patient data
+  # Second-disease (Scalability) run only. NEVER a way around gate G1: leave it null and
+  # let causal_gene carry the finding a person signed off.
+  gene: null
+  # Which target set each endpoint makes primary for ranking. This mapping is a project
+  # decision (gate G2, D4), not a property of the method, so it lives here and L1's code
+  # stays disease-agnostic. An endpoint absent from this map leaves both sets in play.
+  primary_set_by_endpoint:
+    chemoprevention: downstream
+    mitotic_fidelity: upstream
+    symptomatic: both

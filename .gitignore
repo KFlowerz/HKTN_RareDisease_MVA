@@ -28,3 +28,6 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 .DS_Store
+
+# Cached public reference data (STRING, Reactome). Not patient data, not in custody.
+reference/

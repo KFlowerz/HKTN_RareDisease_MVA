@@ -42,6 +42,8 @@ Ensembl. (2026). Ensembl Canonical transcript (Release 116). Retrieved September
 
 Girish, V., Lakhani, A. A., Thompson, S. L., Scaduto, C. M., Brown, L. M., Hagenson, R. A., Sausville, E. L., Mendelson, B. E., Kandikuppa, P. K., Lukow, D. A., Yuan, M. L., Stevens, E. C., Lee, S. N., Schukken, K. M., Akalu, S. M., Vasudevan, A., Zou, C., Salovska, B., Li, W., et al. (2023). Oncogene-like addiction to aneuploidy in human cancers. Science, 381(6660). https://doi.org/10.1126/science.adg4521
 
+Guney, E., Menche, J., Vidal, M., & Barábasi, A.-L. (2016). Network-based in silico drug efficacy screening. Nature Communications, 7(1), Article 10331. https://doi.org/10.1038/ncomms10331
+
 Hanks, S., Coleman, K., Reid, S., Plaja, A., Firth, H., FitzPatrick, D., Kidd, A., Méhes, K., Nash, R., Robin, N., Shannon, N., Tolmie, J., Swansbury, J., Irrthum, A., Douglas, J., & Rahman, N. (2004). Constitutional aneuploidy and cancer predisposition caused by biallelic mutations in BUB1B. Nature Genetics, 36(11), 1159–1161. https://doi.org/10.1038/ng1449
 
 Karczewski, K. J., Francioli, L. C., Tiao, G., Cummings, B. B., Alföldi, J., Wang, Q., Collins, R. L., Laricchia, K. M., Ganna, A., Birnbaum, D. P., Gauthier, L. D., Brand, H., Solomonson, M., Watts, N. A., Rhodes, D., Singer-Berk, M., England, E. M., Seaby, E. G., Kosmicki, J. A., … MacArthur, D. G. (2020). The mutational constraint spectrum quantified from variation in 141,456 humans. Nature, 581(7809), 434–443. https://doi.org/10.1038/s41586-020-2308-7
@@ -55,6 +57,8 @@ Ma, H., & Poon, R. (2016). TRIP13 Regulates Both the Activation and Inactivation
 MacArthur, D. G., Balasubramanian, S., Frankish, A., Huang, N., Morris, J., Walter, K., Jostins, L., Habegger, L., Pickrell, J. K., Montgomery, S. B., Albers, C. A., Zhang, Z. D., Conrad, D. F., Lunter, G., Zheng, H., Ayub, Q., DePristo, M. A., Banks, E., Hu, M., … Tyler-Smith, C. (2012). A systematic survey of loss-of-function variants in human protein-coding genes. Science, 335(6070), 823–828. https://doi.org/10.1126/science.1215040
 
 McCarthy, D. J., Humburg, P., Kanapin, A., Rivas, M. A., Gaulton, K., Cazier, J.-B., & Donnelly, P. (2014). Choice of transcripts and software has a large effect on variant annotation. Genome Medicine, 6(3), Article 26. https://doi.org/10.1186/gm543
+
+Milacic, M., Beavers, D., Conley, P., Gong, C., Gillespie, M., Griss, J., Haw, R., Jassal, B., Matthews, L., May, B., Petryszak, R., Ragueneau, E., Rothfels, K., Sevilla, C., Shamovsky, V., Stephan, R., Tiwari, K., Varusai, T., Weiser, J., … D’Eustachio, P. (2023). The Reactome Pathway Knowledgebase 2024. Nucleic Acids Research, 52(D1), D672–D678. https://doi.org/10.1093/nar/gkad1025
 
 Morales, J., Pujar, S., Loveland, J. E., Astashyn, A., Bennett, R., Berry, A., Cox, E., Davidson, C., Ermolaeva, O., Farrell, C. M., Fatima, R., Gil, L., Goldfarb, T., Gonzalez, J. M., Haddad, D., Hardy, M., Hunt, T., Jackson, J., Joardar, V. S., … Murphy, T. D. (2022). A joint NCBI and EMBL-EBI transcript set for clinical genomics and research. Nature, 604(7905), 310–315. https://doi.org/10.1038/s41586-022-04558-8
 
@@ -85,6 +89,8 @@ SnpEff & SnpSift documentation. (n.d.). Commands & command line options. Retriev
 Stingele, S., Stoehr, G., Peplowska, K., Cox, J., Mann, M., & Storchova, Z. (2012). Global analysis of genome, transcriptome and proteome reveals the response to aneuploidy in human cells. Molecular Systems Biology, 8(1). https://doi.org/10.1038/msb.2012.40
 
 Suijkerbuijk, S. J. E., van Osch, M. H. J., Bos, F. L., Hanks, S., Rahman, N., & Kops, G. J. P. L. (2010). Molecular Causes for BUBR1 Dysfunction in the Human Cancer Predisposition Syndrome Mosaic Variegated Aneuploidy. Cancer Research, 70(12), 4891–4900. https://doi.org/10.1158/0008-5472.can-09-4319
+
+Szklarczyk, D., Kirsch, R., Koutrouli, M., Nastou, K., Mehryary, F., Hachilif, R., Gable, A. L., Fang, T., Doncheva, N. T., Pyysalo, S., Bork, P., Jensen, L. J., & von Mering, C. (2022). The STRING database in 2023: Protein–protein association networks and functional enrichment analyses for any sequenced genome of interest. Nucleic Acids Research, 51(D1), D638–D646. https://doi.org/10.1093/nar/gkac1000
 
 Tang, Y.-C., Williams, B. R., Siegel, J. J., & Amon, A. (2011). Identification of Aneuploidy-Selective Antiproliferation Compounds. Cell, 144(4), 499–512. https://doi.org/10.1016/j.cell.2011.01.017
 
@@ -130,6 +136,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `donnelly2014` | doi:10.15252/embj.201488648 | Crossref | None on record | 2026-09-08 |
 | `durrbaum2014` | doi:10.1186/1471-2164-15-139 | Crossref | None on record | 2026-09-08 |
 | `girish2023` | doi:10.1126/science.adg4521 | Crossref | None on record | 2026-09-08 |
+| `guney2016` | doi:10.1038/ncomms10331 | Crossref | None on record | 2026-09-16 |
 | `hanks2004` | doi:10.1038/ng1449 | Crossref | None on record | 2026-09-08 |
 | `karczewski2020` | doi:10.1038/s41586-020-2308-7 | Crossref | **Author Correction** doi:10.1038/s41586-020-03174-8 (missing consortium member) and **Addendum** doi:10.1038/s41586-021-03758-y (extends the LoF-tolerance analysis of disease genes). Neither changes the LOFTEE results cited here (text read via Europe PMC, PMC8064911 / PMC8410591) | 2026-09-11 |
 | `loh2018` | doi:10.1038/s41586-018-0321-x | Crossref | None on record | 2026-09-08 |
@@ -137,6 +144,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `macarthur2012` | doi:10.1126/science.1215040 | Crossref | None on record | 2026-09-11 |
 | `mapoon2016` | doi:10.1016/j.celrep.2016.01.001 | Crossref | None on record | 2026-09-08 |
 | `mccarthy2014` | doi:10.1186/gm543 | Crossref | None on record | 2026-09-11 |
+| `milacic2023` | doi:10.1093/nar/gkad1025 | Crossref | None on record. Crossref registers the online-first date (2023-11); the article is the 2024 NAR database issue, 52(D1) | 2026-09-16 |
 | `morales2022` | doi:10.1038/s41586-022-04558-8 | Crossref | None on record | 2026-09-11 |
 | `pozo2022` | doi:10.1038/s41525-022-00329-6 | Crossref | None on record | 2026-09-11 |
 | `richards2015` | doi:10.1038/gim.2015.30 | Crossref | None on record | 2026-09-11 |
@@ -149,6 +157,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `singerberk2023` | doi:10.1016/j.ajhg.2023.08.005 | Crossref bibliographic match, confirmed by Europe PMC (PMID 37633279) | None on record | 2026-09-11 |
 | `stingele2012` | doi:10.1038/msb.2012.40 | Crossref | None on record | 2026-09-08 |
 | `suijkerbuijk2010` | doi:10.1158/0008-5472.can-09-4319 | Crossref | None on record | 2026-09-08 |
+| `szklarczyk2022` | doi:10.1093/nar/gkac1000 | Crossref | None on record. Crossref registers the online-first date (2022-11); the article is the 2023 NAR database issue, 51(D1) | 2026-09-16 |
 | `tang2011` | doi:10.1016/j.cell.2011.01.017 | Crossref | None on record | 2026-09-08 |
 | `torres2007` | doi:10.1126/science.1142210 | Crossref | None on record | 2026-09-08 |
 | `williams2008` | doi:10.1126/science.1160058 | Crossref | None on record | 2026-09-08 |

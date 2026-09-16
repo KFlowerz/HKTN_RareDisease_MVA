@@ -120,14 +120,15 @@ def test_stub_layer_records_not_implemented_and_stops(tmp_path: Path, data_root:
     The distinction matters: a layer that ran and produced nothing is a scientific claim;
     a layer that was never implemented is not.
 
-    Targets L1 explicitly. L0 is no longer a pure stub -- its burden half needs a real
-    VCF -- so this asserts the manifest behaviour on a layer that genuinely is one.
+    Targets L2 explicitly. L0 and L1 are no longer stubs -- they need a real VCF and a
+    causal gene respectively -- so this asserts the manifest behaviour on a layer that
+    genuinely is one.
     """
     config = pipeline.load_config(_write_config(tmp_path))
-    pipeline.run(config, only="l1_target")
+    pipeline.run(config, only="l2_channels")
 
     manifest = json.loads((config["results_dir"] / pipeline.MANIFEST_NAME).read_text(encoding="utf-8"))
-    assert manifest["layers"]["l1_target"]["status"] == "not_implemented"
+    assert manifest["layers"]["l2_channels"]["status"] == "not_implemented"
     assert manifest["seed"] == 42
     assert manifest["causal_gene"] is None
 

@@ -41,11 +41,12 @@ HELPER_MODULES = [
 ]
 
 
-#: Layers still unimplemented end to end. L0 is absent: it is implemented, and needs a
-#: real VCF and the local snpEff database, so calling it with an empty config raises
-#: KeyError on the missing data_dir. Layers move off this list as they are built, one at
-#: a time and deliberately.
-STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m != "src.l0_genomics.run"]
+#: Layers still unimplemented end to end. L0 and L1 are absent: both are implemented and
+#: both need real input, so an empty config fails on the missing input rather than on an
+#: unimplemented body. Layers move off this list as they are built, one at a time and
+#: deliberately.
+IMPLEMENTED = {"src.l0_genomics.run", "src.l1_target.run"}
+STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m not in IMPLEMENTED]
 
 
 @pytest.mark.parametrize("module_name", STUB_LAYER_MODULES)
@@ -71,6 +72,20 @@ def test_l0_is_partially_implemented() -> None:
     assert callable(l0.run)
     with pytest.raises(KeyError):
         l0.run({})
+
+
+def test_l1_requires_a_causal_gene() -> None:
+    """L1 refuses to run without a gene rather than inventing one.
+
+    ``causal_gene`` stays null until gate G1, and L0 writes only a *candidate*. A layer
+    that quietly picked a gene -- from L0's artifact or anywhere else -- would fabricate
+    the scientific premise of the whole run.
+    """
+    l1 = importlib.import_module("src.l1_target.run")
+
+    assert callable(l1.run)
+    with pytest.raises(ValueError, match="gate G1"):
+        l1.run({})
 
 
 @pytest.mark.parametrize("module_name", CHANNEL_MODULES)
