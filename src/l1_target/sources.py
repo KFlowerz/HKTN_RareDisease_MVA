@@ -6,8 +6,8 @@ Purpose
     consumes.
 
 Inputs
-    ``config["l1"]`` (``string_version``, ``taxon``, ``species``, ``reference_dir``) and
-    network access to STRING and Reactome.
+    ``config["l1"]`` (``string_version``, ``taxon``, ``species``), ``config["reference_dir"]``
+    via :mod:`src.refcache`, and network access to STRING and Reactome.
 
 Outputs
     Parsed edges, symbol maps, pathway memberships, and a provenance record -- URL,
@@ -26,40 +26,23 @@ Guardrail
     whole public files with no query attached, so not even a gene symbol leaves the
     machine.
 
-    Cached files are public reference data, not patient data: they live in
-    ``reference_dir``, outside the repository and outside the custody root, and must never
-    enter the deletion register in ``docs/data_custody.md``.
+    Caching and its provenance record live in :mod:`src.refcache`, which states the
+    whole-file-never-a-query rule every layer's downloads obey.
 """
 
 from __future__ import annotations
 
 import gzip
-import hashlib
-import os
 import re
-import urllib.request
-from datetime import date, timezone, datetime
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-USER_AGENT = {"User-Agent": "mva-track2-l1/1.0 (https://github.com/KFlowerz/HKTN_RareDisease_MVA)"}
+from ..refcache import fetch, reference_dir
+
 STRING_BASE = "https://stringdb-downloads.org/download"
 REACTOME_URL = "https://reactome.org/download/current/UniProt2Reactome_All_Levels.txt"
 LICENCES = {"STRING": "CC BY 4.0", "Reactome": "CC0 1.0"}
 #: UniProt accession syntax, so alias rows that are not accessions are ignored.
 UNIPROT_RE = re.compile(r"^([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2})$")
-
-
-def reference_dir(config: dict) -> Path:
-    """Where cached source files live. ``MVA_REF_ROOT`` overrides the config."""
-    raw = (os.environ.get("MVA_REF_ROOT")
-           or (config.get("l1") or {}).get("reference_dir")
-           or "reference")
-    path = Path(raw)
-    if not path.is_absolute():
-        path = REPO_ROOT / path
-    path.mkdir(parents=True, exist_ok=True)
-    return path
 
 
 def string_urls(version: str, taxon: int) -> dict:
@@ -70,31 +53,6 @@ def string_urls(version: str, taxon: int) -> dict:
         "info": f"{STRING_BASE}/protein.info.v{version}/{taxon}.protein.info.v{version}.txt.gz",
         "aliases": f"{STRING_BASE}/protein.aliases.v{version}/{taxon}.protein.aliases.v{version}.txt.gz",
     }
-
-
-def fetch(url: str, dest: Path) -> dict:
-    """Download once and reuse the cached copy; return a provenance record.
-
-    The partial file is written beside the target and renamed on completion, so an
-    interrupted download cannot be mistaken for a complete one on the next run.
-    """
-    if not dest.exists():
-        part = dest.with_name(dest.name + ".part")
-        request = urllib.request.Request(url, headers=USER_AGENT)
-        with urllib.request.urlopen(request, timeout=300) as response, open(part, "wb") as handle:
-            while chunk := response.read(1 << 20):
-                handle.write(chunk)
-        part.rename(dest)
-        retrieved = date.today().isoformat()
-    else:
-        retrieved = datetime.fromtimestamp(dest.stat().st_mtime, timezone.utc).date().isoformat()
-
-    digest = hashlib.sha256()
-    with open(dest, "rb") as handle:
-        while chunk := handle.read(1 << 20):
-            digest.update(chunk)
-    return {"url": url, "file": dest.name, "bytes": dest.stat().st_size,
-            "sha256": digest.hexdigest(), "retrieved": retrieved}
 
 
 def ensure_sources(config: dict) -> tuple:

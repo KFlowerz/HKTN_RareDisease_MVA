@@ -7,6 +7,13 @@ seed: 42
 data_dir: ./data
 results_dir: ./results
 
+# Cached public reference files (STRING, Reactome, ClinVar). NOT patient data and not in
+# custody: whole public releases, downloaded once and matched against locally. Overridden
+# by $MVA_REF_ROOT. A relative path resolves against the user's home directory, never the
+# repo -- the ClinVar release is a .vcf.gz, and no genomic file may sit in the working
+# tree (tests/test_smoke.py). src/refcache.py refuses a path inside the repository.
+reference_dir: ~/.cache/mva-track2/reference
+
 causal_gene: null            # still open -- set only from L0's call, never guessed
 
 # L0 variant annotation runs LOCALLY -- no patient variant may leave the machine
@@ -26,6 +33,15 @@ annotator:
   # MANE release the database's MANE_Select tags were cross-checked against for the SAC
   # panel (scripts/transcript_policy_check.py). Re-run that check on any database change.
   mane_release: MANE.GRCh38.v1.5
+
+# L0 ClinVar cross-reference: what the public archive already says about the subject's
+# panel alleles, as evidence for gate G1. The WHOLE release is downloaded and matched
+# locally -- never a per-variant query, which would send this child's coordinates to NCBI
+# (COMPLIANCE.md). It reports submitted interpretations and their review status; it
+# classifies nothing. See src/l0_genomics/clinvar.py.
+clinvar:
+  enabled: true
+  url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
 
 # Gate G2, decided 2026-09-08 (mngmt/decisions.md D4).
 # chemoprevention | symptomatic | mitotic_fidelity
@@ -55,7 +71,6 @@ l1:
   rwr_restart: 0.7         # higher keeps the module tighter around the seed set
   module_size: 200
   max_pathway_size: 200    # bigger pathways are too generic to define "upstream"
-  reference_dir: ./reference   # cached public source files; gitignored, not patient data
   # Second-disease (Scalability) run only. NEVER a way around gate G1: leave it null and
   # let causal_gene carry the finding a person signed off.
   gene: null

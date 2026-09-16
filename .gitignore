@@ -29,5 +29,8 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 
-# Cached public reference data (STRING, Reactome). Not patient data, not in custody.
+# Cached public reference data (STRING, Reactome, ClinVar). Whole public releases,
+# downloaded once and matched against locally -- not patient data, not in custody.
+# The ClinVar release here is a .vcf.gz, which the patterns above already exclude; this
+# entry keeps the whole cache out regardless of what a later layer adds to it.
 reference/

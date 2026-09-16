@@ -44,6 +44,8 @@ Outputs
         tier)
       - ``causal_gene_call.json`` -- per-gene biallelic configurations, the overall
         verdict and candidate gene(s) for gate G1, provenance, and caveats
+      - ``clinvar_crossref.json`` -- what the public ClinVar release already says about
+        each of those alleles, matched locally against the whole release
 
     Burden is written **before** the causal-gene half runs, so a failure there does not
     discard a completed scan of a 5-million-record VCF. The affected pathway module is
@@ -88,9 +90,13 @@ Method note -- aneuploidy burden without alignments
 Method note -- the causal gene
     Panel alleles are annotated **locally** by snpEff in the two passes decision D5
     prescribes (MANE Select, then all transcripts), classified LoF or not, and assembled
-    into biallelic configurations from zygosity and GATK physical phasing. The result is a
-    *candidate* for gate G1 shipped with its evidence, never a setting. See ``causal.py``
-    for the method and ``annotate.py`` for why a remote annotation API is forbidden.
+    into biallelic configurations from zygosity and GATK physical phasing. Each allele is
+    then cross-referenced against a cached copy of the whole public ClinVar release
+    [landrum2018] doi:10.1093/nar/gkx1153, so a configuration is weighed against submitted
+    interpretations and not against prediction alone. The result is a *candidate* for gate
+    G1 shipped with its evidence, never a setting. See ``causal.py`` for the method,
+    ``clinvar.py`` for the cross-reference, and ``annotate.py`` for why a remote
+    annotation API is forbidden.
 
 Guardrail
     Reads **only** from ``config["data_dir"]`` and writes **only** under

@@ -30,6 +30,14 @@ In a worldwide population of roughly 50 patients, a per-chromosome burden plot o
 variant coordinate can identify on its own. Aggregate and categorical forms are the only publishable
 derivatives; see the L5 guardrail in [../src/l5_report/run.py](../src/l5_report/run.py).
 
+**What is not patient-derived, and why it looks like it might be.** The reference cache
+(`$MVA_REF_ROOT`, default `~/.cache/mva-track2/reference`) holds whole public releases — STRING,
+Reactome, and ClinVar's GRCh38 VCF. It is **not** in the register below and must not enter a purge
+attestation: nothing in it derives from the subject, and every file is a complete public download
+with no query attached, so not even a gene symbol was disclosed to obtain it. It contains a
+`.vcf.gz`, which is why it lives outside the repository — `src/refcache.py` refuses a location
+inside it, and `tests/test_smoke.py` still forbids any genomic file in the working tree.
+
 ---
 
 ## Custody register

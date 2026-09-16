@@ -16,7 +16,10 @@ Outputs
         :class:`~src.l0_genomics.transcripts.VariantCall`; alleles that no panel
         transcript covers are listed separately
       - ``causal_gene_call.json`` -- per-gene configurations and verdicts, the overall
-        verdict, provenance, and caveats
+        verdict, provenance, and caveats; each configuration carries what ClinVar holds
+        about its alleles
+      - ``clinvar_crossref.json`` -- the full cross-reference behind that summary
+        (:mod:`src.l0_genomics.clinvar`)
 
 Method
     1. Regions: each panel gene's span from the local snpEff database, padded.
@@ -30,6 +33,10 @@ Method
     4. Configuration: MVA is caused by biallelic mutation [hanks2004] doi:10.1038/ng1449,
        so one heterozygous LoF is not a call. Two heterozygous alleles are cis, trans or
        unphased; a cis pair leaves the other copy intact and is never biallelic.
+    5. Cross-reference: each allele is matched against the cached public ClinVar release
+       [landrum2018] doi:10.1093/nar/gkx1153, so a configuration is weighed against what
+       has already been submitted about its alleles and not against prediction alone.
+       See :mod:`src.l0_genomics.clinvar`; it interprets nothing.
 
 Guardrail
     - The output is a *candidate* for gate G1. Nothing here writes
@@ -53,6 +60,7 @@ from itertools import combinations
 from pathlib import Path
 
 from . import annotate
+from . import clinvar as _clinvar
 from . import transcripts as tx
 
 #: Padding around each gene span. Covers either BED coordinate convention and variants
@@ -121,6 +129,9 @@ CAVEATS = (
     "samples or physical phasing, a cis arrangement cannot be excluded.",
     "Missense and other protein-altering variants are listed but not interpreted; no "
     "pathogenicity predictor is applied.",
+    "A ClinVar match reports what submitters have concluded, weighted by review status. "
+    "It is not a classification made here, and absence from ClinVar is not evidence of "
+    "benignity -- see the caveats in clinvar_crossref.json.",
 )
 
 
@@ -327,6 +338,20 @@ def _configuration(kind: str, members: list, phase: str) -> dict:
     }
 
 
+def attach_clinvar(genes: dict, crossref: dict) -> None:
+    """Attach each configuration member's ClinVar summary, in place.
+
+    A configuration is what gate G1 is decided on, so what the archive says about its
+    alleles belongs beside it -- not only in a second file a reader has to join by hand.
+    """
+    if crossref.get("status") != "ok":
+        return
+    summaries = {m["variant_id"]: _clinvar.summarize(m) for m in crossref["alleles"]}
+    for result in genes.values():
+        for config in result["configurations"]:
+            config["clinvar"] = [summaries[v] for v in config["variant_ids"] if v in summaries]
+
+
 def resolve_gene(items: list) -> dict:
     """Biallelic configurations and a verdict for one gene's ``(Allele, VariantCall)`` pairs."""
     passing = [(a, c) for a, c in items if a.filter == "PASS"]
@@ -398,7 +423,8 @@ def call(vcf_path, config: dict, out_dir, *, panel) -> dict:
     """Run the causal-gene half of L0 and write its two artifacts.
 
     Returns:
-        ``{"verdict", "candidate_genes", "n_alleles"}`` -- categories and counts only.
+        ``{"verdict", "candidate_genes", "n_alleles", "clinvar"}`` -- categories and
+        counts only.
     """
     policy = tx.transcript_policy(config)
     mane_release = config["annotator"]["mane_release"]
@@ -423,15 +449,38 @@ def call(vcf_path, config: dict, out_dir, *, panel) -> dict:
     verdict, candidates = overall_verdict(genes)
 
     out_dir = Path(out_dir)
+    # Written before the cross-reference, which downloads a release and runs snpEff again:
+    # a network failure there must not discard annotation work already finished, for the
+    # same reason run.py writes the burden before this half starts.
     (out_dir / "variant_calls.json").write_text(json.dumps({
         "calls": [{"genotype": asdict(a), "annotation": asdict(c)} for a, c in calls],
         "outside_panel_transcripts": [asdict(a) for a in uncovered],
     }, indent=2), encoding="utf-8")
+
+    if _clinvar.enabled(config):
+        # A failure here is fatal on purpose. Writing the G1 artifact with the archive's
+        # evidence missing invites the call to be made without it; re-running once the
+        # release is reachable is the cheaper mistake. Turning the key off in config is
+        # the deliberate way to run without it.
+        crossref = _clinvar.cross_reference(
+            config, alleles, {a.variant_id: c for a, c in calls}, regions, pad=pad)
+        (out_dir / "clinvar_crossref.json").write_text(
+            json.dumps(crossref, indent=2, sort_keys=True), encoding="utf-8")
+        attach_clinvar(genes, crossref)
+        clinvar_status = {"status": "ok", "release": crossref["release"]["file_date"],
+                          "artifact": "clinvar_crossref.json"}
+    else:
+        # Explicit, because a missing cross-reference and an empty one read alike in an
+        # artifact, and only one of them means "the archive knows nothing about these".
+        clinvar_status = {"status": "disabled",
+                          "reason": "config['clinvar']['enabled'] is false"}
+
     (out_dir / "causal_gene_call.json").write_text(json.dumps({
         "verdict": verdict,
         "verdict_note": VERDICT_NOTES[verdict],
         "candidate_genes": candidates,
         "causal_gene_config": "not set by L0 -- gate G1 is a human decision made from this evidence",
+        "clinvar": clinvar_status,
         "per_gene": genes,
         "caveats": list(CAVEATS),
         "provenance": {
@@ -457,4 +506,5 @@ def call(vcf_path, config: dict, out_dir, *, panel) -> dict:
         "seed": config["seed"],
     }, indent=2, sort_keys=True), encoding="utf-8")
 
-    return {"verdict": verdict, "candidate_genes": candidates, "n_alleles": len(alleles)}
+    return {"verdict": verdict, "candidate_genes": candidates, "n_alleles": len(alleles),
+            "clinvar": clinvar_status["status"]}

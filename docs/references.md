@@ -48,6 +48,8 @@ Hanks, S., Coleman, K., Reid, S., Plaja, A., Firth, H., FitzPatrick, D., Kidd, A
 
 Karczewski, K. J., Francioli, L. C., Tiao, G., Cummings, B. B., Alföldi, J., Wang, Q., Collins, R. L., Laricchia, K. M., Ganna, A., Birnbaum, D. P., Gauthier, L. D., Brand, H., Solomonson, M., Watts, N. A., Rhodes, D., Singer-Berk, M., England, E. M., Seaby, E. G., Kosmicki, J. A., … MacArthur, D. G. (2020). The mutational constraint spectrum quantified from variation in 141,456 humans. Nature, 581(7809), 434–443. https://doi.org/10.1038/s41586-020-2308-7
 
+Landrum, M. J., Lee, J. M., Benson, M., Brown, G. R., Chao, C., Chitipiralla, S., Gu, B., Hart, J., Hoffman, D., Jang, W., Karapetyan, K., Katz, K., Liu, C., Maddipatla, Z., Malheiro, A., McDaniel, K., Ovetsky, M., Riley, G., Zhou, G., … Maglott, D. R. (2018). ClinVar: Improving access to variant interpretations and supporting evidence. Nucleic Acids Research, 46(D1), D1062–D1067. https://doi.org/10.1093/nar/gkx1153
+
 Loh, P.-R., Genovese, G., Handsaker, R. E., Finucane, H. K., Reshef, Y. A., Palamara, P. F., Birmann, B. M., Talkowski, M. E., Bakhoum, S. F., McCarroll, S. A., & Price, A. L. (2018). Insights into clonal haematopoiesis from 8,342 mosaic chromosomal alterations. Nature, 559(7714), 350–355. https://doi.org/10.1038/s41586-018-0321-x
 
 Ly, P., Kim, S. B., Kaisani, A. A., Marian, G., Wright, W. E., & Shay, J. W. (2012). Aneuploid human colonic epithelial cells are sensitive to AICAR-induced growth inhibition through EGFR degradation. Oncogene, 32(26), 3139–3146. https://doi.org/10.1038/onc.2012.339
@@ -63,6 +65,14 @@ Milacic, M., Beavers, D., Conley, P., Gong, C., Gillespie, M., Griss, J., Haw, R
 Morales, J., Pujar, S., Loveland, J. E., Astashyn, A., Bennett, R., Berry, A., Cox, E., Davidson, C., Ermolaeva, O., Farrell, C. M., Fatima, R., Gil, L., Goldfarb, T., Gonzalez, J. M., Haddad, D., Hardy, M., Hunt, T., Jackson, J., Joardar, V. S., … Murphy, T. D. (2022). A joint NCBI and EMBL-EBI transcript set for clinical genomics and research. Nature, 604(7905), 310–315. https://doi.org/10.1038/s41586-022-04558-8
 
 National Center for Biotechnology Information. (2026). ClinVar GRCh38 VCF (release of 2026-09-05) [Data set]. Retrieved September 11, 2026, from https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/
+
+National Center for Biotechnology Information. (2026). ClinVar GRCh38 VCF (release of 2026-09-13) [Data set]. Retrieved September 16, 2026, from https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/
+
+National Center for Biotechnology Information. (2026). ClinVar: Maintenance and use of the data. Retrieved September 16, 2026, from https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/
+
+National Center for Biotechnology Information. (2026). ClinVar review status. Retrieved September 16, 2026, from https://www.ncbi.nlm.nih.gov/clinvar/docs/review_status/
+
+National Center for Biotechnology Information. (2026). NCBI website and data usage policies and disclaimers. Retrieved September 16, 2026, from https://www.ncbi.nlm.nih.gov/home/about/policies/
 
 National Center for Biotechnology Information & EMBL-EBI. (n.d.). MANE release 1.5 summary table [Data set]. Retrieved September 11, 2026, from https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/
 
@@ -91,6 +101,8 @@ Stingele, S., Stoehr, G., Peplowska, K., Cox, J., Mann, M., & Storchova, Z. (201
 Suijkerbuijk, S. J. E., van Osch, M. H. J., Bos, F. L., Hanks, S., Rahman, N., & Kops, G. J. P. L. (2010). Molecular Causes for BUBR1 Dysfunction in the Human Cancer Predisposition Syndrome Mosaic Variegated Aneuploidy. Cancer Research, 70(12), 4891–4900. https://doi.org/10.1158/0008-5472.can-09-4319
 
 Szklarczyk, D., Kirsch, R., Koutrouli, M., Nastou, K., Mehryary, F., Hachilif, R., Gable, A. L., Fang, T., Doncheva, N. T., Pyysalo, S., Bork, P., Jensen, L. J., & von Mering, C. (2022). The STRING database in 2023: Protein–protein association networks and functional enrichment analyses for any sequenced genome of interest. Nucleic Acids Research, 51(D1), D638–D646. https://doi.org/10.1093/nar/gkac1000
+
+Tan, A., Abecasis, G. R., & Kang, H. M. (2015). Unified representation of genetic variants. Bioinformatics, 31(13), 2202–2204. https://doi.org/10.1093/bioinformatics/btv112
 
 Tang, Y.-C., Williams, B. R., Siegel, J. J., & Amon, A. (2011). Identification of Aneuploidy-Selective Antiproliferation Compounds. Cell, 144(4), 499–512. https://doi.org/10.1016/j.cell.2011.01.017
 
@@ -139,6 +151,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `guney2016` | doi:10.1038/ncomms10331 | Crossref | None on record | 2026-09-16 |
 | `hanks2004` | doi:10.1038/ng1449 | Crossref | None on record | 2026-09-08 |
 | `karczewski2020` | doi:10.1038/s41586-020-2308-7 | Crossref | **Author Correction** doi:10.1038/s41586-020-03174-8 (missing consortium member) and **Addendum** doi:10.1038/s41586-021-03758-y (extends the LoF-tolerance analysis of disease genes). Neither changes the LOFTEE results cited here (text read via Europe PMC, PMC8064911 / PMC8410591) | 2026-09-11 |
+| `landrum2018` | doi:10.1093/nar/gkx1153 | Crossref | None on record. Crossref registers the online-first date (2017-11); the article is the 2018 NAR database issue, 46(D1) | 2026-09-16 |
 | `loh2018` | doi:10.1038/s41586-018-0321-x | Crossref | None on record | 2026-09-08 |
 | `ly2012` | doi:10.1038/onc.2012.339 | Crossref | None on record | 2026-09-08 |
 | `macarthur2012` | doi:10.1126/science.1215040 | Crossref | None on record | 2026-09-11 |
@@ -158,6 +171,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `stingele2012` | doi:10.1038/msb.2012.40 | Crossref | None on record | 2026-09-08 |
 | `suijkerbuijk2010` | doi:10.1158/0008-5472.can-09-4319 | Crossref | None on record | 2026-09-08 |
 | `szklarczyk2022` | doi:10.1093/nar/gkac1000 | Crossref | None on record. Crossref registers the online-first date (2022-11); the article is the 2023 NAR database issue, 51(D1) | 2026-09-16 |
+| `tan2015` | doi:10.1093/bioinformatics/btv112 | Crossref | None on record | 2026-09-16 |
 | `tang2011` | doi:10.1016/j.cell.2011.01.017 | Crossref | None on record | 2026-09-08 |
 | `torres2007` | doi:10.1126/science.1142210 | Crossref | None on record | 2026-09-08 |
 | `williams2008` | doi:10.1126/science.1160058 | Crossref | None on record | 2026-09-08 |
@@ -170,6 +184,10 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | Key | URL | What it supports | Checked |
 |---|---|---|---|
 | `clinvar20260905` | https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/ | Public P/LP variant set for the transcript-policy benchmark (fileDate 2026-09-05) | 2026-09-11 |
+| `clinvar20260913` | https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/ | Clinical interpretations cross-referenced against the subject's panel alleles in L0 (fileDate 2026-09-13) | 2026-09-16 |
+| `clinvar_reviewstatus` | https://www.ncbi.nlm.nih.gov/clinvar/docs/review_status/ | Review-status-to-star mapping in `src/l0_genomics/clinvar.py` | 2026-09-16 |
+| `ncbi_datapolicy` | https://www.ncbi.nlm.nih.gov/home/about/policies/ | NCBI asserts no restriction on molecular data reuse; submitters may retain rights in their own submissions (Table 4, src/l4_validate/sources.md) | 2026-09-16 |
+| `clinvar_use` | https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ | ClinVar requests attribution when data are redistributed, citing PMID 29165669 | 2026-09-16 |
 | `ensemblcanonical` | https://www.ensembl.org/info/genome/genebuild/canonical.html | Ensembl Canonical definition and its relation to MANE Select (release 116) | 2026-09-11 |
 | `mane_v15` | https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/ | MANE Select transcript per SAC-panel gene | 2026-09-11 |
 | `snpeffdocs` | https://pcingola.github.io/SnpEff/snpeff/commandline/ | snpEff `-canon` = longest CDS; `-tag` filtering | 2026-09-11 |
