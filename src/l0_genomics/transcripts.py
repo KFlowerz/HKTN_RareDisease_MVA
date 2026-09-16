@@ -57,6 +57,8 @@ REFUSED_POLICIES = {
 PASSES = ("primary", "secondary")
 LOF_TIERS = ("mane_select", "non_mane", "not_lof")
 IMPACTS = ("HIGH", "MODERATE", "LOW", "MODIFIER")
+ZYGOSITIES = ("het", "hom_alt", "hemizygous")
+EFFECT_CLASSES = ("lof", "protein_altering", "other")
 
 #: The only pass that may produce each LoF tier. ``not_lof`` may come from either.
 _TIER_PASS = {"mane_select": "primary", "non_mane": "secondary"}
@@ -111,7 +113,8 @@ class VariantCall:
 
     ``transcript``, ``mane_release`` and ``lof_tier`` are required by decision D5, and
     ``annotation_pass`` / ``transcript_policy`` record how the call was produced, so it can
-    be regenerated and disagreed with.
+    be regenerated and disagreed with. The trailing fields link the call to its genotype
+    record; L0 always sets them, and they are validated whenever they are set.
     """
 
     gene: str
@@ -120,10 +123,16 @@ class VariantCall:
     lof_tier: str            # "mane_select" | "non_mane" | "not_lof"
     mane_release: str        # MANE release the database's tags were checked against
     transcript_policy: str   # the policy that ran
-    consequence: str         # snpEff effect, e.g. "stop_gained"
+    consequence: str         # snpEff effect(s), e.g. "stop_gained"
     impact: str              # snpEff impact
     hgvs_c: str = ""         # identifying -- results_dir only
     hgvs_p: str = ""         # identifying -- results_dir only
+    variant_id: str = ""     # links to the genotype record in variant_calls.json
+    zygosity: str = ""       # "het" | "hom_alt" | "hemizygous"
+    effect_class: str = ""   # "lof" | "protein_altering" | "other"
+    exon_rank: str = ""      # snpEff exon rank, e.g. "12/23"; "" where it counts introns
+    last_exon: bool | None = None
+    flags: tuple = ()        # e.g. "nmd_escape_last_exon", "filtered"
 
     def __post_init__(self) -> None:
         if not self.transcript:
@@ -144,3 +153,12 @@ class VariantCall:
                 f"lof_tier {self.lof_tier!r} can only come from the {required} pass, "
                 f"not {self.annotation_pass!r}"
             )
+        if self.zygosity and self.zygosity not in ZYGOSITIES:
+            raise ValueError(f"zygosity {self.zygosity!r} not in {ZYGOSITIES}")
+        if self.effect_class:
+            if self.effect_class not in EFFECT_CLASSES:
+                raise ValueError(f"effect_class {self.effect_class!r} not in {EFFECT_CLASSES}")
+            if (self.effect_class == "lof") != (self.lof_tier != "not_lof"):
+                raise ValueError(
+                    f"effect_class {self.effect_class!r} contradicts lof_tier {self.lof_tier!r}"
+                )

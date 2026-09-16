@@ -33,23 +33,21 @@ VCF facts this layer must accommodate (verified 2026-09-07)
       from contigs that carry no meaningful allelic signal.
 
 Outputs
-    Written under ``config["results_dir"]/l0_genomics/``.
-
-    **Implemented:**
+    Written under ``config["results_dir"]/l0_genomics/``:
       - ``aneuploidy_burden.json`` -- the sample's own diploid baseline, inferred sex, a
         contamination screen, and per-contig verdicts with mosaic-fraction estimates
         under both the gain and loss models
       - ``windows.json`` -- per-window statistics with z-scores against that baseline
+      - ``variant_calls.json`` -- every non-reference allele the sample carries in the
+        panel regions, with its genotype record and its decision-D5
+        :class:`~src.l0_genomics.transcripts.VariantCall` (consequence, transcript, LoF
+        tier)
+      - ``causal_gene_call.json`` -- per-gene biallelic configurations, the overall
+        verdict and candidate gene(s) for gate G1, provenance, and caveats
 
-    **Not implemented** (see the TODO in :func:`run`):
-      - causal gene symbol + the biallelic variant pair supporting the call
-      - predicted variant effect (consequence, LoF confidence)
-      - the affected pathway module identifier handed to L1
-
-    The layer therefore raises ``NotImplementedError`` *after* writing the burden
-    artifacts. That is deliberate: the burden result is complete and usable on its own,
-    and discarding it because a later step is unfinished would waste a full scan of a
-    5-million-record VCF on every run.
+    Burden is written **before** the causal-gene half runs, so a failure there does not
+    discard a completed scan of a 5-million-record VCF. The affected pathway module is
+    derived from the causal gene in L1, whose purpose that is.
 
 Method note -- aneuploidy burden without alignments
     Burden is derived from **B-allele frequency (BAF) at heterozygous sites**, using
@@ -87,6 +85,13 @@ Method note -- aneuploidy burden without alignments
     and a whole-chromosome mean dilutes a strong local signal into the surrounding diploid
     genome. Segment along each chromosome and report the segment, not just the chromosome.
 
+Method note -- the causal gene
+    Panel alleles are annotated **locally** by snpEff in the two passes decision D5
+    prescribes (MANE Select, then all transcripts), classified LoF or not, and assembled
+    into biallelic configurations from zygosity and GATK physical phasing. The result is a
+    *candidate* for gate G1 shipped with its evidence, never a setting. See ``causal.py``
+    for the method and ``annotate.py`` for why a remote annotation API is forbidden.
+
 Guardrail
     Reads **only** from ``config["data_dir"]`` and writes **only** under
     ``config["results_dir"]`` -- both outside the repository and registered in
@@ -123,6 +128,8 @@ from dataclasses import asdict
 from pathlib import Path
 
 from . import burden as _burden
+from . import causal as _causal
+from . import transcripts as _transcripts
 from .scan import DEFAULT_WINDOW, scan_vcf
 
 LOGGER = logging.getLogger(__name__)
@@ -222,16 +229,20 @@ def run(config: dict) -> None:
 
     Args:
         config: Parsed pipeline configuration. Uses ``data_dir``, ``results_dir``,
-            ``seed``, and (for cross-checking only) ``causal_gene``.
-
-    Raises:
-        NotImplementedError: The variant-annotation half is not implemented -- see below.
+            ``seed`` and ``annotator``; optionally ``l0_min_dp``, ``l0_window``,
+            ``l0_panel_extension`` (extra gene symbols to search alongside the SAC panel)
+            and ``l0_region_pad``.
     """
     data_dir = Path(config["data_dir"])
     out_dir = Path(config["results_dir"]) / "l0_genomics"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     vcf_path = _find_vcf(data_dir)
+    # Fail before the ~70 s burden scan if the transcript policy is missing or refused --
+    # but after _find_vcf, so a missing dataset is still reported as a missing dataset,
+    # which is the more useful of the two errors.
+    _transcripts.transcript_policy(config)
+
     LOGGER.info("scanning VCF for aneuploidy burden (this reads ~5M records)")
 
     result = compute_burden(
@@ -293,79 +304,13 @@ def run(config: dict) -> None:
         result.inferred_sex, result.contamination, result.baseline_mean_dev,
     )
 
-    # TODO: the causal-gene half. Steps 1-3 of the method note above -- restrict to the
-    # SAC_PANEL regions, predict consequence, resolve zygosity -- are NOT implemented,
-    # and must not be faked from position alone.
-    #
-    # The blocker is deliberate, not incidental. Consequence prediction needs a
-    # transcript-aware annotator, and the only ones available are either a local install
-    # (VEP with a cache, or snpEff with its GRCh38 database) or a remote API. **The remote
-    # option is forbidden**: Ensembl's VEP REST endpoint would put this child's variants on
-    # a third-party server, which COMPLIANCE.md prohibits and no convenience justifies.
-    # Gene *symbols* may be sent out to resolve coordinates -- they are public identifiers
-    # -- but never a variant.
-    #
-    # The local annotator is installed (2026-09-11): snpEff 5.4c, pinned in
-    # environment.yml, with the `config["annotator"]["database"]` database (GRCh38.115) in
-    # the conda env's default data dir. Every invocation must pass:
-    #   -noLog      snpEff otherwise reports usage statistics to its server
-    #   -nodownload otherwise a missing database is silently fetched mid-run
-    #   -noStats, or -stats <path under results_dir>
-    #               otherwise snpEff_summary.html / snpEff_genes.txt land in the CWD
-    #   -Xmx<config["annotator"]["java_heap"]>
-    #               the bioconda wrapper defaults to -Xmx1g, which OOMs loading this DB
-    # The DB carries every Ensembl transcript, so one variant gets several consequences
-    # (e.g. 5'UTR on one BUB1B transcript, upstream on others). Which transcripts may make
-    # a call is decision D5 (mngmt/decisions.md): run the passes from
-    # transcripts.snpeff_passes(config) -- MANE Select first, then all transcripts -- tier
-    # each variant with transcripts.lof_tier(), and emit transcripts.VariantCall records,
-    # which carry the transcript, the MANE release and the tier. -canon is refused there.
-    # Evidence: docs/research/transcript-policy-lof.md.
-    # Pipe the region-restricted records through stdin rather than naming the VCF on the
-    # command line, so no dataset filename appears in a process listing or log.
-    #
-    # So: run it offline over the SAC panel regions, then
-    # classify LoF (nonsense, frameshift, canonical splice), then resolve biallelic
-    # configurations. MVA is autosomal recessive, so a single het LoF is not a causal
-    # call; and this dataset is single-sample, so comp-het phasing has no parental data
-    # and must either be read-backed or reported as unphased with that caveat attached.
-    raise NotImplementedError(
-        "l0_genomics: aneuploidy burden is implemented and written to results/l0_genomics/; "
-        "the causal-gene call is not implemented yet. It must use the LOCAL snpEff "
-        "(config['annotator'], with -noLog -nodownload -noStats). "
-        "Do not use a remote annotation API -- that would send patient variants off-machine."
+    # Causal-gene half: panel alleles -> the two decision-D5 annotation passes -> zygosity
+    # and phase -> biallelic configurations -> a candidate for gate G1. The panel is the
+    # SAC set plus any configured extension; never filter to one gene a priori. Nothing
+    # here writes config["causal_gene"] -- that is a human decision at G1.
+    panel = tuple(dict.fromkeys((*SAC_PANEL, *config.get("l0_panel_extension", ()))))
+    summary = _causal.call(vcf_path, config, out_dir, panel=panel)
+    LOGGER.info(
+        "causal-gene call written: verdict=%s, %d panel allele(s), %d candidate gene(s)",
+        summary["verdict"], summary["n_alleles"], len(summary["candidate_genes"]),
     )
-    # TODO: implement L0 as four steps.
-    #  1. Ingest: open the VCF with `pysam.VariantFile` (bgzipped + .tbi, so region
-    #     queries work); restrict to the SAC gene panel (BUB1B, CEP57, TRIP13, BUB1,
-    #     BUB3, CEP192) plus a configurable extension set. Do not filter to a single
-    #     gene a priori.
-    #  2. Annotate: run VEP / OpenCRAVAT-style consequence prediction; keep LoF calls
-    #     (nonsense, frameshift, canonical splice) and rank by predicted severity.
-    #  3. Zygosity: identify *biallelic* configurations (hom-alt, or comp-het phased or
-    #     inferred). MVA is autosomal recessive -- a single het LoF is not a causal call.
-    #     Note the dataset is single-sample: no parental data, so comp-het phasing must
-    #     rely on read-backed phasing or be reported as unphased with that caveat.
-    #  4. Aneuploidy burden (VCF-only, see the method note above):
-    #     a. Restrict to the primary contigs -- 1-22, X, Y with no `chr` prefix. The VCF
-    #        declares 2,580 contigs; decoys and alts must not enter the burden vector.
-    #     b. Keep FILTER=PASS biallelic SNVs with adequate `FORMAT/DP` (>=10 is workable;
-    #        make the floor configurable and record it). Exclude PAR and low-complexity
-    #        regions before anything is scored.
-    #     c. BAF = AD[alt] / (AD[ref] + AD[alt]) at heterozygous sites.
-    #     d. Build the per-sample diploid baseline from the autosomal bulk, then score
-    #        each segment against it -- an internal null, not a literature constant.
-    #     e. Segment along each chromosome; report segments, not chromosome-wide means.
-    #        Convert deviation magnitude into a mosaic-fraction estimate with an interval,
-    #        not a point value: at low fractions the estimate is not well determined.
-    #     f. Infer sex from X heterozygosity and branch. Do not apply the autosomal model
-    #        to a hemizygous contig; record the exclusion rather than emitting a number.
-    #     g. Rule out contamination before calling anything mosaic -- low-level sample
-    #        contamination and low-fraction mosaicism look alike in BAF, and calling the
-    #        wrong one would misstate the central feature of this child's disease.
-    #     Carry median normalized `FORMAT/DP` per chromosome as a secondary signal only.
-    #     Segments with too few informative het sites are `insufficient_sites`, never zero.
-    # Finally: emit the causal-gene call with its supporting and rejected evidence. There
-    # is no Track-1 result to reconcile against; if one is published later, reconcile then
-    # and raise on disagreement rather than silently preferring either source.
-    raise NotImplementedError("l0_genomics.run is a scaffold stub")

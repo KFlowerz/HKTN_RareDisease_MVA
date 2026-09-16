@@ -91,6 +91,11 @@ def scan_vcf(
     """
     import pysam
 
+    # htslib writes warnings to stderr that quote the VCF's path, and this dataset's
+    # filename embeds a lab accession and a sequencer flowcell id, which must never
+    # propagate into a log or an artifact (see run.py's guardrail). Silence them.
+    pysam.set_verbosity(0)
+
     vcf = pysam.VariantFile(str(vcf_path))
     if len(vcf.header.samples) != 1:
         raise ValueError(

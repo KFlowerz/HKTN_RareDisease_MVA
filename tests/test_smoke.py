@@ -41,10 +41,10 @@ HELPER_MODULES = [
 ]
 
 
-#: Layers still unimplemented end to end. L0 is absent: its aneuploidy-burden half is
-#: implemented and needs a real VCF, so calling it with an empty config now raises
-#: KeyError before reaching the NotImplementedError its causal-gene half still carries.
-#: Layers move off this list as they are built, one at a time and deliberately.
+#: Layers still unimplemented end to end. L0 is absent: it is implemented, and needs a
+#: real VCF and the local snpEff database, so calling it with an empty config raises
+#: KeyError on the missing data_dir. Layers move off this list as they are built, one at
+#: a time and deliberately.
 STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m != "src.l0_genomics.run"]
 
 
