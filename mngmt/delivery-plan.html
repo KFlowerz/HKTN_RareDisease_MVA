@@ -220,10 +220,11 @@
       L0&ndash;L5 around that constraint: work that cannot start until the data lands sits behind a
       contingency, and everything else is built against a fixture contract in the meantime.</p>
     <dl class="clock">
-      <div><dt>Today</dt><dd>2026-09-01</dd></div>
-      <div><dt>Target submission</dt><dd>2026-10-05</dd></div>
-      <div><dt>Working weeks</dt><dd>5 <span class="soften">(4 if buffer is spent)</span></dd></div>
-      <div><dt>Status</dt><dd>G0 + G2 passed <div><dt>Status</dt><dd>W1 closed &mdash; G0 passed early</dd></div>mdash; L0 next</dd></div>
+      <div><dt>Today</dt><dd>2026-09-17</dd></div>
+      <div><dt>Submissions close</dt><dd>2026-10-24 23:59 UTC</dd></div>
+      <div><dt>Data deletion due</dt><dd>2026-11-23 23:59 UTC</dd></div>
+      <div><dt>Working weeks</dt><dd>7.7 <span class="soften">(5 planned below, 2.7 unallocated)</span></dd></div>
+      <div><dt>Status</dt><dd>G0, G1, G2 passed &mdash; G3 condition met, awaiting sign-off; L3 next</dd></div>
     </dl>
   </header>
 
@@ -251,10 +252,14 @@
     </div>
   </section>
 
-  <p class="assume"><strong>Assumption, stated because the repo does not record it.</strong> No submission
-    deadline appears anywhere in the repository, so this plan runs on a five-week horizon anchored at
-    2026-10-05. Every phase is week-relative rather than date-locked &mdash; if the real deadline differs,
-    shift W1 and the gates travel with it.</p>
+  <p class="assume"><strong>The deadline is now a fact, and the plan has not been re-cut around it.</strong>
+    This plan was built on an assumed 2026-10-05 submission. The organizers' published timeline puts
+    submissions closing <strong>2026-10-24 23:59 UTC</strong> &mdash; 19 days later
+    (<a href="decisions.md">D12</a>). W1&ndash;W5 below are unchanged and still end 2026-10-05; the
+    remaining <strong>2.7 weeks are deliberately unallocated</strong>, because more time is not more scope
+    by default and a replan is its own decision. Judging runs 2026-10-24 to 2026-11-24 and the 30-day
+    data-deletion deadline falls <strong>2026-11-23</strong>, one day before judging ends &mdash; see
+    <a href="../docs/data_custody.md">data_custody.md</a> for what that costs.</p>
 
   <!-- ============ SCHEDULE MATRIX ============ -->
   <section class="band">
@@ -624,7 +629,8 @@
       a claim of efficacy, or a substitute for clinical judgement.</p>
     <p>Plan derived from <span class="mono">CLAUDE.md</span>, <span class="mono">SCAFFOLD_PROMPT.md</span>, and
       the current scaffold at commit <span class="mono">e54391d</span>. Dates are week-relative and re-anchor by
-      shifting W1; the submission date is an assumption, not a repository fact.</p>
+      shifting W1. The submission date is no longer an assumption: it is 2026-10-24 23:59 UTC, from the
+      organizers' published timeline, recorded as D12 on 2026-09-17.</p>
   </footer>
 
 </div>

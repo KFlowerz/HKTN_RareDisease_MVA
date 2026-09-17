@@ -111,8 +111,8 @@ rendered Markdown companion for the email body. Schema version `1.0`:
 {
   "schema_version": "1.0",
   "generated_utc": "2026-__-__T__:__:__Z",
-  "hackathon_close_date": null,
-  "deletion_deadline_utc": null,
+  "hackathon_close_date": "2026-10-24",
+  "deletion_deadline_utc": "2026-11-23T23:59:00Z",
   "dataset": {
     "repo_id": "SageBio/mva-hackathon-2026-data",
     "repo_type": "dataset",
@@ -172,7 +172,18 @@ it before the first byte is fetched.
 
 ## Open items
 
-- **Hackathon close date is unknown**, so the 30-day deletion deadline cannot yet be computed.
-  Fill `hackathon_close_date` and `deletion_deadline_utc` once the organizers announce it.
+- **Which date "Hackathon close" means is not settled by the organizers' timeline**, and the two
+  readings are a month apart. Taken here as **submission close, 2026-10-24 23:59 UTC**, giving a
+  deletion deadline of **2026-11-23 23:59 UTC** — the earlier and therefore safer reading of an
+  obligation this project made. The alternative reading, the announced end of the event
+  (2026-11-25), would put the deadline at 2026-12-25.
+
+  **The consequence is worth seeing before it arrives:** Track 2 expert-panel judging runs
+  2026-10-24 to 2026-11-24 and winners are announced 2026-11-25, so on this reading the data is
+  deleted *during* the judging window — one day before it ends. If the panel asks a question that
+  needs the pipeline re-run against the real data, that is no longer possible, and the answer is
+  that it is no longer possible. Do not extend the deadline to keep the option; ask the organizers
+  which date they mean, and if they confirm the later one, record that as a new decision with
+  their wording. See [mngmt/decisions.md](../mngmt/decisions.md) D12.
 - Confirm with the organizers whether they want the attestation JSON attached to the confirmation
   email, or only the rendered summary.

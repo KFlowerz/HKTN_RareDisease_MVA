@@ -597,9 +597,51 @@ is decided by fixed phrases and cannot tell a finding from a proposal. Grade wei
 declared choice, not a measurement. Each of these is a caveat on the channel's output, and each
 is a thing the model evaluation is meant to move.
 
+## D12 — Hackathon close is taken as submission close, 2026-10-24 (2026-09-17)
+
+Recorded by the maintainer on 2026-09-17 from the organizers' published timeline. Tentative:
+the timeline itself says "Dates are subject to change. Any updates to key milestones will be
+reflected in this table posted to the Community page."
+
+**The organizers' milestones.** Launch 2026-08-24; submissions open 2026-08-25; **submissions
+close 2026-10-24, 23:59 UTC**, Track 1 leaderboard frozen; Track 1 qualitative evaluation and
+Track 2 expert-panel judging 2026-10-24 to 2026-11-24; winners announced 2026-11-25.
+
+**What it means.** Two things that had been assumptions become facts:
+
+- **The submission deadline is 2026-10-24, not 2026-10-05.** The delivery plan's target was
+  labelled an assumption in the plan itself ("the submission date is an assumption, not a
+  repository fact"). It was 19 days early. The plan's W1–W5 structure now ends almost three
+  weeks before the real deadline.
+- **The deletion deadline is 2026-11-23 23:59 UTC**, 30 days after submission close, which
+  `COMPLIANCE.md` commits this project to. `docs/data_custody.md` carries it, and the purge
+  attestation's `hackathon_close_date` and `deletion_deadline_utc` are filled in.
+
+**Why submission close and not the announced end of the event.** "Hackathon close" is not
+defined by the timeline, and the two readings are a month apart: 2026-11-23 from submission
+close, or 2026-12-25 from the 2026-11-25 announcement. The earlier one is taken because this is
+an obligation this project made about a child's genome, and where the wording is ambiguous the
+reading that deletes sooner is the one to be held to. Choosing the later date would be choosing
+to hold patient data for an extra month on our own interpretation.
+
+**What it costs, stated rather than discovered later.** Judging runs to 2026-11-24 and winners
+are announced 2026-11-25, so on this reading the data is deleted *during* the judging window,
+one day before it ends. If the expert panel asks something that needs the pipeline re-run
+against the real data, the answer will be that the data is gone and why. That is the correct
+answer and it should not be avoided by quietly extending the deadline. The way to change it is
+to ask the organizers which date they mean and record their answer as a new decision.
+
+**What it does not settle.** Whether the extra 19 days change the plan. More time is not more
+scope by default: L3, L4 and L5 are all still scaffolds, and the gates they serve (G4, and the
+submission sweep) were sized for a schedule that assumed less time, not more. Any replan is its
+own decision.
+
 ## Open
 
-- **Hackathon close date** — unknown, so the 30-day deletion deadline cannot be computed. See
-  [docs/data_custody.md](../docs/data_custody.md).
+- **Which date the organizers mean by "Hackathon close"** — taken as submission close (D12), which is
+  the earlier and safer reading. Worth asking them, because the alternative is a month later and the
+  chosen deadline falls one day before judging ends. See [docs/data_custody.md](../docs/data_custody.md).
+- **Whether the extra 19 days change the plan** — the delivery plan still ends 2026-10-05 and the
+  remaining 2.7 weeks are unallocated on purpose (D12).
 - **APA title casing** in [docs/references.md](../docs/references.md) — Crossref preserves publisher
   casing; a sentence-case pass is owed before submission.
