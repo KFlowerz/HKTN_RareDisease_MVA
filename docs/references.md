@@ -46,6 +46,8 @@ EMBL-EBI. (2026). Terms of use. Retrieved September 17, 2026, from https://www.e
 
 Ensembl. (2026). Ensembl Canonical transcript (Release 116). Retrieved September 11, 2026, from https://www.ensembl.org/info/genome/genebuild/canonical.html
 
+Europe PMC. (2025). Copyright. Retrieved September 17, 2026, from https://web.archive.org/web/20250605155112/https://europepmc.org/Copyright
+
 Ferguson, C., Araújo, D., Faulk, L., Gou, Y., Hamelers, A., Huang, Z., Ide-Smith, M., Levchenko, M., Marinos, N., Nambiar, R., Nassar, M., Parkin, M., Pi, X., Rahman, F., Rogers, F., Roochun, Y., Saha, S., Selim, M., Shafique, Z., … McEntyre, J. (2021). Europe PMC in 2020. Nucleic Acids Research, 49(D1), D1507–D1514. https://doi.org/10.1093/nar/gkaa994
 
 Gargano, M. A., Matentzoglu, N., Coleman, B., Addo-Lartey, E. B., Anagnostopoulos, A. V., Anderton, J., Avillach, P., Bagley, A. M., Bakštein, E., Balhoff, J. P., Baynam, G., Bello, S. M., Berk, M., Bertram, H., Bishop, S., Blau, H., Bodenstein, D. F., Botas, P., Boztug, K., … Robinson, P. N. (2024). The Human Phenotype Ontology in 2024: Phenotypes around the world. Nucleic Acids Research, 52(D1), D1333–D1346. https://doi.org/10.1093/nar/gkad1005
@@ -243,7 +245,8 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `ncbi_datapolicy` | https://www.ncbi.nlm.nih.gov/home/about/policies/ | NCBI asserts no restriction on molecular data reuse; submitters may retain rights in their own submissions (Table 4, src/l4_validate/sources.md) | 2026-09-16 |
 | `clinvar_use` | https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ | ClinVar requests attribution when data are redistributed, citing PMID 29165669 | 2026-09-16 |
 | `crossref_metadata_licence` | https://www.crossref.org/documentation/retrieve-metadata/ | Crossref metadata reusable without restriction, the majority CC0; abstracts excepted (Table 7, src/l4_validate/sources.md) | 2026-09-17 |
-| `ebi_terms` | https://www.ebi.ac.uk/about/terms-of-use/ | The terms recorded for Europe PMC in Table 7: attribution expected, provided AS IS without warranty. Europe PMC own copyright page unreadable behind a Cloudflare challenge | 2026-09-17 |
+| `ebi_terms` | https://www.ebi.ac.uk/about/terms-of-use/ | The terms recorded for Europe PMC in Table 7: attribution expected, provided AS IS without warranty. Europe PMC copyright terms cited separately | 2026-09-17 |
+| `europepmc_copyright` | https://web.archive.org/web/20250605155112/https://europepmc.org/Copyright | The REST service is a sanctioned route for automated retrieval and crawling the site is prohibited; article content stays publisher copyright with per-article licences (Table 7). Read from the Internet Archive: the live page returns HTTP 403 behind Cloudflare | 2026-09-17 |
 | `ensemblcanonical` | https://www.ensembl.org/info/genome/genebuild/canonical.html | Ensembl Canonical definition and its relation to MANE Select (release 116) | 2026-09-11 |
 | `gnomad_v411` | https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1.1/vcf/ | Population allele frequencies for the subject's panel alleles in L0, read by whole panel-gene span (decision D8) | 2026-09-17 |
 | `gnomad_policies` | https://gnomad.broadinstitute.org/policies | Primary gnomAD data are CC0; SpliceAI annotations are CC BY-NC 4.0 and are not read (Table 4, src/l4_validate/sources.md) | 2026-09-17 |

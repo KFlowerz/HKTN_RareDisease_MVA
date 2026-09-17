@@ -74,16 +74,20 @@ MIN_SECONDS_BETWEEN_CALLS = 0.25
 MAX_PAGE_SIZE = 1000
 CACHE_SUBDIR = "literature"
 
-#: Europe PMC's own copyright page could not be read on 2026-09-17 (a Cloudflare challenge
-#: answers every request), so the binding terms recorded here are EMBL-EBI's, which host
-#: the service: attribution expected, data provided "AS IS" without warranties. Abstracts
-#: are treated as publisher copyright and never republished -- the conservative reading,
-#: and the one Crossref's own statement takes. See src/l4_validate/sources.md, Table 7.
-EUROPEPMC_LICENCE = ("Europe PMC RESTful Web Service (EMBL-EBI terms of use, read "
-                     "2026-09-17): free, no key, attribution expected, provided AS IS "
-                     "without warranty. Bibliographic metadata is published by this "
-                     "pipeline; abstracts and full text are publisher copyright and are "
-                     "not republished. Europe PMC's own copyright page was unreadable.")
+#: Europe PMC's copyright terms name OAI, RESTful, SOAP and bulk download as "the only
+#: services that may be used for automated downloading of articles", and prohibit crawling
+#: the website for batches of articles. This module uses the RESTful service and fetches no
+#: page from the site. Article content stays publisher copyright with per-article licences
+#: that "are not identical for all the articles", which is why no abstract is republished.
+#: The live page is unreachable from here (Cloudflare, HTTP 403); quoted from the Internet
+#: Archive snapshot of 2025-06-05. See src/l4_validate/sources.md, Table 7.
+EUROPEPMC_LICENCE = ("Europe PMC RESTful Web Service: free, no key. Europe PMC's copyright "
+                     "terms name the REST service as a sanctioned route for automated "
+                     "retrieval and prohibit crawling the website; article content remains "
+                     "publisher copyright under per-article licences, so this pipeline "
+                     "publishes bibliographic metadata only and reproduces no abstract or "
+                     "full text. EMBL-EBI terms of use also apply (read 2026-09-17): "
+                     "attribution expected, provided AS IS without warranty.")
 #: Crossref, read 2026-09-17: "Almost all of the metadata we hold is reusable without
 #: restriction, with the exception of abstracts which are subject to publisher or author
 #: copyright... considered to be 'facts' which are not copyrightable and are thus in the

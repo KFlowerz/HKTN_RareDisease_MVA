@@ -559,10 +559,26 @@
   title        = {Terms of use},
   year         = {2026},
   url          = {https://www.ebi.ac.uk/about/terms-of-use/},
-  note         = {Web documentation, no DOI, read 2026-09-17. The terms recorded for Europe PMC
-                  in src/l4_validate/sources.md Table 7, EMBL-EBI hosting the service:
-                  attribution expected, data provided ``AS IS'' without warranties of any kind
-                  and with no guarantee of accuracy or fitness for any purpose. Europe PMC's
-                  own copyright page (europepmc.org/Copyright) could not be read on that date
-                  -- every request is answered by a Cloudflare challenge.},
+  note         = {Web documentation, no DOI, read 2026-09-17. Applies to Europe PMC as the
+                  service EMBL-EBI hosts (src/l4_validate/sources.md Table 7): attribution
+                  expected, data provided ``AS IS'' without warranties of any kind and with no
+                  guarantee of accuracy or fitness for any purpose. Europe PMC's own copyright
+                  terms are cited separately as europepmc_copyright.},
+}
+
+@misc{europepmc_copyright,
+  organization = {Europe PMC},
+  title        = {Copyright},
+  year         = {2025},
+  url          = {https://web.archive.org/web/20250605155112/https://europepmc.org/Copyright},
+  note         = {Web documentation, no DOI. Read 2026-09-17 from the Internet Archive snapshot
+                  of 2025-06-05, the most recent successful capture: the live page at
+                  europepmc.org/Copyright answers every request from this machine with a
+                  Cloudflare challenge (HTTP 403), and the Archive's own 2026 captures recorded
+                  the same 403. Operative clauses for this project: crawlers ``may NOT be used
+                  to systematically retrieve batches of articles from the Europe PMC web
+                  site''; the OAI, RESTful, SOAP and bulk download services ``are the only
+                  services that may be used for automated downloading of articles''; material
+                  remains under publisher or author copyright and per-article licence terms
+                  ``are not identical for all the articles''.},
 }

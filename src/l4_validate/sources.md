@@ -308,19 +308,39 @@ carries public vocabulary and nothing derived from the subject, enforced in
 
 | Role | Source | License | CC-BY-4.0 compatible? | Where it lives |
 |---|---|---|---|---|
-| Record retrieval, identifiers, publication types, MeSH, retraction status | Europe PMC RESTful Web Service | **EMBL-EBI terms of use** (EMBL-EBI hosts the service): free, no key, attribution expected, provided "AS IS" without warranties. Europe PMC's own copyright page could not be read — see below | ✅ For bibliographic metadata | responses cached under `reference_dir/literature/` |
+| Record retrieval, identifiers, publication types, MeSH, retraction status | Europe PMC RESTful Web Service | **Europe PMC copyright terms**: the RESTful service is one of the four routes Europe PMC names as "the only services that may be used for automated downloading"; scraping the website is prohibited. Plus **EMBL-EBI terms of use** (EMBL-EBI hosts the service): free, no key, attribution expected, provided "AS IS" without warranties | ✅ For bibliographic metadata | responses cached under `reference_dir/literature/` |
 | Article abstracts (matched locally against fixed patterns) | Europe PMC | Publisher or author copyright; Europe PMC redistributes under each publisher's own terms | ❌ No | **cache only** — never written to an output |
 | DOI resolution and a second retraction check (`update-to`) | Crossref REST API | "Almost all of the metadata we hold is reusable without restriction… considered to be 'facts' which are not copyrightable and are thus in the public domain (CC0)"; Crossref-generated data released as public domain | ✅ Yes | responses cached under `reference_dir/literature/` |
 | Compound identity (ChEMBL id, clinical stage) | Open Targets Platform 26.06 `drug_molecule` | as Table 5 — ChEMBL-derived | ❌ No — treated as SA | `enrichment_dir`, never redistributed |
 
-**Europe PMC's copyright page is unreadable, and that is recorded rather than assumed.**
-Every request to `europepmc.org/Copyright` is answered by a Cloudflare challenge, so the
-page's wording could not be read on 2026-09-17. The terms recorded here are therefore
-EMBL-EBI's, which the service is hosted under and which *were* read, plus the conservative
-treatment of abstracts: they stay in the local cache and no output reproduces them.
-`tests/test_l2_channel_e.py` asserts that abstract text reaches no file the channel writes.
-Revisit this row if the page becomes readable — the same treatment as the OMIM row in
-Table 6.
+**The REST API is the sanctioned route, and scraping the site is not.** Europe PMC's
+copyright page is explicit: "Crawlers and other automated processes may **NOT** be used to
+systematically retrieve batches of articles from the Europe PMC web site. Bulk downloading
+of articles from the main Europe PMC site, in any way, is prohibited because of copyright
+restrictions." It then names OAI, RESTful, SOAP and bulk download as the sanctioned
+alternatives: "These are the only services that may be used for automated downloading of
+articles in Europe PMC." This channel uses the RESTful service and never fetches a page
+from the website, which is what that paragraph requires.
+
+**Article content is publisher copyright, and per-article licences differ.** "All of the
+material available through the Europe PMC site is provided by the respective publishers or
+authors. Almost all of it is protected by U.K. and/or foreign copyright laws, even though
+Europe PMC provides free access to it." Material reached through the sanctioned services is
+"still protected by copyright, but… distributed under a Creative Commons or similar
+license… The license terms are not identical for all the articles." Since the terms vary
+per article and this pipeline does not read each article's licence statement, no output
+reproduces abstract or full text at all. `tests/test_l2_channel_e.py` asserts that abstract
+text reaches no file the channel writes, and the first real run scanned 56 cached abstracts
+against every output and found none.
+
+**How that page was read, because the live one is unreachable.** Every request to
+`europepmc.org/Copyright` from this machine is answered by a Cloudflare challenge (HTTP 403,
+to `curl` and to a browser user agent alike), and the Internet Archive's own 2026 captures
+recorded the same 403. The wording above is quoted from the Archive's snapshot of
+**2025-06-05**, the most recent successful capture:
+`https://web.archive.org/web/20250605155112/https://europepmc.org/Copyright`. An archived
+page can lag the live one, so this row names its date; re-read it before submission if the
+live page becomes reachable.
 
 **What reaches `candidates.tsv`.** The Table 5 identity whitelist (ChEMBL id, drug name,
 type, clinical stage), the channel's own score, the curated `axis`, `target`, `direction`

@@ -529,6 +529,19 @@ on a known retracted record. Crossref resolves DOIs independently and is public-
 Checked on 2026-09-17: Crossref's `update-to` field was **empty** for that same retraction, so
 Europe PMC is the primary retraction signal and Crossref the second opinion, not the reverse.
 
+**Europe PMC's own terms make the REST API the sanctioned route.** Its copyright page prohibits
+crawlers retrieving batches of articles from the website, and names OAI, RESTful, SOAP and bulk
+download as "the only services that may be used for automated downloading of articles in Europe
+PMC". This channel queries the RESTful service and fetches no page from the site. Article content
+stays under publisher copyright with per-article licence terms that "are not identical for all the
+articles", which settles the abstract question: since the terms vary per article and the pipeline
+does not read each article's licence statement, no output reproduces abstract or full text at all.
+The live page is unreachable from this machine (Cloudflare, HTTP 403, to `curl` and to a browser
+user agent alike, and the Internet Archive's own 2026 captures recorded the same 403), so these
+clauses were read from the Archive's 2025-06-05 snapshot and Table 7 names that date. An earlier
+version of this decision and of Table 7 recorded the page as simply unread; that was corrected on
+2026-09-17 once the snapshot was found.
+
 **The outbound-query exception, and its bound.** Every other external read in this pipeline is a
 whole-file download, because a per-item query would put the subject's data on someone's server
 (`COMPLIANCE.md`). A literature index has no release to download, so this channel queries. The
