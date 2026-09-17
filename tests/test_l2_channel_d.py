@@ -216,12 +216,14 @@ HEADER = ["Clinical Feature", "HPO Term", "HPO ID", "Presentation / Notes"]
 def test_read_terms_takes_ids_from_table_rows_in_order(tmp_path) -> None:
     doc = _docx(tmp_path / "x.docx", [HEADER, ["f", "t", B1, "invented note"],
                                       ["f", "t", A1, "invented"], ["f", "t", B1, "dup"]])
-    assert phenotype.read_terms(doc) == [B1, A1]
+    terms, counts = phenotype.read_terms(doc)
+    assert terms == [B1, A1]
+    assert counts == {"narrative_negations": 0, "document_reviewed": False}
 
 
 def test_an_id_split_across_runs_is_joined(tmp_path) -> None:
     doc = _docx(tmp_path / "x.docx", [HEADER, ["f", "t", "HP:90|00011", "n"]])
-    assert phenotype.read_terms(doc) == [A1]
+    assert phenotype.read_terms(doc)[0] == [A1]
 
 
 def test_a_negated_row_is_refused_without_quoting_it(tmp_path) -> None:
@@ -242,6 +244,42 @@ def test_a_document_without_ids_is_refused(tmp_path) -> None:
     doc = _docx(tmp_path / "x.docx", [HEADER, ["f", "t", "", "n"]])
     with pytest.raises(ValueError, match="no HPO id"):
         phenotype.read_terms(doc)
+
+
+def test_an_hpo_term_name_may_contain_a_negation_word(tmp_path) -> None:
+    """"Absent speech" is a feature that is PRESENT; HPO's wording may not veto its row."""
+    doc = _docx(tmp_path / "x.docx", [HEADER, ["invented feature", "Absent invented thing",
+                                               A1, "documented"]])
+    assert phenotype.read_terms(doc)[0] == [A1]
+
+
+def test_a_negation_in_a_clinical_cell_still_refuses_the_row(tmp_path) -> None:
+    doc = _docx(tmp_path / "x.docx", [HEADER, ["invented", "Invented A1", A1,
+                                               "excluded on examination"]])
+    with pytest.raises(ValueError, match="row 2"):
+        phenotype.read_terms(doc)
+
+
+def test_narrative_negation_needs_a_persons_review(tmp_path) -> None:
+    """Prose can negate a block of features, and no word list can tell that from
+    "no single feature is diagnostic" -- so it defers to a person."""
+    doc = _docx(tmp_path / "x.docx", [HEADER, ["f", "t", A1, "n"]],
+                outside="The following were excluded from consideration.")
+    with pytest.raises(ValueError, match="MVA_PHENOTYPE_REVIEWED") as err:
+        phenotype.read_terms(doc)
+    assert phenotype.fingerprint(doc) in str(err.value)
+
+    terms, counts = phenotype.read_terms(doc, reviewed_fingerprint=phenotype.fingerprint(doc))
+    assert terms == [A1]
+    assert counts == {"narrative_negations": 1, "document_reviewed": True}
+
+
+def test_a_review_does_not_survive_an_edited_document(tmp_path) -> None:
+    doc = _docx(tmp_path / "x.docx", [HEADER, ["f", "t", A1, "n"]], outside="none excluded")
+    stale = phenotype.fingerprint(doc)
+    _docx(doc, [HEADER, ["f", "t", A1, "n"], ["f", "t", B1, "n"]], outside="none excluded")
+    with pytest.raises(ValueError, match="negation word"):
+        phenotype.read_terms(doc, reviewed_fingerprint=stale)
 
 
 def test_find_document_wants_exactly_one(tmp_path) -> None:
@@ -334,6 +372,8 @@ def test_load_indications_keeps_only_the_requested_stage(monkeypatch) -> None:
     out, stats = enrichment.load_indications(["p"])
     assert out == {"MONDO_9000001": {"CHEMBL9001"}}
     assert (stats["indication_rows"], stats["indications_at_stage"]) == (3, 1)
+    widened, stats = enrichment.load_indications(["p"], stage="PHASE_2")
+    assert widened == {"MONDO_9000001": {"CHEMBL9002"}} and stats["stage"] == "PHASE_2"
 
 
 def test_each_channel_uses_its_own_release_setting(tmp_path, monkeypatch) -> None:
@@ -412,13 +452,15 @@ def _stub_sources(tmp_path, monkeypatch, *, indications):
                         lambda config, datasets, channel: ({"clinical_indication": ["i"],
                                                             "drug_molecule": ["m"]}, []))
     monkeypatch.setattr(channel.enrichment, "load_indications",
-                        lambda paths: (indications, {"indication_rows": 1}))
+                        lambda paths, stage=enrichment.APPROVED: (
+                            indications, {"indication_rows": 1, "stage": stage}))
     monkeypatch.setattr(channel.enrichment, "load_molecules", lambda paths: MOLECULES)
 
     data = tmp_path / "data"
     data.mkdir()
-    _docx(data / "Invented_Phenotype_1.docx", [HEADER, ["f", "t", A1, "n"],
-                                              ["f", "t", B1, "n"], ["f", "t", MOI, "n"]])
+    _docx(data / "Invented_Phenotype_1.docx", [HEADER, ["f", "t", A1, "documented"],
+                                              ["f", "t", B1, "documented"],
+                                              ["f", "t", MOI, "documented"]])
     return {"data_dir": data, "results_dir": tmp_path / "results", "seed": 42,
             "l2": {"channel_d": {"permutations": 30, "p_max": 1.0, "top_diseases": 3}}}
 
@@ -444,6 +486,12 @@ def test_generate_writes_a_symptomatic_table_with_no_term_or_disease(tmp_path, m
     evidence = json.loads((out / "evidence.json").read_text(encoding="utf-8"))
     assert evidence["patient_derived"] is True and evidence["redistributable"] is False
     record = json.loads((out / "channel.json").read_text(encoding="utf-8"))
+    # The mean information content of the subject's own terms is a number someone holding
+    # the public files could recompute for a guessed feature set and match; it belongs
+    # with the patient-derived evidence, not in the shareable record.
+    assert "self_similarity" not in json.dumps(record)
+    assert "query_self_similarity" in evidence
+    assert record["parameters"]["indication_stage"] == "APPROVAL"
     assert record["counts"]["terms_used"] == 2
     assert record["counts"]["terms_outside_phenotypic_abnormality"] == 1
     assert "2099-01-01" in record["attribution"]     # HPO licence: show the version
@@ -462,3 +510,23 @@ def test_generate_refuses_to_write_an_empty_channel(tmp_path, monkeypatch) -> No
     with pytest.raises(ValueError, match="unmet threshold"):
         channel.generate(config)
     assert not (tmp_path / "results" / "l2" / "channel_d_phenotype" / "candidates.tsv").exists()
+
+
+def test_a_word_lock_file_does_not_count_as_a_second_document(tmp_path) -> None:
+    """Word writes ~$name.docx while a document is open -- including while it is reviewed."""
+    _docx(tmp_path / "Invented_Phenotype_1.docx", [HEADER, ["f", "t", A1, "n"]])
+    (tmp_path / "~$vented_Phenotype_1.docx").write_bytes(b"word owner file")
+    assert phenotype.find_document({"data_dir": tmp_path}).name == "Invented_Phenotype_1.docx"
+
+
+def test_narrative_text_is_not_confused_with_cell_text(tmp_path) -> None:
+    """Prose is identified structurally, not by subtracting cell strings from the text.
+
+    A note repeating a cell's wording must not cancel out a real negation elsewhere.
+    """
+    doc = _docx(tmp_path / "x.docx", [HEADER, ["f", "t", A1, "documented"]],
+                outside="documented documented none excluded")
+    with pytest.raises(ValueError, match="negation word"):
+        phenotype.read_terms(doc)
+    _, counts = phenotype.read_terms(doc, reviewed_fingerprint=phenotype.fingerprint(doc))
+    assert counts["narrative_negations"] == 2

@@ -92,7 +92,9 @@ CAVEATS = (
     "Frequencies differ between genetic ancestry groups. The subject's ancestry is not "
     "assessed and must not be inferred from these numbers; AF_grpmax reports the highest "
     "group frequency instead.",
-    "Sites gnomAD itself did not pass are reported with their filter, not dropped.",
+    "Sites gnomAD itself did not pass are reported with their filter, not dropped, and "
+    "are not counted as observed: site_in_release says the release holds the site, "
+    "observed says at least one carrier was counted there.",
 )
 
 
@@ -252,8 +254,14 @@ def lookup(allele, sites: list) -> dict:
               and s.an is not None]
     an_max = max((s.an for s in sites if s.an is not None), default=None)
     median = statistics.median(nearby) if nearby else None
+    # "Observed" means gnomAD counted at least one carrier. A site it kept but flagged, one
+    # whose carriers all failed its filters (AC=0), and one whose release reports no AC at
+    # all are each present without anyone having been seen to carry the allele; reporting
+    # that as observed would read, at gate G1, as "the population carries this".
+    carriers = exact[0].ac if exact else None
     entry = {
-        "observed": bool(exact),
+        "observed": bool(exact) and bool(carriers),
+        "site_in_release": bool(exact),
         "n_sites_nearby": len(nearby),
         "an_nearby_median": median,
         "an_max_in_gene": an_max,
@@ -323,8 +331,11 @@ def summarize(entry: dict, datasets=DATASETS) -> dict:
         d = entry.get(dataset)
         if d is None:
             continue
+        # filter and af travel with the counts: a flagged site and a clean one are not the
+        # same evidence, and the compact form is what a G1 reviewer reads first.
         out[dataset] = {k: d.get(k) for k in
-                        ("observed", "ac", "an", "nhomalt", "an_nearby_fraction_of_max")}
+                        ("observed", "site_in_release", "ac", "an", "af", "nhomalt",
+                         "filter", "an_nearby_fraction_of_max")}
     return out
 
 

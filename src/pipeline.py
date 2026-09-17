@@ -200,6 +200,32 @@ def _write_manifest(results_dir: Path, manifest: dict) -> None:
     tmp.replace(path)
 
 
+def _artifacts(results_dir: Path, name: str) -> list:
+    """What this layer produced in this run.
+
+    Usually every file under the layer's directory. L2 is the exception: its channels have
+    their own directories, and a channel that was disabled this run may still have a table
+    on disk from an earlier one. Listing that as an artifact of this run would contradict
+    ``channels.json``, which is what L3 reads -- so for L2 the status record is the
+    authority, and only the completed channels' files are listed.
+    """
+    layer_dir = results_dir / LAYER_OUTPUT_DIRS.get(name, name)
+    if not layer_dir.is_dir():
+        return []
+    index = layer_dir / "channels.json"
+    if name == "l2_channels" and index.is_file():
+        try:
+            status = json.loads(index.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            LOGGER.warning("%s is unreadable; listing no channel artifact", index)
+            return [str(index.relative_to(results_dir))]
+        listed = [a for record in status.get("channels", {}).values()
+                  if record.get("status") == "complete"
+                  for a in record.get("artifacts", ())]
+        return sorted({str(index.relative_to(results_dir)), *listed})
+    return sorted(str(p.relative_to(results_dir)) for p in layer_dir.rglob("*") if p.is_file())
+
+
 def run(config: dict, *, resume: bool = False, only: str | None = None) -> None:
     """Run every layer L0 -> L5 in order.
 
@@ -264,12 +290,7 @@ def run(config: dict, *, resume: bool = False, only: str | None = None) -> None:
             _write_manifest(results_dir, manifest)
             raise
 
-        layer_dir = results_dir / LAYER_OUTPUT_DIRS.get(name, name)
-        artifacts = (
-            sorted(str(p.relative_to(results_dir)) for p in layer_dir.rglob("*") if p.is_file())
-            if layer_dir.is_dir()
-            else []
-        )
+        artifacts = _artifacts(results_dir, name)
         manifest["layers"][name] = {
             "status": "complete",
             "seconds": round(time.monotonic() - started, 3),

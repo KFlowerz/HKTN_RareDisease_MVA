@@ -26,6 +26,18 @@ Guardrail
     not parsed, because reading "absent X" as X would invert the query; the fix is a
     person reading that row.
 
+    **Negation outside the rows needs a person, not a better word list.** Prose around the
+    table can negate a whole block ("the following were excluded"), and a word search
+    cannot tell that from a sentence like "no single feature is diagnostic". So narrative
+    negation does not fail the run silently and does not pass silently either: the run
+    stops until a person has read the document and recorded its SHA-256 in
+    ``$MVA_PHENOTYPE_REVIEWED``, which lives in the local environment file and never in
+    this repository. Editing the document changes the fingerprint and asks again.
+
+    HPO's own term names are excluded from the search: "Absent speech" is a feature that
+    is *present*, and treating the ontology's wording as the clinician's would stop every
+    run on a document that is perfectly clear.
+
     **Nothing about the subject leaves the machine.** The two public resources are
     downloaded whole and matched locally -- never queried with the subject's terms, which
     is exactly what Monarch's web API would require (decision D10).
@@ -71,7 +83,11 @@ def find_document(config: dict) -> Path:
     """
     pattern = ((config.get("l2") or {}).get("channel_d") or {}).get("document_glob",
                                                                      DOCUMENT_GLOB)
-    matches = sorted(Path(config["data_dir"]).rglob(pattern))
+    # Word writes a "~$name.docx" owner file beside an open document, which matches every
+    # sensible glob. Reading it would fail; refusing to run because a person has the
+    # document open -- as a person reviewing it must -- would be worse.
+    matches = sorted(p for p in Path(config["data_dir"]).rglob(pattern)
+                     if not p.name.startswith("~$"))
     if not matches:
         raise FileNotFoundError(f"no phenotype document matching {pattern!r} under data_dir")
     if len(matches) > 1:
@@ -84,43 +100,93 @@ def _cell_text(cell) -> str:
     return "".join(t.text or "" for t in cell.iter(f"{_W}t"))
 
 
-def read_terms(path: Path) -> list:
+def fingerprint(path: Path) -> str:
+    """SHA-256 of the document -- the handle a person's review is recorded against."""
+    return refcache.sha256(Path(path))
+
+
+def _label_columns(table) -> set:
+    """Indices of columns holding HPO's own term names, by their header cell."""
+    rows = list(table.iter(f"{_W}tr"))
+    if not rows:
+        return set()
+    header = [_cell_text(c).strip().lower() for c in rows[0].iter(f"{_W}tc")]
+    return {i for i, text in enumerate(header) if "hpo term" in text or text == "term"}
+
+
+def read_terms(path: Path, *, reviewed_fingerprint: str = "") -> tuple:
     """The HPO ids a ``.docx`` records as present, deduplicated, in document order.
 
     Reads every table. A row contributes the HPO ids in its cells; a row with a negation
-    word in any cell is refused. HPO ids outside tables are refused too: their status
-    (present? historical? a differential?) cannot be read from structure.
+    word in a cell that is not HPO's own term name is refused. HPO ids outside tables are
+    refused too: their status (present? historical? a differential?) cannot be read from
+    structure.
+
+    Narrative negation outside the rows cannot be judged by word search, so it requires a
+    person: the run proceeds only if ``reviewed_fingerprint`` equals this document's
+    SHA-256.
+
+    Returns:
+        ``(terms, counts)`` -- counts holds ``narrative_negations`` and
+        ``document_reviewed``, never any term or text.
 
     Raises:
-        ValueError: On a negated row, on HPO ids outside a table, or on no id at all.
-            Messages carry row numbers only.
+        ValueError: On a negated row, on HPO ids outside a table, on no id at all, or on
+            unreviewed narrative negation. Messages carry row numbers only.
     """
     from xml.etree import ElementTree
 
     with zipfile.ZipFile(path) as archive:
         root = ElementTree.fromstring(archive.read("word/document.xml"))
 
+    # Text nodes inside tables, by identity: subtracting cell strings from the document
+    # text would mis-subtract whenever a cell's wording also appears in the prose.
+    in_table = {id(node) for table in root.iter(f"{_W}tbl") for node in table.iter(f"{_W}t")}
+
     terms, table_ids = [], 0
     for t_index, table in enumerate(root.iter(f"{_W}tbl"), start=1):
+        labels = _label_columns(table)
         for r_index, row in enumerate(table.iter(f"{_W}tr"), start=1):
             cells = [_cell_text(c) for c in row.iter(f"{_W}tc")]
             ids = [m for c in cells for m in _HP_ID.findall(c)]
             if not ids:
                 continue
             table_ids += len(ids)
-            if any(_NEGATION.search(c) for c in cells):
+            # HPO's own wording is not the clinician's: "Absent speech" is a feature that
+            # is present, and its name may not veto its own row.
+            clinical = [c for i, c in enumerate(cells) if i not in labels]
+            if any(_NEGATION.search(c) for c in clinical):
                 raise ValueError(
-                    f"table {t_index}, row {r_index} carries an HPO id and a negation word. "
-                    "Refusing to guess whether the feature is present; review that row.")
+                    f"table {t_index}, row {r_index} carries an HPO id and a negation word "
+                    "outside the term name. Refusing to guess whether the feature is "
+                    "present; review that row.")
             terms.extend(ids)
 
-    body_ids = len(_HP_ID.findall("".join(t.text or "" for t in root.iter(f"{_W}t"))))
+    all_text = [t.text or "" for t in root.iter(f"{_W}t")]
+    body_ids = len(_HP_ID.findall("".join(all_text)))
     if body_ids != table_ids:
         raise ValueError(f"{body_ids - table_ids} HPO id(s) appear outside a table, where "
                          "their status cannot be read from structure; review the document.")
     if not terms:
         raise ValueError("the phenotype document holds no HPO id")
-    return list(dict.fromkeys(terms))
+
+    # Everything outside the tables: headings, captions, notes. A word search cannot tell
+    # "the following were excluded" from "no single feature is diagnostic", so it defers to
+    # a person rather than deciding either way.
+    outside = " ".join(t.text or "" for t in root.iter(f"{_W}t") if id(t) not in in_table)
+    narrative = len(_NEGATION.findall(outside))
+    digest = fingerprint(path)
+    reviewed = bool(reviewed_fingerprint) and reviewed_fingerprint.strip().lower() == digest
+    if narrative and not reviewed:
+        raise ValueError(
+            f"{narrative} negation word(s) appear outside the table rows. Prose can negate a "
+            "whole block of features, and no word list can tell that from an ordinary "
+            "sentence, so this needs a person: read the document, and if no listed feature "
+            "is described as absent, record the review by setting MVA_PHENOTYPE_REVIEWED to "
+            f"this document's SHA-256 ({digest}) in your local environment file -- never in "
+            "the repository. Editing the document changes the fingerprint and asks again.")
+    return list(dict.fromkeys(terms)), {"narrative_negations": narrative,
+                                        "document_reviewed": reviewed}
 
 
 # -------------------------------------------------------------------- the HPO

@@ -244,11 +244,14 @@ def test_frequencies_assembles_the_artifact(monkeypatch) -> None:
 
 def test_summarize_keeps_the_numbers_a_reviewer_needs() -> None:
     entry = {"variant_id": "v1",
-             "exomes": {"observed": True, "ac": 1, "an": 1000, "nhomalt": 0,
-                        "an_nearby_fraction_of_max": 1.0, "af": 0.001},
-             "genomes": {"observed": False, "an_nearby_fraction_of_max": 0.9}}
+             "exomes": {"observed": True, "site_in_release": True, "ac": 1, "an": 1000,
+                        "nhomalt": 0, "an_nearby_fraction_of_max": 1.0, "af": 0.001,
+                        "filter": "PASS"},
+             "genomes": {"observed": False, "site_in_release": False,
+                         "an_nearby_fraction_of_max": 0.9}}
     out = gnomad.summarize(entry)
-    assert out["exomes"] == {"observed": True, "ac": 1, "an": 1000, "nhomalt": 0,
+    assert out["exomes"] == {"observed": True, "site_in_release": True, "ac": 1, "an": 1000,
+                             "af": 0.001, "nhomalt": 0, "filter": "PASS",
                              "an_nearby_fraction_of_max": 1.0}
     assert out["genomes"]["observed"] is False and out["genomes"]["ac"] is None
 
@@ -349,3 +352,31 @@ def test_every_caveat_is_kept_whichever_way_the_lookup_went(tmp_path, monkeypatc
     assert len(written["caveats"]) == len(causal.CAVEATS) + 1
     for caveat in causal.CAVEATS:
         assert caveat in written["caveats"]
+
+
+def test_a_site_with_no_passing_carrier_is_not_observed() -> None:
+    """gnomAD keeps sites whose carriers all failed its filters (AC=0).
+
+    Reporting those as observed would read, at gate G1, as "the population carries this".
+    """
+    sites = gnomad.parse_sites([_row(ac="0", af="0", filt="AC0"), _row(pos=1510, an="900")])
+    entry = gnomad.lookup(_allele(), sites)
+    assert entry["observed"] is False
+    assert entry["site_in_release"] is True
+    assert (entry["ac"], entry["filter"]) == (0, "AC0")
+
+
+def test_an_allele_absent_from_the_release_says_so_too() -> None:
+    entry = gnomad.lookup(_allele(alt="A"), gnomad.parse_sites([_row()]))
+    assert entry["observed"] is False and entry["site_in_release"] is False
+
+
+def test_the_summary_carries_the_filter_and_frequency() -> None:
+    """A flagged site and a clean one are not the same evidence for a G1 reviewer."""
+    entry = {"variant_id": "v1",
+             "exomes": {"observed": True, "site_in_release": True, "ac": 3, "an": 1000,
+                        "af": 0.003, "nhomalt": 0, "filter": "PASS",
+                        "an_nearby_fraction_of_max": 1.0}}
+    out = gnomad.summarize(entry, ("exomes",))
+    assert out["exomes"]["filter"] == "PASS" and out["exomes"]["af"] == 0.003
+    assert out["exomes"]["site_in_release"] is True

@@ -248,3 +248,37 @@ def test_the_configured_channels_are_all_valid() -> None:
     config = yaml.safe_load((Path(__file__).resolve().parent.parent / "config" / "pipeline.yaml")
                             .read_text(encoding="utf-8"))
     l2.enabled_channels(config)
+
+
+def test_a_disabled_channels_old_table_is_not_listed_as_this_runs_output(tmp_path,
+                                                                        monkeypatch) -> None:
+    """channels.json is what L3 reads; the manifest must not contradict it.
+
+    A channel switched off after an earlier run keeps its table on disk. Listing that as an
+    artifact of this run would present last week's candidates as today's evidence.
+    """
+    from src import pipeline
+
+    _fake(monkeypatch, "proximity", _writes(2, "proximity"))
+    _fake(monkeypatch, "prior", _writes(2, "prior"))
+    pipeline.run(_config(tmp_path, proximity=True, prior=True), only="l2_channels")
+    assert (tmp_path / "l2" / "channel_prior" / l2.CANDIDATES_FILE).exists()
+
+    pipeline.run(_config(tmp_path, proximity=True), only="l2_channels")
+    manifest = json.loads((tmp_path / pipeline.MANIFEST_NAME).read_text(encoding="utf-8"))
+    listed = [a.replace("\\", "/") for a in manifest["layers"]["l2_channels"]["artifacts"]]
+
+    assert "l2/channel_proximity/candidates.tsv" in listed
+    assert "l2/channel_prior/candidates.tsv" not in listed, "a disabled channel's stale table"
+    assert "l2/channels.json" in listed
+    # The file itself is left alone: only channels that ran get their directory cleared.
+    assert (tmp_path / "l2" / "channel_prior" / l2.CANDIDATES_FILE).exists()
+
+
+def test_an_unreadable_status_record_lists_only_itself(tmp_path, monkeypatch) -> None:
+    from src import pipeline
+
+    _fake(monkeypatch, "proximity", _writes(1, "proximity"))
+    pipeline.run(_config(tmp_path, proximity=True), only="l2_channels")
+    (tmp_path / "l2" / l2.STATUS_FILE).write_text("{not json", encoding="utf-8")
+    assert pipeline._artifacts(tmp_path, "l2_channels") == ["l2/channels.json".replace("/", __import__("os").sep)]

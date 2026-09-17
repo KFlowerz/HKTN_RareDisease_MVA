@@ -115,7 +115,8 @@ l2:
     hpo_url: http://purl.obolibrary.org/obo/hp/releases/2026-09-01/hp.obo
     monarch_url: https://data.monarchinitiative.org/monarch-kg/2026-09-02/tsv/disease_associations/disease_phenotype.all.tsv.gz
     open_targets_release: "26.06"   # indications; restricted, never redistributed (D7)
-    approved_only: true
+    approved_only: true                # the drug itself must be approved
+    indication_stage: APPROVAL       # and approved FOR that indication; lower to widen
     permutations: 1000               # random queries per run; min attainable p = 1/1001
     p_max: 0.001                     # diseases no random query matched or beat
     top_diseases: 50                 # cap on diseases feeding the disease route

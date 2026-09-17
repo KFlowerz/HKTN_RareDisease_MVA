@@ -75,6 +75,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from pathlib import Path
 
 from . import enrichment, phenosim, phenotype
@@ -85,7 +86,8 @@ ENDPOINT = "symptomatic"
 INDICATION_DATASETS = ("clinical_indication", "drug_molecule")
 
 DEFAULTS = {"permutations": 1000, "p_max": 0.001, "top_diseases": 50,
-            "min_term_ratio": 0.5, "approved_only": True, "open_targets_release": "26.06"}
+            "min_term_ratio": 0.5, "indication_stage": enrichment.APPROVED,
+            "approved_only": True, "open_targets_release": "26.06"}
 
 CAVEATS = (
     "Symptomatic, not disease-modifying: a drug here is indicated for a disease that "
@@ -241,7 +243,11 @@ def generate(config: dict) -> None:
     out_dir = Path(config["results_dir"]) / "l2" / "channel_d_phenotype"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    raw_terms = phenotype.read_terms(phenotype.find_document(config))
+    # The fingerprint of a reviewed document comes from the environment, never from
+    # config: it is a handle on a patient file and must not be committed.
+    raw_terms, document_counts = phenotype.read_terms(
+        phenotype.find_document(config),
+        reviewed_fingerprint=os.environ.get("MVA_PHENOTYPE_REVIEWED", ""))
 
     paths, reference_provenance = phenotype.ensure_sources(config)
     with phenotype.open_text(paths["hpo"]) as handle:
@@ -267,7 +273,7 @@ def generate(config: dict) -> None:
     ot_paths, drug_provenance = enrichment.ensure_datasets(
         config, INDICATION_DATASETS, channel="channel_d")
     indications, indication_stats = enrichment.load_indications(
-        ot_paths["clinical_indication"])
+        ot_paths["clinical_indication"], stage=str(settings["indication_stage"]))
     molecules = enrichment.load_molecules(ot_paths["drug_molecule"])
 
     term_hits = {}
@@ -315,6 +321,7 @@ def generate(config: dict) -> None:
                          for h in e["diseases"]],
             "phenotype_terms": [{"hpo_id": t, "ratio": round(r, 4)} for t, r in e["terms"]],
         } for e in entries],
+        "query_self_similarity": null_info["self_similarity"],
         "diseases_selected": [{"mondo_id": s.disease, "label": labels.get(s.disease, ""),
                                "score": round(s.score, 4), "p_value": s.p_value}
                               for s in selected],
@@ -339,14 +346,17 @@ def generate(config: dict) -> None:
             "ranking": "descending score, then support count, then ChEMBL id",
         },
         "parameters": {k: settings[k] for k in DEFAULTS},
-        "counts": {**query_counts, **corpus_counts, **association_stats,
+        "counts": {**query_counts, **document_counts, **corpus_counts, **association_stats,
                    "diseases_scored": len(corpus.diseases),
                    "diseases_selected": len(selected),
                    "selected_diseases_contributing_a_drug": len(
                        {h.disease for e in entries for h in e["diseases"]}),
                    "indication_terms_matched": len(term_hits),
                    "drugs_ranked": len(entries), **indication_stats},
-        "null": null_info,
+        # self_similarity is the mean information content of the subject's own terms:
+        # a number someone holding the public files could recompute for a guessed feature
+        # set and match. It belongs with the other patient-derived values, not here.
+        "null": {k: v for k, v in null_info.items() if k != "self_similarity"},
         "sources": {"reference": reference_provenance, "indications": drug_provenance,
                     "hpo_version": obo["version"]},
         "attribution": (f"This channel uses the Human Phenotype Ontology (version "

@@ -475,10 +475,20 @@ for the rare disease beneath it. Thin coverage is reported as thin, not padded.
 
 - `evidence.json` is patient-derived and never published, quoted or committed: which diseases
   resemble this child, and which of the child's features an indication matched, are facts
-  about the child. `candidates.tsv` and `channel.json` carry no HPO id, no disease and no term;
-  a test asserts that, and that the log carries none either.
+  about the child. `candidates.tsv` and `channel.json` carry no HPO id, no disease, no term,
+  and no value computed from the subject's terms; a test asserts that, and that the log
+  carries none either.
 - A negated row in the phenotype document stops the run rather than being guessed at, and
-  errors name row numbers, never content.
+  errors name row numbers, never content. HPO's own term names are exempt: "Absent speech"
+  names a feature that is *present*, and the ontology's wording may not veto its own row.
+- **Negation in the prose around the table needs a person, and the review is recorded outside
+  the repository.** No word list can separate "the following were excluded" from "no single
+  feature in isolation is diagnostic" — a sentence this dataset's own notes contain. So the
+  run stops until a reviewer sets `MVA_PHENOTYPE_REVIEWED` to the document's SHA-256 in the
+  local environment file (`~/.config/mva/env`, never committed: it is a handle on a patient
+  file). Editing the document changes the fingerprint and asks again. Reviewed for the
+  current document on 2026-09-17: the two negation-carrying paragraphs are guidance on
+  interpreting the phenotype, and describe no listed feature as absent.
 - Any public display of channel D results carries the HPO version and acknowledgement from
   `channel.json`'s `attribution` field, and cites Gargano et al. (2024) and Putman et al. (2024).
 - Releases are pinned by date in config; `latest` is refused by a test.
