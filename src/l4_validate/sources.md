@@ -248,3 +248,51 @@ interactome using STRING's own alias table (CC BY 4.0), not the restricted sourc
 **If the rationale needs to name a target.** Take it from the drug's FDA label
 (openFDA, CC0, already in Table 1) rather than from this source. The label states the
 molecular target for most approved drugs, and it is quotable in a redistributed output.
+
+---
+
+## Table 6 — phenotype matching and indications (L2 channel D)
+
+Channel D matches the subject's HPO-coded phenotype against diseases' annotated features,
+then takes the approved drugs indicated for the closest diseases or for the subject's
+features. Terms read 2026-09-17, each from the project's own source (web pages that are
+script-only apps were read from their source repositories).
+
+| Role | Source | License | CC-BY-4.0 compatible? | Where it lives |
+|---|---|---|---|---|
+| Phenotype vocabulary and hierarchy | HPO `hp.obo`, release 2026-09-01 | **HPO licence (custom)**: free to use on condition of citation, showing the file's date/version wherever displayed publicly, and no alteration of content or logical relationships; services must acknowledge HPO use | ❌ Not CC — but only ids, counts and an acknowledgement are output | `reference_dir`, unaltered |
+| Disease → feature annotations | Monarch KG 2026-09-02, `disease_phenotype.all.tsv.gz` (HPO annotations; primary sources include OMIM and Orphanet) | Annotations under the HPO licence; Monarch's own data recommendation is CC0/CC BY with per-source terms prevailing | ❌ Not redistributed | `reference_dir`; matched locally |
+| Disease names and ids | Mondo, as labelled in Monarch's table | CC BY 4.0 | ✅ Yes | patient-derived `evidence.json` only (see below) |
+| Orphanet-sourced annotations | Orphadata **Science** datasets | CC BY 4.0 — the rest of Orphadata needs written consent from INSERM | ✅ Yes (Science datasets only) | inside the Monarch table |
+| OMIM-sourced annotations | OMIM | **Unread**: OMIM's use agreement returned HTTP 403 on 2026-09-17 | ❓ Treated as restricted | used locally only; no OMIM id, name or text is output |
+| Drug → approved indication | Open Targets Platform 26.06 `clinical_indication` | as Table 5 — ChEMBL-derived | ❌ No — treated as SA | `enrichment_dir`, never redistributed |
+
+**The HPO licence is the binding one, and it is not a Creative Commons licence.** Its three
+conditions are met by construction: the ontology is cached and parsed unaltered; its
+version is written into `channel.json`'s `attribution` field and must accompany any public
+display of HPO-derived results; and the report cites Gargano et al. (2024) and acknowledges
+HPO. What leaves the pipeline is ranked drug identities and counts, not HPO content.
+
+**OMIM stays unread, so its content stays in.** Most rare-disease annotations originate
+from OMIM (8,478 of the 12,882 diseases in the HPO annotation file). Its terms could not be
+read, so nothing OMIM-authored is output: diseases are keyed and named by Mondo. Revisit
+this row when the agreement can be read.
+
+**What reaches `candidates.tsv`.** ChEMBL id, drug name, type, clinical stage (the Table 5
+whitelist), the pipeline's own score, the route, support *counts*, and
+`endpoint=symptomatic`. No HPO id, no disease, no indication pair.
+
+**`evidence.json` is patient-derived, not just licence-restricted.** Which diseases resemble
+this child, and which of the child's features an indication matched, are statements about
+the child (`COMPLIANCE.md`). The file is marked `patient_derived: true` and
+`redistributable: false` and stays under the gitignored `results_dir`.
+
+**No warranty, no clinical use.** Monarch's terms of use state its tools "should not be
+used for direct diagnostic use or medical decision-making", provide the data "as is"
+without warranty, and place "total and exclusive responsibility and risk" on the user.
+Channel D's caveats carry this, and the report must.
+
+**Why local, not Monarch's API.** Querying Monarch's service would send the subject's
+feature combination to a third party, and Monarch's website states it runs HotJar and
+Google Analytics. The files are downloaded whole and matched on this machine; see
+[decision D10](../../mngmt/decisions.md).

@@ -108,3 +108,15 @@ l2:
     approved_only: true              # scope is repurposing of APPROVED drugs
     permutations: 1000               # null resamples; fewer destabilises the tail
     min_bin_size: 100                # degree-bin floor, so a hub is never resampled as itself
+  # Phenotype channel (decision D10). The subject's terms are read from data_dir at run
+  # time and never written here. Resources are downloaded whole and matched locally.
+  channel_d:
+    document_glob: "*Phenotype*.docx"
+    hpo_url: http://purl.obolibrary.org/obo/hp/releases/2026-09-01/hp.obo
+    monarch_url: https://data.monarchinitiative.org/monarch-kg/2026-09-02/tsv/disease_associations/disease_phenotype.all.tsv.gz
+    open_targets_release: "26.06"   # indications; restricted, never redistributed (D7)
+    approved_only: true
+    permutations: 1000               # random queries per run; min attainable p = 1/1001
+    p_max: 0.001                     # diseases no random query matched or beat
+    top_diseases: 50                 # cap on diseases feeding the disease route
+    min_term_ratio: 0.5              # phenotype route: IC(MICA)/IC(term) floor

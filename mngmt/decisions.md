@@ -422,6 +422,70 @@ fixture instead of this child's disease.
 
 ---
 
+## D10 — Channel D matches the phenotype locally; OMIM stays in, Mondo names come out (2026-09-17)
+
+`l2.channel_d` in [config/pipeline.yaml](../config/pipeline.yaml), implemented in
+[src/l2_channels/channel_d_phenotype.py](../src/l2_channels/channel_d_phenotype.py),
+[phenotype.py](../src/l2_channels/phenotype.py) and [phenosim.py](../src/l2_channels/phenosim.py).
+Output: `results/l2/channel_d_phenotype/`. Decided by the maintainer on 2026-09-17 after the
+licence and liability review summarised in Table 6 of
+[src/l4_validate/sources.md](../src/l4_validate/sources.md).
+
+**What it means.** The subject's HPO terms are read from the phenotype document at run time and
+never leave the machine. The HPO ontology (release 2026-09-01) and Monarch's Mondo-keyed
+disease–phenotype table (release 2026-09-02) are downloaded whole and matched locally by
+one-sided semantic similarity with an empirical p-value (Köhler et al., 2009; Resnik, 1999).
+Approved drugs come from Open Targets' `clinical_indication` for the closest diseases, or for HPO
+terms on the lineage of the subject's own terms, and stay in the D7 enrichment zone. Every
+candidate is tagged `endpoint=symptomatic`.
+
+**Why not the alternatives.**
+
+- **Monarch's web API** — faster to build, and refused: it would send this child's feature
+  combination to a third party, whose website states it runs HotJar and Google Analytics.
+  Constraint 7 of `CLAUDE.md` already treats that combination as identifying.
+- **FDA labels (openFDA) for the drug step** — licence-clean, but indications are free text,
+  so the join from a matched disease to a drug would itself need extraction. Kept for L4's
+  rationale text, per D7.
+- **Monarch's full graph or its 3.6 GB semantic-similarity database** — the 4.4 MB
+  association table already carries what the method needs, keyed by Mondo.
+
+**Licences, as read.** The HPO licence is custom, not Creative Commons: use is free on condition
+of citation, a displayed version, and no alteration. It is met by caching the files unaltered
+and writing the version into `channel.json`. Mondo is CC BY 4.0; Orphanet's Science datasets
+are CC BY 4.0. **OMIM's use agreement could not be read** (HTTP 403), and OMIM originates most
+rare-disease annotations, so OMIM content is used for matching only and nothing OMIM-authored
+is output: diseases are identified and named by Mondo.
+
+**Liability, as read.** Monarch provides its data "as is", disclaims warranties and liability,
+places "total and exclusive responsibility and risk" on the user, and says its tools "should not
+be used for direct diagnostic use or medical decision-making". That matches this project's
+scope (hypothesis generation, no clinical recommendation) and travels as a caveat.
+
+**What it does not settle.** Coverage is thin by construction: diseases resembling a rare
+presentation are mostly rare themselves, and few carry an approved indication recorded against
+that exact Mondo disease. The first run on the real data found that most selected diseases
+contributed no drug (`selected_diseases_contributing_a_drug` in `channel.json`, seed=42).
+Widening the join to a disease's Mondo parents would add coverage and noise together.
+**Decided by the maintainer on 2026-09-17: not widened.** Indications are joined to the exact
+Mondo disease only; a drug indicated for a broader parent category is not treated as indicated
+for the rare disease beneath it. Thin coverage is reported as thin, not padded.
+
+**Obliges.**
+
+- `evidence.json` is patient-derived and never published, quoted or committed: which diseases
+  resemble this child, and which of the child's features an indication matched, are facts
+  about the child. `candidates.tsv` and `channel.json` carry no HPO id, no disease and no term;
+  a test asserts that, and that the log carries none either.
+- A negated row in the phenotype document stops the run rather than being guessed at, and
+  errors name row numbers, never content.
+- Any public display of channel D results carries the HPO version and acknowledgement from
+  `channel.json`'s `attribution` field, and cites Gargano et al. (2024) and Putman et al. (2024).
+- Releases are pinned by date in config; `latest` is refused by a test.
+- Revisit the OMIM row in Table 6 once its agreement can be read.
+
+---
+
 ## Open
 
 - **Hackathon close date** — unknown, so the 30-day deletion deadline cannot be computed. See

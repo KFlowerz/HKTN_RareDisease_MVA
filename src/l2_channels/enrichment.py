@@ -1,19 +1,22 @@
 """L2 -- the non-redistributed enrichment zone: drug-target data, kept behind the counter.
 
 Purpose
-    Supply Channel B with each drug's protein targets, from a source whose licence does
-    not permit redistribution, without any of that source's content reaching a published
-    output.
+    Supply Channel B with each drug's protein targets, and Channel D with each drug's
+    approved indications, from a source whose licence does not permit redistribution,
+    without any of that source's content reaching a published output.
 
 Inputs
-    ``config["l2"]["channel_b"]`` (``open_targets_release``, ``approved_only``) and
-    ``config["enrichment_dir"]``; a map from Ensembl gene id to the interactome's protein
-    identifiers, built from STRING's own alias table (CC BY 4.0).
+    ``config["l2"]["channel_b"]`` / ``["channel_d"]`` (``open_targets_release``,
+    ``approved_only``) and ``config["enrichment_dir"]``; for Channel B, a map from Ensembl
+    gene id to the interactome's protein identifiers, built from STRING's own alias table
+    (CC BY 4.0).
 
 Outputs
     :class:`DrugRecord` per drug -- identifiers, name, clinical stage, and the target set
-    in the interactome's identifier space -- plus a provenance record per file.
-    :func:`publishable` reduces a record to the fields that may leave this zone.
+    in the interactome's identifier space -- plus a provenance record per file;
+    :func:`load_indications` -> disease id -> approved drugs, which likewise never leaves
+    the zone except as counts. :func:`publishable` reduces a record to the fields that may
+    leave this zone.
 
 Guardrail
     **This is the segregated zone described in ``../l4_validate/sources.md``.** Open
@@ -136,14 +139,18 @@ def part_urls(base: str) -> list:
     return [base + name for name in names]
 
 
-def ensure_datasets(config: dict) -> tuple:
-    """Download (or reuse) each dataset's parts. Returns ``(paths, provenance)``."""
-    settings = ((config.get("l2") or {}).get("channel_b") or {})
+def ensure_datasets(config: dict, datasets=DATASETS, *, channel: str = "channel_b") -> tuple:
+    """Download (or reuse) each dataset's parts. Returns ``(paths, provenance)``.
+
+    ``channel`` names the ``config["l2"]`` block whose ``open_targets_release`` applies, so
+    each channel records the release it actually used.
+    """
+    settings = ((config.get("l2") or {}).get(channel) or {})
     release = str(settings.get("open_targets_release", "26.06"))
     cache = enrichment_dir(config)
 
     paths, provenance = {}, []
-    for dataset in DATASETS:
+    for dataset in datasets:
         base = f"{OPEN_TARGETS_FTP}/{release}/output/{dataset}/"
         urls = part_urls(base)
         if not urls:
@@ -229,6 +236,29 @@ def load_molecules(paths) -> dict:
                     "clinical_stage": row.get("maximumClinicalStage") or "",
                 }
     return out
+
+
+def load_indications(paths, *, stage: str = APPROVED) -> tuple:
+    """``({disease id: {chembl_id}}, stats)`` from Open Targets' ``clinical_indication``.
+
+    Only indications whose highest clinical stage *for that indication* equals ``stage``
+    are kept: a drug approved for one disease and in a phase-2 trial for another is not an
+    approved treatment of the second. Disease ids are Open Targets' (``MONDO_0012941``,
+    ``HP_0001250``, ``EFO_...``). The indication pairs are ChEMBL-derived content and never
+    leave this zone except as counts.
+    """
+    out: dict = {}
+    stats = {"indication_rows": 0, "indications_at_stage": 0, "stage": stage}
+    for path in paths:
+        for row in _rows(path):
+            stats["indication_rows"] += 1
+            if row.get("maxClinicalStage") != stage:
+                continue
+            drug, disease = row.get("drugId"), row.get("diseaseId")
+            if drug and disease:
+                out.setdefault(disease, set()).add(drug)
+                stats["indications_at_stage"] += 1
+    return out, stats
 
 
 def ensembl_index(alias_path, source: str = "Ensembl_gene") -> dict:

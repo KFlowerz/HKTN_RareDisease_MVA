@@ -42,6 +42,8 @@ Dürrbaum, M., Kuznetsova, A. Y., Passerini, V., Stingele, S., Stoehr, G., & Sto
 
 Ensembl. (2026). Ensembl Canonical transcript (Release 116). Retrieved September 11, 2026, from https://www.ensembl.org/info/genome/genebuild/canonical.html
 
+Gargano, M. A., Matentzoglu, N., Coleman, B., Addo-Lartey, E. B., Anagnostopoulos, A. V., Anderton, J., Avillach, P., Bagley, A. M., Bakštein, E., Balhoff, J. P., Baynam, G., Bello, S. M., Berk, M., Bertram, H., Bishop, S., Blau, H., Bodenstein, D. F., Botas, P., Boztug, K., … Robinson, P. N. (2024). The Human Phenotype Ontology in 2024: Phenotypes around the world. Nucleic Acids Research, 52(D1), D1333–D1346. https://doi.org/10.1093/nar/gkad1005
+
 Genome Aggregation Database. (2026a). gnomAD v4.1.1 exomes and genomes sites VCFs [Data set]. Retrieved September 17, 2026, from https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1.1/vcf/
 
 Genome Aggregation Database. (2026b). Policies. Retrieved September 17, 2026, from https://gnomad.broadinstitute.org/policies
@@ -52,7 +54,15 @@ Guney, E., Menche, J., Vidal, M., & Barábasi, A.-L. (2016). Network-based in si
 
 Hanks, S., Coleman, K., Reid, S., Plaja, A., Firth, H., FitzPatrick, D., Kidd, A., Méhes, K., Nash, R., Robin, N., Shannon, N., Tolmie, J., Swansbury, J., Irrthum, A., Douglas, J., & Rahman, N. (2004). Constitutional aneuploidy and cancer predisposition caused by biallelic mutations in BUB1B. Nature Genetics, 36(11), 1159–1161. https://doi.org/10.1038/ng1449
 
+Human Phenotype Ontology Consortium. (2026a). Human Phenotype Ontology (hp.obo), release 2026-09-01 [Data set]. Retrieved September 17, 2026, from http://purl.obolibrary.org/obo/hp/releases/2026-09-01/hp.obo
+
+Human Phenotype Ontology Consortium. (2026b). License. Retrieved September 17, 2026, from http://human-phenotype-ontology.github.io/license.html
+
+INSERM US14 – Orphanet. (2026). Orphadata: Legal notice. Retrieved September 17, 2026, from https://www.orphadata.com/legal-notice/
+
 Karczewski, K. J., Francioli, L. C., Tiao, G., Cummings, B. B., Alföldi, J., Wang, Q., Collins, R. L., Laricchia, K. M., Ganna, A., Birnbaum, D. P., Gauthier, L. D., Brand, H., Solomonson, M., Watts, N. A., Rhodes, D., Singer-Berk, M., England, E. M., Seaby, E. G., Kosmicki, J. A., … MacArthur, D. G. (2020). The mutational constraint spectrum quantified from variation in 141,456 humans. Nature, 581(7809), 434–443. https://doi.org/10.1038/s41586-020-2308-7
+
+Köhler, S., Schulz, M. H., Krawitz, P., Bauer, S., Dölken, S., Ott, C. E., Mundlos, C., Horn, D., Mundlos, S., & Robinson, P. N. (2009). Clinical diagnostics in human genetics with semantic similarity searches in ontologies. The American Journal of Human Genetics, 85(4), 457–464. https://doi.org/10.1016/j.ajhg.2009.09.003
 
 Landrum, M. J., Lee, J. M., Benson, M., Brown, G. R., Chao, C., Chitipiralla, S., Gu, B., Hart, J., Hoffman, D., Jang, W., Karapetyan, K., Katz, K., Liu, C., Maddipatla, Z., Malheiro, A., McDaniel, K., Ovetsky, M., Riley, G., Zhou, G., … Maglott, D. R. (2018). ClinVar: Improving access to variant interpretations and supporting evidence. Nucleic Acids Research, 46(D1), D1062–D1067. https://doi.org/10.1093/nar/gkx1153
 
@@ -67,6 +77,12 @@ MacArthur, D. G., Balasubramanian, S., Frankish, A., Huang, N., Morris, J., Walt
 McCarthy, D. J., Humburg, P., Kanapin, A., Rivas, M. A., Gaulton, K., Cazier, J.-B., & Donnelly, P. (2014). Choice of transcripts and software has a large effect on variant annotation. Genome Medicine, 6(3), Article 26. https://doi.org/10.1186/gm543
 
 Milacic, M., Beavers, D., Conley, P., Gong, C., Gillespie, M., Griss, J., Haw, R., Jassal, B., Matthews, L., May, B., Petryszak, R., Ragueneau, E., Rothfels, K., Sevilla, C., Shamovsky, V., Stephan, R., Tiwari, K., Varusai, T., Weiser, J., … D’Eustachio, P. (2023). The Reactome Pathway Knowledgebase 2024. Nucleic Acids Research, 52(D1), D672–D678. https://doi.org/10.1093/nar/gkad1025
+
+Monarch Initiative. (2026a). Monarch knowledge graph: Disease–phenotype associations, release 2026-09-02 [Data set]. Retrieved September 17, 2026, from https://data.monarchinitiative.org/monarch-kg/2026-09-02/tsv/disease_associations/
+
+Monarch Initiative. (2026b). Mondo Disease Ontology: LICENSE. Retrieved September 17, 2026, from https://github.com/monarch-initiative/mondo/blob/master/LICENSE
+
+Monarch Initiative. (2026c). Terms of use. Retrieved September 17, 2026, from https://github.com/monarch-initiative/monarch-app/blob/main/frontend/src/pages/knowledgeGraph/PageTerms.vue
 
 Morales, J., Pujar, S., Loveland, J. E., Astashyn, A., Bennett, R., Berry, A., Cox, E., Davidson, C., Ermolaeva, O., Farrell, C. M., Fatima, R., Gil, L., Goldfarb, T., Gonzalez, J. M., Haddad, D., Hardy, M., Hunt, T., Jackson, J., Joardar, V. S., … Murphy, T. D. (2022). A joint NCBI and EMBL-EBI transcript set for clinical genomics and research. Nature, 604(7905), 310–315. https://doi.org/10.1038/s41586-022-04558-8
 
@@ -87,6 +103,10 @@ Ochoa, D., Hercules, A., Carmona, M., Suveges, D., Baker, J., Malangone, C., Lop
 Open Targets. (2026). Licence — Open Targets Platform documentation. Retrieved September 16, 2026, from https://platform-docs.opentargets.org/licence
 
 Pozo, F., Rodriguez, J. M., Vázquez, J., & Tress, M. L. (2022). Clinical variant interpretation and biologically relevant reference transcripts. npj Genomic Medicine, 7(1), Article 59. https://doi.org/10.1038/s41525-022-00329-6
+
+Putman, T. E., Schaper, K., Matentzoglu, N., Rubinetti, V. P., Alquaddoomi, F. S., Cox, C., Caufield, J. H., Elsarboukh, G., Gehrke, S., Hegde, H., Reese, J. T., Braun, I., Bruskiewich, R. M., Cappelletti, L., Carbon, S., Caron, A. R., Chan, L. E., Chute, C. G., Cortes, K. G., … Munoz-Torres, M. C. (2024). The Monarch Initiative in 2024: An analytic platform integrating phenotypes, genes and diseases across species. Nucleic Acids Research, 52(D1), D938–D949. https://doi.org/10.1093/nar/gkad1082
+
+Resnik, P. (1999). Semantic similarity in a taxonomy: An information-based measure and its application to problems of ambiguity in natural language. Journal of Artificial Intelligence Research, 11, 95–130. https://doi.org/10.1613/jair.514
 
 Richards, S., Aziz, N., Bale, S., Bick, D., Das, S., Gastier-Foster, J., Grody, W. W., Hegde, M., Lyon, E., Spector, E., Voelkerding, K., & Rehm, H. L. (2015). Standards and guidelines for the interpretation of sequence variants: A joint consensus recommendation of the American College of Medical Genetics and Genomics and the Association for Molecular Pathology. Genetics in Medicine, 17(5), 405–424. https://doi.org/10.1038/gim.2015.30
 
@@ -164,10 +184,12 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `cummings2020` | doi:10.1038/s41586-020-2329-2 | Crossref | **Author Correction** doi:10.1038/s41586-020-03175-7 — adds a missing consortium member; no change to results (text read via Europe PMC, PMC8064909) | 2026-09-11 |
 | `donnelly2014` | doi:10.15252/embj.201488648 | Crossref | None on record | 2026-09-08 |
 | `durrbaum2014` | doi:10.1186/1471-2164-15-139 | Crossref | None on record | 2026-09-08 |
+| `gargano2024` | doi:10.1093/nar/gkad1005 | Crossref | None on record | 2026-09-17 |
 | `girish2023` | doi:10.1126/science.adg4521 | Crossref | None on record | 2026-09-08 |
 | `guney2016` | doi:10.1038/ncomms10331 | Crossref | None on record | 2026-09-16 |
 | `hanks2004` | doi:10.1038/ng1449 | Crossref | None on record | 2026-09-08 |
 | `karczewski2020` | doi:10.1038/s41586-020-2308-7 | Crossref | **Author Correction** doi:10.1038/s41586-020-03174-8 (missing consortium member) and **Addendum** doi:10.1038/s41586-021-03758-y (extends the LoF-tolerance analysis of disease genes). Neither changes the LOFTEE results cited here (text read via Europe PMC, PMC8064911 / PMC8410591) | 2026-09-11 |
+| `kohler2009` | doi:10.1016/j.ajhg.2009.09.003 | Crossref; abstract read via Europe PMC (PMID 19800049) | None on record | 2026-09-17 |
 | `landrum2018` | doi:10.1093/nar/gkx1153 | Crossref | None on record. Crossref registers the online-first date (2017-11); the article is the 2018 NAR database issue, 46(D1) | 2026-09-16 |
 | `loh2018` | doi:10.1038/s41586-018-0321-x | Crossref | None on record | 2026-09-08 |
 | `ly2012` | doi:10.1038/onc.2012.339 | Crossref | None on record | 2026-09-08 |
@@ -178,6 +200,8 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `morales2022` | doi:10.1038/s41586-022-04558-8 | Crossref | None on record | 2026-09-11 |
 | `ochoa2023` | doi:10.1093/nar/gkac1046 | Crossref | None on record. Crossref registers the online-first date (2022-11); the article is the 2023 NAR database issue, 51(D1) | 2026-09-16 |
 | `pozo2022` | doi:10.1038/s41525-022-00329-6 | Crossref | None on record | 2026-09-11 |
+| `putman2024` | doi:10.1093/nar/gkad1082 | Crossref | None on record | 2026-09-17 |
+| `resnik1999` | doi:10.1613/jair.514 | Crossref | None on record | 2026-09-17 |
 | `richards2015` | doi:10.1038/gim.2015.30 | Crossref | None on record | 2026-09-11 |
 | `riofrio2010` | doi:10.1056/nejmoa1006565 | Crossref | None on record | 2026-09-08 |
 | `santaguida2010` | doi:10.1083/jcb.201001036 | Crossref | None on record | 2026-09-08 |
@@ -211,8 +235,14 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `ensemblcanonical` | https://www.ensembl.org/info/genome/genebuild/canonical.html | Ensembl Canonical definition and its relation to MANE Select (release 116) | 2026-09-11 |
 | `gnomad_v411` | https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1.1/vcf/ | Population allele frequencies for the subject's panel alleles in L0, read by whole panel-gene span (decision D8) | 2026-09-17 |
 | `gnomad_policies` | https://gnomad.broadinstitute.org/policies | Primary gnomAD data are CC0; SpliceAI annotations are CC BY-NC 4.0 and are not read (Table 4, src/l4_validate/sources.md) | 2026-09-17 |
+| `hpo_20260901` | http://purl.obolibrary.org/obo/hp/releases/2026-09-01/hp.obo | Phenotype ontology for channel D, used unaltered | 2026-09-17 |
+| `hpo_licence` | http://human-phenotype-ontology.github.io/license.html | HPO licence conditions (Table 6, src/l4_validate/sources.md) | 2026-09-17 |
 | `mane_v15` | https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/ | MANE Select transcript per SAC-panel gene | 2026-09-11 |
+| `monarch_kg_20260902` | https://data.monarchinitiative.org/monarch-kg/2026-09-02/tsv/disease_associations/ | Disease–phenotype annotations for channel D, Mondo-keyed | 2026-09-17 |
+| `monarch_terms` | https://github.com/monarch-initiative/monarch-app/blob/main/frontend/src/pages/knowledgeGraph/PageTerms.vue | Intended use, warranty and liability terms (Table 6) | 2026-09-17 |
+| `mondo_licence` | https://github.com/monarch-initiative/mondo/blob/master/LICENSE | Mondo is CC BY 4.0 | 2026-09-17 |
 | `opentargets_licence` | https://platform-docs.opentargets.org/licence | CC0 mark on Platform data, with ChEMBL CC BY-SA 3.0 listed as a source in the same table (decision D7) | 2026-09-16 |
+| `orphadata_legal` | https://www.orphadata.com/legal-notice/ | Orphadata Science datasets CC BY 4.0; other content needs consent | 2026-09-17 |
 | `snpeffdocs` | https://pcingola.github.io/SnpEff/snpeff/commandline/ | snpEff `-canon` = longest CDS; `-tag` filtering | 2026-09-11 |
 | `uniprot_O60566` | https://rest.uniprot.org/uniprotkb/O60566.json | BUBR1 length (1,050 aa) and protein kinase domain (766–1050), release 2026_03 | 2026-09-17 |
 
