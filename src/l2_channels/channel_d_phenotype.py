@@ -374,5 +374,11 @@ def generate(config: dict) -> None:
         "seed": config["seed"],
     }, indent=2, sort_keys=True), encoding="utf-8")
 
-    LOGGER.info("channel D written: %d drug(s) from %d disease(s) and %d indication term(s)",
-                len(entries), len(selected), len(term_hits))
+    # "from N disease(s)" must be the number that actually produced a drug, not the number
+    # selected. Logging the selection made a run where 2 of 28 diseases contributed anything
+    # read as though all 28 had, which overstates the channel's coverage in the one place a
+    # person looks first.
+    LOGGER.info("channel D written: %d drug(s) from %d of %d selected disease(s) and %d "
+                "indication term(s)", len(entries),
+                len({h.disease for e in entries for h in e["diseases"]}), len(selected),
+                len(term_hits))
