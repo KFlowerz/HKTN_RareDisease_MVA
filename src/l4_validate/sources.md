@@ -185,3 +185,39 @@ caveat in every causal-gene call rather than quietly omitted. The frequency fiel
 carries (ESP, ExAC, 1000 Genomes) are legacy, absent from most records, and no substitute.
 Adding gnomAD is a scope decision that has not been taken; its terms must be verified and
 entered in this table before anything from it enters an output.
+
+---
+
+## Table 5 — drug–target sets for network proximity (L2 channel B)
+
+Channel B needs, per drug, the human proteins it acts on, as nodes in the interactome.
+Terms read 2026-09-16 from each project's own licence page.
+
+| Role | Source | License | CC-BY-4.0 compatible? | Where it lives |
+|---|---|---|---|---|
+| Drug → target protein, action type, mechanism text | Open Targets Platform (`drug_mechanism_of_action`) | Platform marked CC0 1.0; this content derives from **ChEMBL, CC BY-SA 3.0** | ❌ No — treated as SA | `enrichment_dir`, never redistributed |
+| Drug identity: ChEMBL id, name, type, clinical stage | Open Targets Platform (`drug_molecule`) | as above | Identifiers and names only | published |
+| Ensembl gene id → interactome protein | STRING v12.0 aliases | CC BY 4.0 | ✅ Yes | `reference_dir` |
+
+**Why this is Table 5 and not Table 1.** Open Targets marks its Platform data CC0 and says
+downstream users may consume it without restriction. The same licence page lists ChEMBL as
+CC BY-SA 3.0 among its sources, and the drug–target content is ChEMBL's. This project does
+not rely on one aggregator's relicensing of another's ShareAlike data — see
+[decision D7](../../mngmt/decisions.md) — so the content is treated as ShareAlike and kept
+in the segregated zone described in Table 2.
+
+**What that means in practice.** The target sets never leave
+[src/l2_channels/enrichment.py](enrichment.py). What reaches
+`results/l2/channel_b_proximity/candidates.tsv` is the whitelist in
+`enrichment.PUBLISHABLE_FIELDS` — ChEMBL id, drug name, drug type, clinical stage, and the
+*count* of targets — plus the scores this pipeline computed. Identifiers and INN-style
+names are exactly what Table 2 already permits for performing a join;
+`tests/test_l2_channel_b.py` asserts the written table carries no target identifier.
+
+**The crosswalk is clean by construction.** Ensembl gene ids are mapped into the
+interactome using STRING's own alias table (CC BY 4.0), not the restricted source, so drug
+*identity* is the only thing taken from the enrichment zone.
+
+**If the rationale needs to name a target.** Take it from the drug's FDA label
+(openFDA, CC0, already in Table 1) rather than from this source. The label states the
+molecular target for most approved drugs, and it is quotable in a redistributed output.

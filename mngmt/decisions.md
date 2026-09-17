@@ -242,6 +242,68 @@ Genomes) are legacy and absent from most records. Both remain caveats on every c
 
 ---
 
+## D7 — Drug–target data is used, not redistributed (2026-09-16)
+
+Channel B scores drugs against the disease module, which needs each drug's protein targets.
+Those target sets live in [src/l2_channels/enrichment.py](../src/l2_channels/enrichment.py)
+and are never published; the ranking in `results/l2/channel_b_proximity/candidates.tsv`
+carries identifiers, names and scores. Ledger entry: Table 5 in
+[src/l4_validate/sources.md](../src/l4_validate/sources.md).
+
+**What it means.** The target sets, action types and mechanism text stay in
+`enrichment_dir` — a directory outside the repository, separate from the public reference
+cache, so the line between what may be republished and what may not is physical rather
+than conventional. Everything that reaches a published table passes through a whitelist,
+`enrichment.PUBLISHABLE_FIELDS`: ChEMBL id, drug name, drug type, clinical stage, and the
+*count* of targets. Identifiers and INN-style names are what Table 2 already permits for
+performing a join.
+
+**Why.** No comprehensive, gene-level drug–target resource is unambiguously clean for a
+redistributed CC-BY-4.0 output. What the licence pages actually say (read 2026-09-16):
+
+- **Open Targets** marks its Platform data CC0 1.0 and says downstream users may consume it
+  without restriction — and, in a table on the same page, lists **ChEMBL as CC BY-SA 3.0**
+  among its sources. The drug–target content is ChEMBL's.
+- **Guide to PHARMACOLOGY** is ODbL plus CC BY-SA 4.0. **DrugCentral** is Creative Commons
+  with a ShareAlike term. **DrugBank** is CC BY-NC. All already in Table 2.
+- **RxClass / MED-RT** is genuinely clean (US-Gov, "no license is needed"), and is what
+  Table 1 nominates as the DrugBank substitute — but see below.
+
+ShareAlike is the viral one: bundling that content into a derived table would relicense
+every output this project publishes ([COMPLIANCE.md](../COMPLIANCE.md)). Taking Open
+Targets' CC0 mark at face value would have been faster and would have let the report name
+each drug's targets everywhere. It was declined: the project's own ledger explains why
+ShareAlike matters more than NonCommercial, and an output that contradicted that paragraph
+would cost more in Scientific Rigor than the convenience is worth.
+
+**Why not the clean source alone.** RxClass/MED-RT gives 781 mechanism-of-action classes
+with real drug coverage, but they are *categories* — "Calcium Channel Antagonists", not
+`CACNA1C`. Matching the class names against STRING's 2.5 million protein aliases resolved
+**0 of 4** sampled classes, because a calcium channel is about twenty proteins rather than
+one. Worse than the labour: even a perfect mapping yields a family, so amlodipine and
+nifedipine would get identical target sets and Channel B would be ranking drug classes
+rather than drugs. That data belongs in L4's safety triage and in per-candidate rationales,
+not here.
+
+**Obliges.**
+
+- `enrichment.publishable` is the only sanctioned way out of the zone, and it is a
+  whitelist: a field added to `DrugRecord` later stays inside until someone decides
+  otherwise. `tests/test_l2_channel_b.py` asserts the written table carries no target
+  identifier.
+- The crosswalk from Ensembl gene id to interactome protein is built from STRING's own
+  alias table (CC BY 4.0), so drug *identity* is the only thing taken from the restricted
+  zone.
+- A judge reproducing this downloads the release themselves — it is public and free. The
+  release, its URL, byte size and SHA-256 travel in `channel.json`, marked
+  `redistributable: false`.
+- Where a published rationale needs to name a drug's target, it comes from the FDA label
+  (openFDA, CC0), not from this source.
+- Any future source of drug annotation gets a row in Table 5 and a zone before it is wired
+  in. "It was already downloaded" is not a licence.
+
+---
+
 ## Open
 
 - **`causal_gene`** (gate G1) — still `null`. A finding from L0, never a setting. The evidence is

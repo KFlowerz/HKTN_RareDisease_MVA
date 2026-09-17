@@ -76,6 +76,10 @@ National Center for Biotechnology Information. (2026). NCBI website and data usa
 
 National Center for Biotechnology Information & EMBL-EBI. (n.d.). MANE release 1.5 summary table [Data set]. Retrieved September 11, 2026, from https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/
 
+Ochoa, D., Hercules, A., Carmona, M., Suveges, D., Baker, J., Malangone, C., Lopez, I., Miranda, A., Cruz-Castillo, C., Fumis, L., Bernal-Llinares, M., Tsukanov, K., Cornu, H., Tsirigos, K., Razuvayevskaya, O., Buniello, A., Schwartzentruber, J., Karim, M., Ariano, B., … McDonagh, E. M. (2023). The next-generation Open Targets Platform: Reimagined, redesigned, rebuilt. Nucleic Acids Research, 51(D1), D1353–D1359. https://doi.org/10.1093/nar/gkac1046
+
+Open Targets. (2026). Licence — Open Targets Platform documentation. Retrieved September 16, 2026, from https://platform-docs.opentargets.org/licence
+
 Pozo, F., Rodriguez, J. M., Vázquez, J., & Tress, M. L. (2022). Clinical variant interpretation and biologically relevant reference transcripts. npj Genomic Medicine, 7(1), Article 59. https://doi.org/10.1038/s41525-022-00329-6
 
 Richards, S., Aziz, N., Bale, S., Bick, D., Das, S., Gastier-Foster, J., Grody, W. W., Hegde, M., Lyon, E., Spector, E., Voelkerding, K., & Rehm, H. L. (2015). Standards and guidelines for the interpretation of sequence variants: A joint consensus recommendation of the American College of Medical Genetics and Genomics and the Association for Molecular Pathology. Genetics in Medicine, 17(5), 405–424. https://doi.org/10.1038/gim.2015.30
@@ -113,6 +117,8 @@ Williams, B. R., Prabhu, V. R., Hunter, K. E., Glazier, C. M., Whittaker, C. A.,
 Wright, C. F., FitzPatrick, D. R., Ware, J. S., Rehm, H. L., & Firth, H. V. (2023). Importance of adopting standardized MANE transcripts in clinical reporting. Genetics in Medicine, 25(2), Article 100331. https://doi.org/10.1016/j.gim.2022.10.013
 
 Yost, S., de Wolf, B., Hanks, S., Zachariou, A., Marcozzi, C., Clarke, M., de Voer, R. M., Etemad, B., Uijttewaal, E., Ramsay, E., Wylie, H., Elliott, A., Picton, S., Smith, A., Smithson, S., Seal, S., Ruark, E., Houge, G., Pines, J., et al. (2017). Biallelic TRIP13 mutations predispose to Wilms tumor and chromosome missegregation. Nature Genetics, 49(7), 1148–1151. https://doi.org/10.1038/ng.3883
+
+Zdrazil, B., Felix, E., Hunter, F., Manners, E. J., Blackshaw, J., Corbett, S., de Veij, M., Ioannidis, H., Lopez, D. M., Mosquera, J. F., Magarinos, M. P., Bosc, N., Arcila, R., Kizilören, T., Gaulton, A., Bento, A. P., Adasme, M. F., Monecke, P., Landrum, G. A., & Leach, A. R. (2024). The ChEMBL Database in 2023: A drug discovery platform spanning multiple bioactivity data types and time periods. Nucleic Acids Research, 52(D1), D1180–D1192. https://doi.org/10.1093/nar/gkad1004
 
 Zerbib, J., Ippolito, M. R., Eliezer, Y., De Feudis, G., Reuveni, E., Savir Kadmon, A., Martin, S., Viganò, S., Leor, G., Berstler, J., Muenzner, J., Mülleder, M., Campagnolo, E. M., Shulman, E. D., Chang, T., Rubolino, C., Laue, K., Cohen-Sharir, Y., Scorzoni, S., et al. (2024). Human aneuploid cells depend on the RAF/MEK/ERK pathway for overcoming increased DNA damage. Nature Communications, 15(1). https://doi.org/10.1038/s41467-024-52176-x
 
@@ -159,6 +165,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `mccarthy2014` | doi:10.1186/gm543 | Crossref | None on record | 2026-09-11 |
 | `milacic2023` | doi:10.1093/nar/gkad1025 | Crossref | None on record. Crossref registers the online-first date (2023-11); the article is the 2024 NAR database issue, 52(D1) | 2026-09-16 |
 | `morales2022` | doi:10.1038/s41586-022-04558-8 | Crossref | None on record | 2026-09-11 |
+| `ochoa2023` | doi:10.1093/nar/gkac1046 | Crossref | None on record. Crossref registers the online-first date (2022-11); the article is the 2023 NAR database issue, 51(D1) | 2026-09-16 |
 | `pozo2022` | doi:10.1038/s41525-022-00329-6 | Crossref | None on record | 2026-09-11 |
 | `richards2015` | doi:10.1038/gim.2015.30 | Crossref | None on record | 2026-09-11 |
 | `riofrio2010` | doi:10.1056/nejmoa1006565 | Crossref | None on record | 2026-09-08 |
@@ -177,6 +184,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `williams2008` | doi:10.1126/science.1160058 | Crossref | None on record | 2026-09-08 |
 | `wright2023` | doi:10.1016/j.gim.2022.10.013 | Crossref bibliographic match, confirmed by DOI and Europe PMC (PMID 36441169) | None on record | 2026-09-11 |
 | `yost2017` | doi:10.1038/ng.3883 | Crossref | None on record | 2026-09-08 |
+| `zdrazil2024` | doi:10.1093/nar/gkad1004 | Crossref | None on record. Crossref registers the online-first date (2023-11); the article is the 2024 NAR database issue, 52(D1) | 2026-09-16 |
 | `zerbib2024` | doi:10.1038/s41467-024-52176-x | Crossref | None on record | 2026-09-08 |
 
 **Web resources** (no DOI — URL resolved and content read on the date shown):
@@ -190,6 +198,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `clinvar_use` | https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ | ClinVar requests attribution when data are redistributed, citing PMID 29165669 | 2026-09-16 |
 | `ensemblcanonical` | https://www.ensembl.org/info/genome/genebuild/canonical.html | Ensembl Canonical definition and its relation to MANE Select (release 116) | 2026-09-11 |
 | `mane_v15` | https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/ | MANE Select transcript per SAC-panel gene | 2026-09-11 |
+| `opentargets_licence` | https://platform-docs.opentargets.org/licence | CC0 mark on Platform data, with ChEMBL CC BY-SA 3.0 listed as a source in the same table (decision D7) | 2026-09-16 |
 | `snpeffdocs` | https://pcingola.github.io/SnpEff/snpeff/commandline/ | snpEff `-canon` = longest CDS; `-tag` filtering | 2026-09-11 |
 
 Re-run the retraction check before submission — status can change between drafting and publication.

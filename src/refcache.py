@@ -41,31 +41,37 @@ USER_AGENT = {"User-Agent": "mva-track2/1.0 (https://github.com/KFlowerz/HKTN_Ra
 DEFAULT_DIR = "~/.cache/mva-track2/reference"
 
 
-def reference_dir(config: dict) -> Path:
-    """Where cached reference files live. ``$MVA_REF_ROOT`` overrides the config.
+def cache_dir(raw, default: str, *, name: str = "cache") -> Path:
+    """Resolve a cache location, refusing anywhere inside the repository.
 
-    **The cache must not sit inside the repository.** One of these releases is ClinVar's
+    **A cache must not sit inside the working tree.** One cached release is ClinVar's
     GRCh38 VCF, and ``tests/test_smoke.py`` forbids a ``.vcf.gz`` anywhere in the repo --
     a rule worth keeping absolute rather than carving an exception into, since the next
-    genomic file to land in the working tree may not be a public one. A relative path is
-    therefore resolved against the user's home directory, not the repo.
+    genomic file to land there may not be a public one. Another cache holds
+    licence-restricted data that must never be committed. A relative path is therefore
+    resolved against the user's home directory, not the repo.
 
     Raises:
         ValueError: If the resolved directory lies inside the repository.
     """
-    raw = os.environ.get("MVA_REF_ROOT") or config.get("reference_dir") or DEFAULT_DIR
-    path = Path(raw).expanduser()
+    path = Path(raw or default).expanduser()
     if not path.is_absolute():
         path = Path.home() / path
     path = path.resolve()
     if path == REPO_ROOT or REPO_ROOT in path.parents:
         raise ValueError(
-            f"reference_dir {path} is inside the repository. Cached releases include "
-            "genomic files, which must never sit in the working tree; point "
-            "reference_dir or $MVA_REF_ROOT outside it."
+            f"{name} {path} is inside the repository. Cached releases are never committed "
+            "-- some are genomic files, some are licence-restricted -- so point it outside "
+            "the working tree."
         )
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def reference_dir(config: dict) -> Path:
+    """Where cached public reference files live. ``$MVA_REF_ROOT`` overrides the config."""
+    return cache_dir(os.environ.get("MVA_REF_ROOT") or config.get("reference_dir"),
+                     DEFAULT_DIR, name="reference_dir")
 
 
 def sha256(path: Path) -> str:

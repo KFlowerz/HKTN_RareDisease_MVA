@@ -17,6 +17,9 @@ dependencies:
   - networkx
   - scikit-learn
   - pyyaml
+  - pyarrow        # reads the Parquet drug-target release L2 channel B joins on.
+                   # That release is licence-restricted and never redistributed --
+                   # see src/l4_validate/sources.md and src/l2_channels/enrichment.py.
   - pysam
   - bcftools
   - snpeff=5.4.0c   # L0's LOCAL variant annotator. Pinned: its databases are built per

@@ -48,6 +48,11 @@ HELPER_MODULES = [
 IMPLEMENTED = {"src.l0_genomics.run", "src.l1_target.run"}
 STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m not in IMPLEMENTED]
 
+#: Channels already built. A channel moves off the stub list only when it produces a real
+#: ranking from real inputs -- the same one-at-a-time rule the layers follow.
+IMPLEMENTED_CHANNELS = {"src.l2_channels.channel_b_proximity"}
+STUB_CHANNEL_MODULES = [m for m in CHANNEL_MODULES if m not in IMPLEMENTED_CHANNELS]
+
 
 @pytest.mark.parametrize("module_name", STUB_LAYER_MODULES)
 def test_layer_run_is_a_stub(module_name: str) -> None:
@@ -88,12 +93,26 @@ def test_l1_requires_a_causal_gene() -> None:
         l1.run({})
 
 
-@pytest.mark.parametrize("module_name", CHANNEL_MODULES)
+@pytest.mark.parametrize("module_name", STUB_CHANNEL_MODULES)
 def test_channel_generate_is_a_stub(module_name: str) -> None:
-    """Each L2 channel exposes a callable ``generate`` that raises."""
+    """Each unimplemented L2 channel exposes a callable ``generate`` that raises."""
     module = importlib.import_module(module_name)
     assert callable(module.generate)
     with pytest.raises(NotImplementedError):
+        module.generate({})
+
+
+@pytest.mark.parametrize("module_name", sorted(IMPLEMENTED_CHANNELS))
+def test_implemented_channel_requires_real_config(module_name: str) -> None:
+    """An implemented channel fails on its missing input, not on an unimplemented body.
+
+    The stub assertion above is what proves an unbuilt channel cannot quietly return an
+    empty list. This is its counterpart: a built channel must still refuse an empty
+    config rather than inventing a module to score against.
+    """
+    module = importlib.import_module(module_name)
+    assert callable(module.generate)
+    with pytest.raises((KeyError, FileNotFoundError, ValueError)):
         module.generate({})
 
 

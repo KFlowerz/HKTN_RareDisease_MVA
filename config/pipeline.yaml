@@ -14,6 +14,12 @@ results_dir: ./results
 # tree (tests/test_smoke.py). src/refcache.py refuses a path inside the repository.
 reference_dir: ~/.cache/mva-track2/reference
 
+# Licence-RESTRICTED cached data, kept out of every redistributed output. Separate from
+# reference_dir on purpose: the line between what may be republished and what may not is
+# a directory boundary, not a convention. Overridden by $MVA_ENRICHMENT_ROOT.
+# See src/l2_channels/enrichment.py and src/l4_validate/sources.md Table 5.
+enrichment_dir: ~/.cache/mva-track2/enrichment
+
 causal_gene: null            # still open -- set only from L0's call, never guessed
 
 # L0 variant annotation runs LOCALLY -- no patient variant may leave the machine
@@ -81,3 +87,12 @@ l1:
     chemoprevention: downstream
     mitotic_fidelity: upstream
     symptomatic: both
+
+# L2 channel settings. Channel B scores network proximity between a drug's targets and
+# the L1 disease module, against a degree-matched null (Guney et al., 2016).
+l2:
+  channel_b:
+    open_targets_release: "26.06"   # drug-target release; restricted, never redistributed
+    approved_only: true              # scope is repurposing of APPROVED drugs
+    permutations: 1000               # null resamples; fewer destabilises the tail
+    min_bin_size: 100                # degree-bin floor, so a hub is never resampled as itself
