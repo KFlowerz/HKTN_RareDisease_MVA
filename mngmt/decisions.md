@@ -227,6 +227,7 @@ are worth surfacing next to an allele.
 allele in a disease with roughly 50 known patients, absence is the expected state. Population
 allele frequency is still unassessed: the frequency fields ClinVar carries (ESP, ExAC, 1000
 Genomes) are legacy and absent from most records. Both remain caveats on every causal-gene call.
+*(Population frequency: closed by D8, 2026-09-17.)*
 
 **Obliges.**
 
@@ -304,14 +305,69 @@ not here.
 
 ---
 
+## D8 — L0 reports gnomAD population frequency, read by whole gene span (2026-09-17)
+
+`gnomad` block in [config/pipeline.yaml](../config/pipeline.yaml), implemented in
+[src/l0_genomics/gnomad.py](../src/l0_genomics/gnomad.py). Output:
+`results/l0_genomics/gnomad_frequencies.json`, summarised onto every configuration in
+`causal_gene_call.json`. Closes the gap D6 left open.
+
+**What it means.** For every panel allele, L0 reports whether gnomAD v4.1.1 (Chen et al., 2024)
+observed it in its exomes and its genomes, with allele count, allele number, frequency,
+homozygote count and highest genetic-ancestry-group frequency. Where an allele was not observed,
+the allele number of sites within 50 bp is reported beside the absence, so "not seen" can be told
+apart from "not sampled". Only the five core CC0 fields are read.
+
+**Why.** At G1 the open question about a protein-altering second allele was whether it is simply
+common. Consequence prediction cannot answer that, and ClinVar's frequency fields are legacy and
+mostly empty (D6). A population frequency is the direct measurement.
+
+**Why not the alternatives.**
+
+- **Download the whole release, as for ClinVar** — chromosome 15 alone is 24 GB across the two
+  data sets (7.4 GB exomes, 17.0 GB genomes; server Content-Length, 2026-09-17), and the panel
+  spans five chromosomes. Not proportionate to six genes.
+- **Query gnomAD's API per variant** — refused for the reason D6 refused ClinVar's: it would put
+  this child's coordinates on a third-party server.
+- **Read by gene span (adopted)** — htslib fetches the tabix index and the compressed blocks
+  covering each panel gene's whole padded span. The request is determined by the panel alone,
+  which is already public in this repository, and is identical for every proband. A server log
+  shows that someone read six mitotic-checkpoint genes, not which variants anyone carries.
+- **A missense predictor instead** — still declined, for D6's reason: an uncalibrated score in
+  place of a measurement.
+
+**What it does not settle.** Rarity is necessary, not sufficient: most very rare variants are
+benign, and no ACMG/AMP criterion (PM2 or other) is applied (Richards et al., 2015). Presence
+does not imply benign either: healthy heterozygous carriers of a recessive pathogenic allele are
+expected in any large population sample, so the homozygote count matters more. Phase is untouched: a rare pair on the same copy of a gene is still not
+biallelic.
+
+**Obliges.**
+
+- `gnomad.extract` takes a gene span and nothing else, and `tests/test_l0_gnomad.py` asserts the
+  queried regions do not change when the alleles do. A later "just look up this one position" has
+  to break a test first.
+- Only `AC`, `AN`, `AF`, `nhomalt`, `AF_grpmax` are read. SpliceAI scores in the same files are
+  CC BY-NC 4.0 (Table 4b, [src/l4_validate/sources.md](../src/l4_validate/sources.md)).
+- Each extract's URL, region, server ETag and Last-Modified, and SHA-256 travel in the artifact.
+  A new gnomAD release means a new extract and a re-run, not reasoning from the old one.
+- A failed read is fatal, like the ClinVar cross-reference: an empty extract must never read as
+  "this gene has no variation", and the G1 artifact is not written without the evidence it claims
+  to weigh. `gnomad.enabled: false` is the deliberate way to run without it, and the artifact then
+  says frequency was not assessed.
+- gnomAD's terms bind this project not to attempt to re-identify its participants.
+
+---
+
 ## Open
 
 - **`causal_gene`** (gate G1) — still `null`. A finding from L0, never a setting. The evidence is
   assembled: `results/l0_genomics/causal_gene_call.json` (seed=42) reports one gene with a LoF
-  allele paired with a protein-altering second allele, and D6's cross-reference
-  (`clinvar_crossref.json`) says what ClinVar holds about each. What the evidence cannot settle is
-  recorded with it: the pair is unphased, the second allele is absent from ClinVar, and no
-  population frequency is assessed. G1 is a person reading that and deciding.
+  allele paired with a protein-altering second allele; D6's cross-reference
+  (`clinvar_crossref.json`) says what ClinVar holds about each, and D8's lookup
+  (`gnomad_frequencies.json`) how often gnomAD observed them. What the evidence cannot settle is
+  recorded with it: the pair is unphased, and the second allele is absent from ClinVar. G1 is a
+  person reading that and deciding.
 - **Hackathon close date** — unknown, so the 30-day deletion deadline cannot be computed. See
   [docs/data_custody.md](../docs/data_custody.md).
 - **APA title casing** in [docs/references.md](../docs/references.md) — Crossref preserves publisher

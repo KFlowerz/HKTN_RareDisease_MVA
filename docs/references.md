@@ -26,6 +26,8 @@ Alfieri, C., Chang, L., & Barford, D. (2018). Mechanism for remodelling of the c
 
 Carter, S. L., Eklund, A. C., Kohane, I. S., Harris, L. N., & Szallasi, Z. (2006). A signature of chromosomal instability inferred from gene expression profiles predicts clinical outcome in multiple human cancers. Nature Genetics, 38(9), 1043–1048. https://doi.org/10.1038/ng1861
 
+Chen, S., Francioli, L. C., Goodrich, J. K., Collins, R. L., Kanai, M., Wang, Q., Alföldi, J., Watts, N. A., Vittal, C., Gauthier, L. D., Poterba, T., Wilson, M. W., Tarasova, Y., Phu, W., Grant, R., Yohannes, M. T., Koenig, Z., Farjoun, Y., Banks, E., … Karczewski, K. J. (2024). A genomic mutational constraint map using variation in 76,156 human genomes. Nature, 625(7993), 92–100. https://doi.org/10.1038/s41586-023-06045-0
+
 Cingolani, P., Platts, A., Wang, L. L., Coon, M., Nguyen, T., Wang, L., Land, S. J., Lu, X., & Ruden, D. M. (2012). A program for annotating and predicting the effects of single nucleotide polymorphisms, SnpEff: SNPs in the genome of Drosophila melanogaster strain w1118; iso-2; iso-3. Fly, 6(2), 80–92. https://doi.org/10.4161/fly.19695
 
 Cohen-Sharir, Y., McFarland, J. M., Abdusamad, M., Marquis, C., Bernhard, S. V., Kazachkova, M., Tang, H., Ippolito, M. R., Laue, K., Zerbib, J., Malaby, H. L. H., Jones, A., Stautmeister, L.-M., Bockaj, I., Wardenaar, R., Lyons, N., Nagaraja, A., Bass, A. J., Spierings, D. C. J., et al. (2021). Aneuploidy renders cancer cells vulnerable to mitotic checkpoint inhibition. Nature, 590(7846), 486–491. https://doi.org/10.1038/s41586-020-03114-6
@@ -39,6 +41,10 @@ Donnelly, N., Passerini, V., Dürrbaum, M., Stingele, S., & Storchová, Z. (2014
 Dürrbaum, M., Kuznetsova, A. Y., Passerini, V., Stingele, S., Stoehr, G., & Storchová, Z. (2014). Unique features of the transcriptional response to model aneuploidy in human cells. BMC Genomics, 15(1). https://doi.org/10.1186/1471-2164-15-139
 
 Ensembl. (2026). Ensembl Canonical transcript (Release 116). Retrieved September 11, 2026, from https://www.ensembl.org/info/genome/genebuild/canonical.html
+
+Genome Aggregation Database. (2026a). gnomAD v4.1.1 exomes and genomes sites VCFs [Data set]. Retrieved September 17, 2026, from https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1.1/vcf/
+
+Genome Aggregation Database. (2026b). Policies. Retrieved September 17, 2026, from https://gnomad.broadinstitute.org/policies
 
 Girish, V., Lakhani, A. A., Thompson, S. L., Scaduto, C. M., Brown, L. M., Hagenson, R. A., Sausville, E. L., Mendelson, B. E., Kandikuppa, P. K., Lukow, D. A., Yuan, M. L., Stevens, E. C., Lee, S. N., Schukken, K. M., Akalu, S. M., Vasudevan, A., Zou, C., Salovska, B., Li, W., et al. (2023). Oncogene-like addiction to aneuploidy in human cancers. Science, 381(6660). https://doi.org/10.1126/science.adg4521
 
@@ -110,6 +116,10 @@ Tan, A., Abecasis, G. R., & Kang, H. M. (2015). Unified representation of geneti
 
 Tang, Y.-C., Williams, B. R., Siegel, J. J., & Amon, A. (2011). Identification of Aneuploidy-Selective Antiproliferation Compounds. Cell, 144(4), 499–512. https://doi.org/10.1016/j.cell.2011.01.017
 
+The UniProt Consortium. (2026). O60566 · BUB1B_HUMAN: Mitotic checkpoint serine/threonine-protein kinase BUB1 beta (UniProtKB/Swiss-Prot release 2026_03) [Data set]. Retrieved September 17, 2026, from https://rest.uniprot.org/uniprotkb/O60566.json
+
+The UniProt Consortium, Bateman, A., Martin, M.-J., Orchard, S., Magrane, M., Adesina, A., Ahmad, S., Bowler-Barnett, E. H., Bye-A-Jee, H., Carpentier, D., Denny, P., Fan, J., Garmiri, P., Gonzales, L. J. da C., Hussein, A., Ignatchenko, A., Insana, G., Ishtiaq, R., Joshi, V., … Zhang, J. (2025). UniProt: The Universal Protein Knowledgebase in 2025. Nucleic Acids Research, 53(D1), D609–D617. https://doi.org/10.1093/nar/gkae1010
+
 Torres, E. M., Sokolsky, T., Tucker, C. M., Chan, L. Y., Boselli, M., Dunham, M. J., & Amon, A. (2007). Effects of Aneuploidy on Cellular Physiology and Cell Division in Haploid Yeast. Science, 317(5840), 916–924. https://doi.org/10.1126/science.1142210
 
 Williams, B. R., Prabhu, V. R., Hunter, K. E., Glazier, C. M., Whittaker, C. A., Housman, D. E., & Amon, A. (2008). Aneuploidy Affects Proliferation and Spontaneous Immortalization in Mammalian Cells. Science, 322(5902), 703–709. https://doi.org/10.1126/science.1160058
@@ -147,6 +157,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `aboutayoun2018` | doi:10.1002/humu.23626 | Crossref | None on record. Crossref's author list ends with an empty entry; the ClinGen SVI group author is omitted until its exact name is confirmed | 2026-09-11 |
 | `alfieri2018` | doi:10.1038/s41586-018-0281-1 | Crossref | None on record | 2026-09-08 |
 | `carter2006` | doi:10.1038/ng1861 | Crossref | None on record | 2026-09-08 |
+| `chen2024` | doi:10.1038/s41586-023-06045-0 | Crossref | **Author Correction** doi:10.1038/s41586-024-07050-7 (PMID 38225470); text paywalled, not read. Cited only as the description of the gnomAD data set, for no specific result. Crossref registers the online-first date (2023-12); the article is the 2024 print issue | 2026-09-17 |
 | `cingolani2012` | doi:10.4161/fly.19695 | Crossref | None on record | 2026-09-11 |
 | `cohensharir2021` | doi:10.1038/s41586-020-03114-6 | Crossref | None on record | 2026-09-08 |
 | `conlin2010` | doi:10.1093/hmg/ddq003 | Crossref | None on record | 2026-09-08 |
@@ -181,6 +192,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `tan2015` | doi:10.1093/bioinformatics/btv112 | Crossref | None on record | 2026-09-16 |
 | `tang2011` | doi:10.1016/j.cell.2011.01.017 | Crossref | None on record | 2026-09-08 |
 | `torres2007` | doi:10.1126/science.1142210 | Crossref | None on record | 2026-09-08 |
+| `uniprot2025` | doi:10.1093/nar/gkae1010 | Crossref | None on record. Crossref registers the online-first date (2024-11); the article is the 2025 NAR database issue, 53(D1) | 2026-09-17 |
 | `williams2008` | doi:10.1126/science.1160058 | Crossref | None on record | 2026-09-08 |
 | `wright2023` | doi:10.1016/j.gim.2022.10.013 | Crossref bibliographic match, confirmed by DOI and Europe PMC (PMID 36441169) | None on record | 2026-09-11 |
 | `yost2017` | doi:10.1038/ng.3883 | Crossref | None on record | 2026-09-08 |
@@ -197,8 +209,11 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `ncbi_datapolicy` | https://www.ncbi.nlm.nih.gov/home/about/policies/ | NCBI asserts no restriction on molecular data reuse; submitters may retain rights in their own submissions (Table 4, src/l4_validate/sources.md) | 2026-09-16 |
 | `clinvar_use` | https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ | ClinVar requests attribution when data are redistributed, citing PMID 29165669 | 2026-09-16 |
 | `ensemblcanonical` | https://www.ensembl.org/info/genome/genebuild/canonical.html | Ensembl Canonical definition and its relation to MANE Select (release 116) | 2026-09-11 |
+| `gnomad_v411` | https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1.1/vcf/ | Population allele frequencies for the subject's panel alleles in L0, read by whole panel-gene span (decision D8) | 2026-09-17 |
+| `gnomad_policies` | https://gnomad.broadinstitute.org/policies | Primary gnomAD data are CC0; SpliceAI annotations are CC BY-NC 4.0 and are not read (Table 4, src/l4_validate/sources.md) | 2026-09-17 |
 | `mane_v15` | https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/ | MANE Select transcript per SAC-panel gene | 2026-09-11 |
 | `opentargets_licence` | https://platform-docs.opentargets.org/licence | CC0 mark on Platform data, with ChEMBL CC BY-SA 3.0 listed as a source in the same table (decision D7) | 2026-09-16 |
 | `snpeffdocs` | https://pcingola.github.io/SnpEff/snpeff/commandline/ | snpEff `-canon` = longest CDS; `-tag` filtering | 2026-09-11 |
+| `uniprot_O60566` | https://rest.uniprot.org/uniprotkb/O60566.json | BUBR1 length (1,050 aa) and protein kinase domain (766–1050), release 2026_03 | 2026-09-17 |
 
 Re-run the retraction check before submission — status can change between drafting and publication.

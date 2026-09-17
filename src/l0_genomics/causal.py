@@ -20,6 +20,8 @@ Outputs
         about its alleles
       - ``clinvar_crossref.json`` -- the full cross-reference behind that summary
         (:mod:`src.l0_genomics.clinvar`)
+      - ``gnomad_frequencies.json`` -- each allele's population frequency
+        (:mod:`src.l0_genomics.gnomad`)
 
 Method
     1. Regions: each panel gene's span from the local snpEff database, padded.
@@ -37,6 +39,10 @@ Method
        [landrum2018] doi:10.1093/nar/gkx1153, so a configuration is weighed against what
        has already been submitted about its alleles and not against prediction alone.
        See :mod:`src.l0_genomics.clinvar`; it interprets nothing.
+    6. Population frequency: each allele is looked up in gnomAD [chen2024]
+       doi:10.1038/s41586-023-06045-0, read by whole panel-gene span so no subject
+       coordinate leaves the machine (decision D8). See :mod:`src.l0_genomics.gnomad`; it
+       interprets nothing either.
 
 Guardrail
     - The output is a *candidate* for gate G1. Nothing here writes
@@ -61,6 +67,7 @@ from pathlib import Path
 
 from . import annotate
 from . import clinvar as _clinvar
+from . import gnomad as _gnomad
 from . import transcripts as tx
 
 #: Padding around each gene span. Covers either BED coordinate convention and variants
@@ -108,8 +115,9 @@ VERDICT_NOTES = {
     ),
     "lof_plus_protein_altering_only": (
         "No biallelic LoF configuration. At least one gene pairs a LoF allele with a "
-        "protein-altering second allele, which is not interpreted here; population "
-        "frequency is not assessed."
+        "protein-altering second allele, which is not interpreted here. Any ClinVar and "
+        "population-frequency evidence attached to the configuration is reported, not "
+        "weighed."
     ),
     "no_biallelic_lof": (
         "No biallelic LoF configuration was found in the panel. This is not evidence "
@@ -118,13 +126,21 @@ VERDICT_NOTES = {
     ),
 }
 
+#: Swapped into the caveats according to whether the gnomAD lookup ran.
+FREQUENCY_CAVEATS = {
+    "ok": "Population allele frequency is reported from gnomAD (gnomad_frequencies.json) "
+          "but not interpreted: rarity is necessary, not sufficient, for pathogenicity -- "
+          "see the caveats in that file.",
+    "disabled": "Population allele frequency is not assessed -- the gnomAD lookup is "
+                "disabled in config -- so a protein-altering second hit may be a common "
+                "benign variant.",
+}
+
 CAVEATS = (
     "Copy number is not assessed: an apparently homozygous allele is not distinguished "
     "from a heterozygous allele over a deletion of the other copy.",
     "Structural variants, deep-intronic and regulatory variants, and mosaic second hits "
     "are not assessed from a called VCF.",
-    "Population allele frequency is not assessed -- no local population database is "
-    "installed -- so a protein-altering second hit may be a common benign variant.",
     "Unphased pairs are reported as candidate biallelic configurations. Without parental "
     "samples or physical phasing, a cis arrangement cannot be excluded.",
     "Missense and other protein-altering variants are listed but not interpreted; no "
@@ -352,6 +368,18 @@ def attach_clinvar(genes: dict, crossref: dict) -> None:
             config["clinvar"] = [summaries[v] for v in config["variant_ids"] if v in summaries]
 
 
+def attach_gnomad(genes: dict, frequencies: dict) -> None:
+    """Attach each configuration member's gnomAD summary, in place -- see :func:`attach_clinvar`."""
+    if frequencies.get("status") != "ok":
+        return
+    datasets = frequencies["release"]["datasets"]
+    summaries = {e["variant_id"]: _gnomad.summarize(e, datasets)
+                 for e in frequencies["alleles"]}
+    for result in genes.values():
+        for config in result["configurations"]:
+            config["gnomad"] = [summaries[v] for v in config["variant_ids"] if v in summaries]
+
+
 def resolve_gene(items: list) -> dict:
     """Biallelic configurations and a verdict for one gene's ``(Allele, VariantCall)`` pairs."""
     passing = [(a, c) for a, c in items if a.filter == "PASS"]
@@ -423,8 +451,8 @@ def call(vcf_path, config: dict, out_dir, *, panel) -> dict:
     """Run the causal-gene half of L0 and write its two artifacts.
 
     Returns:
-        ``{"verdict", "candidate_genes", "n_alleles", "clinvar"}`` -- categories and
-        counts only.
+        ``{"verdict", "candidate_genes", "n_alleles", "clinvar", "gnomad"}`` -- categories
+        and counts only.
     """
     policy = tx.transcript_policy(config)
     mane_release = config["annotator"]["mane_release"]
@@ -475,14 +503,27 @@ def call(vcf_path, config: dict, out_dir, *, panel) -> dict:
         clinvar_status = {"status": "disabled",
                           "reason": "config['clinvar']['enabled'] is false"}
 
+    if _gnomad.enabled(config):
+        # Fatal on failure for the same reason as the cross-reference above.
+        frequencies = _gnomad.frequencies(config, alleles, regions, pad=pad)
+        (out_dir / "gnomad_frequencies.json").write_text(
+            json.dumps(frequencies, indent=2, sort_keys=True), encoding="utf-8")
+        attach_gnomad(genes, frequencies)
+        gnomad_status = {"status": "ok", "release": frequencies["release"]["version"],
+                         "artifact": "gnomad_frequencies.json"}
+    else:
+        gnomad_status = {"status": "disabled",
+                         "reason": "config['gnomad']['enabled'] is false"}
+
     (out_dir / "causal_gene_call.json").write_text(json.dumps({
         "verdict": verdict,
         "verdict_note": VERDICT_NOTES[verdict],
         "candidate_genes": candidates,
         "causal_gene_config": "not set by L0 -- gate G1 is a human decision made from this evidence",
         "clinvar": clinvar_status,
+        "gnomad": gnomad_status,
         "per_gene": genes,
-        "caveats": list(CAVEATS),
+        "caveats": [*CAVEATS[:2], FREQUENCY_CAVEATS[gnomad_status["status"]], *CAVEATS[2:]],
         "provenance": {
             "annotator": config["annotator"]["tool"],
             "snpeff_version": annotate.snpeff_version(),
@@ -507,4 +548,4 @@ def call(vcf_path, config: dict, out_dir, *, panel) -> dict:
     }, indent=2, sort_keys=True), encoding="utf-8")
 
     return {"verdict": verdict, "candidate_genes": candidates, "n_alleles": len(alleles),
-            "clinvar": clinvar_status["status"]}
+            "clinvar": clinvar_status["status"], "gnomad": gnomad_status["status"]}

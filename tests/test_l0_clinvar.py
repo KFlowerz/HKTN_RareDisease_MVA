@@ -571,6 +571,8 @@ def _stub_causal(monkeypatch, crossref):
         "v1": ((lof,), frozenset({"GENE1"})), "v2": ((missense,), frozenset({"GENE1"}))})
     monkeypatch.setattr(causal.annotate, "snpeff_version", lambda: "SnpEff\ttest")
     monkeypatch.setattr(causal._clinvar, "cross_reference", crossref)
+    # The gnomAD lookup has its own integration tests (tests/test_l0_gnomad.py).
+    monkeypatch.setattr(causal._gnomad, "enabled", lambda config: False)
 
 
 def test_annotation_survives_a_failed_cross_reference(tmp_path, monkeypatch) -> None:

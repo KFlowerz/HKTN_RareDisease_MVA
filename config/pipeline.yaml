@@ -49,6 +49,14 @@ clinvar:
   enabled: true
   url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
 
+# L0 population frequency (decision D8). gnomAD is read by whole panel-gene span over
+# HTTPS -- never by the subject's coordinates -- and only its CC0 count/frequency fields.
+# It reports frequencies; it classifies nothing. See src/l0_genomics/gnomad.py.
+gnomad:
+  enabled: true
+  release: "4.1.1"
+  datasets: [exomes, genomes]
+
 # Gate G2, decided 2026-09-08 (mngmt/decisions.md D4).
 # chemoprevention | symptomatic | mitotic_fidelity
 #

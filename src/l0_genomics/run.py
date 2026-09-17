@@ -46,6 +46,8 @@ Outputs
         verdict and candidate gene(s) for gate G1, provenance, and caveats
       - ``clinvar_crossref.json`` -- what the public ClinVar release already says about
         each of those alleles, matched locally against the whole release
+      - ``gnomad_frequencies.json`` -- how often gnomAD observed each of those alleles,
+        read by whole panel-gene span (decision D8)
 
     Burden is written **before** the causal-gene half runs, so a failure there does not
     discard a completed scan of a 5-million-record VCF. The affected pathway module is
@@ -93,9 +95,10 @@ Method note -- the causal gene
     into biallelic configurations from zygosity and GATK physical phasing. Each allele is
     then cross-referenced against a cached copy of the whole public ClinVar release
     [landrum2018] doi:10.1093/nar/gkx1153, so a configuration is weighed against submitted
-    interpretations and not against prediction alone. The result is a *candidate* for gate
+    interpretations and not against prediction alone, and looked up in gnomAD [chen2024]
+    doi:10.1038/s41586-023-06045-0 for its population frequency. The result is a *candidate* for gate
     G1 shipped with its evidence, never a setting. See ``causal.py`` for the method,
-    ``clinvar.py`` for the cross-reference, and ``annotate.py`` for why a remote
+    ``clinvar.py`` for the cross-reference, ``gnomad.py`` for the frequencies, and ``annotate.py`` for why a remote
     annotation API is forbidden.
 
 Guardrail
@@ -317,6 +320,8 @@ def run(config: dict) -> None:
     panel = tuple(dict.fromkeys((*SAC_PANEL, *config.get("l0_panel_extension", ()))))
     summary = _causal.call(vcf_path, config, out_dir, panel=panel)
     LOGGER.info(
-        "causal-gene call written: verdict=%s, %d panel allele(s), %d candidate gene(s)",
+        "causal-gene call written: verdict=%s, %d panel allele(s), %d candidate gene(s), "
+        "clinvar=%s, gnomad=%s",
         summary["verdict"], summary["n_alleles"], len(summary["candidate_genes"]),
+        summary["clinvar"], summary["gnomad"],
     )
