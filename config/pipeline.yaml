@@ -121,3 +121,25 @@ l2:
     p_max: 0.001                     # diseases no random query matched or beat
     top_diseases: 50                 # cap on diseases feeding the disease route
     min_term_ratio: 0.5              # phenotype route: IC(MICA)/IC(term) floor
+  # Literature prior (decision D11). Ranks the curated compounds in
+  # src/l2_channels/aneuploidy_prior.tsv by the literature Europe PMC returns for each.
+  # No patient data reaches this channel: queries are built from the seed file and the
+  # terms below, and src/l2_channels/literature.py refuses an outbound query carrying an
+  # HPO id, a coordinate or an HGVS expression.
+  channel_e:
+    # Title and abstract, not full text: full text roughly triples recall and loses most of
+    # the precision, and there is no extraction model here to sort the difference out.
+    search_field: TITLE_ABS
+    context_terms: ["aneuploid*", "chromosomal instability", "chromosome missegregation",
+                    "trisomic", "trisomy", "whole-genome doubling"]
+    max_records_per_compound: 200
+    # A declared project choice, NOT a measured effect size -- the ranking moves if these
+    # move, which is why they are here and recorded in channel.json rather than in code.
+    grade_weights: {clinical: 4.0, in_vivo: 2.0, in_vitro: 1.0, ungraded: 0.25}
+    require_direction: true          # drop records with no therapeutic-direction phrase
+    # A record must name the compound and the aneuploid state in ONE sentence. Retrieval
+    # only asks that both appear somewhere, which counts a myeloma paper naming the drug in
+    # one paragraph and chromosomal instability in another.
+    require_cooccurrence: true
+    approved_only: true              # scope is repurposing of APPROVED drugs
+    open_targets_release: "26.06"    # molecule identities; restricted, never redistributed

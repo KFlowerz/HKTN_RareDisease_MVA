@@ -1,15 +1,16 @@
 """L2 -- the non-redistributed enrichment zone: drug-target data, kept behind the counter.
 
 Purpose
-    Supply Channel B with each drug's protein targets, and Channel D with each drug's
-    approved indications, from a source whose licence does not permit redistribution,
-    without any of that source's content reaching a published output.
+    Supply Channel B with each drug's protein targets, Channel D with each drug's approved
+    indications, and Channel E with a name-to-identifier crosswalk, from a source whose
+    licence does not permit redistribution, without any of that source's content reaching a
+    published output.
 
 Inputs
-    ``config["l2"]["channel_b"]`` / ``["channel_d"]`` (``open_targets_release``,
-    ``approved_only``) and ``config["enrichment_dir"]``; for Channel B, a map from Ensembl
-    gene id to the interactome's protein identifiers, built from STRING's own alias table
-    (CC BY 4.0).
+    ``config["l2"]["channel_b"]`` / ``["channel_d"]`` / ``["channel_e"]``
+    (``open_targets_release``, ``approved_only``) and ``config["enrichment_dir"]``; for
+    Channel B, a map from Ensembl gene id to the interactome's protein identifiers, built
+    from STRING's own alias table (CC BY 4.0).
 
 Outputs
     :class:`DrugRecord` per drug -- identifiers, name, clinical stage, and the target set
@@ -236,6 +237,54 @@ def load_molecules(paths) -> dict:
                     "clinical_stage": row.get("maximumClinicalStage") or "",
                 }
     return out
+
+
+def name_index(paths) -> tuple:
+    """``({normalised name: chembl_id}, stats)`` -- resolve a compound name to an identity.
+
+    Channel E starts from compound *names*, which is how the literature refers to a drug,
+    and L3 aggregates on identifiers, so a name has to become a ChEMBL id somewhere. Doing
+    it here keeps that identity the same one Channels B and D used.
+
+    Preferred names win over synonyms and trade names, so ``name`` never loses to another
+    molecule's synonym; among synonyms a collision keeps the first by ChEMBL id, which
+    makes the result order-independent. Collisions are counted, because a name that maps to
+    two molecules is a resolution this channel should not be trusted to have made.
+    """
+    preferred: dict = {}
+    secondary: dict = {}
+    collisions: set = set()
+    for path in paths:
+        for row in _rows(path):
+            chembl_id = row.get("id")
+            if not chembl_id:
+                continue
+            name = normalise_name(row.get("name") or "")
+            if name:
+                if name in preferred and preferred[name] != chembl_id:
+                    collisions.add(name)
+                preferred.setdefault(name, chembl_id)
+            for other in _as_list(row.get("synonyms")) + _as_list(row.get("tradeNames")):
+                key = normalise_name(str(other))
+                if not key:
+                    continue
+                if key in secondary and secondary[key] != chembl_id:
+                    collisions.add(key)
+                    secondary[key] = min(secondary[key], chembl_id)
+                else:
+                    secondary.setdefault(key, chembl_id)
+    index = {**secondary, **preferred}
+    # A preferred name settles its own key, so only a collision among synonyms is left
+    # ambiguous. The names themselves are returned, not just a count: a caller resolving a
+    # handful of compounds needs to know whether *its* names are the ambiguous ones.
+    ambiguous = frozenset(collisions - set(preferred))
+    return index, {"molecule_names": len(preferred), "molecule_synonyms": len(secondary),
+                   "ambiguous_synonyms": ambiguous}
+
+
+def normalise_name(value: str) -> str:
+    """Casefold and collapse punctuation, so ``17-AAG`` and ``17 AAG`` are one key."""
+    return re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
 
 
 def load_indications(paths, *, stage: str = APPROVED) -> tuple:

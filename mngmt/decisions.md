@@ -496,6 +496,66 @@ for the rare disease beneath it. Thin coverage is reported as thin, not padded.
 
 ---
 
+## D11 — Channel E ranks a curated prior by verified literature, with no model in the loop (2026-09-17)
+
+`l2.channel_e` in [config/pipeline.yaml](../config/pipeline.yaml), implemented in
+[src/l2_channels/channel_e_prior.py](../src/l2_channels/channel_e_prior.py) and
+[literature.py](../src/l2_channels/literature.py), seeded by
+[aneuploidy_prior.tsv](../src/l2_channels/aneuploidy_prior.tsv). Output:
+`results/l2/channel_e_prior/`. Decided by the maintainer on 2026-09-17, to reach gate G3
+(three channels producing) without making the gate depend on an unevaluated model.
+
+**What it means.** A committed seed file lists compounds the literature has tested against an
+aneuploid or chromosomally unstable state. For each, the channel resolves its curated citations
+against Europe PMC, retrieves the records where the compound and the aneuploidy vocabulary
+co-occur in title or abstract, grades each record from NLM indexing
+(`clinical` / `in_vivo` / `in_vitro` / `ungraded`), drops the retracted, and scores what remains
+as a weighted count. Compounds resolve to a ChEMBL identity through the D7 enrichment zone so L3
+can aggregate them with Channels B and D. Every candidate is tagged
+`endpoint=chemoprevention` (gate G2, D4).
+
+**Why no extraction model, for now.** CLAUDE.md's design for this channel is agentic literature
+mining. That is still the intent, and the extraction step is kept behind an interface. But the
+choice between a local model and the Claude API has not been evaluated, and G3 is due before it
+can be. Shipping the retrieval-and-verification path first means the gate does not rest on an
+unmeasured component, and the evaluation can be decided on numbers afterwards rather than under
+deadline. A pinned local model would arguably be *more* reproducible than a server-side API for
+the Scientific Rigor criterion — which is exactly the kind of claim that should be measured, not
+assumed.
+
+**Why Europe PMC and Crossref.** Europe PMC needs no key, has documented rate limits, and returns
+retraction and correction status directly in `pubTypeList` and `commentCorrectionList` — verified
+on a known retracted record. Crossref resolves DOIs independently and is public-domain metadata.
+Checked on 2026-09-17: Crossref's `update-to` field was **empty** for that same retraction, so
+Europe PMC is the primary retraction signal and Crossref the second opinion, not the reverse.
+
+**The outbound-query exception, and its bound.** Every other external read in this pipeline is a
+whole-file download, because a per-item query would put the subject's data on someone's server
+(`COMPLIANCE.md`). A literature index has no release to download, so this channel queries. The
+exception is bounded in code, not by convention: `literature.refuse_private` rejects any query
+carrying an HPO id, an OMIM id, a genomic coordinate, an HGVS expression, a dbSNP id or an allele
+change, and it runs before the socket opens. Structurally, the module does not import the
+phenotype reader at all, which `tests/test_l2_channel_e.py` asserts from the parsed module.
+
+**What the first real run showed (seed=42).** Of 13 curated compounds, 8 ranked and 5 were
+excluded — 3 unapproved, 2 with no ChEMBL identity. Two findings changed the design:
+
+- **Co-occurrence in one record is not evidence about the two together.** Bortezomib initially
+  ranked first on multiple-myeloma papers that name the drug in one place and chromosomal
+  instability in another. Requiring both in a single sentence dropped its score from 13.0 to
+  2.25 and removed lupus-with-trisomy-X and Down-syndrome-COVID papers from other compounds.
+- **The lexical filters must not be applied to curated citations.** They were, and they discarded
+  the best evidence in the file: the paper that identified chloroquine as aneuploidy-selective
+  never names the compound in its abstract. A curated anchor is now checked for existence and
+  retraction only, and `n_curated_citations_verified` says how much of each rank rests on that.
+
+**What it does not settle.** After filtering, most ranked compounds rest on their curated
+citation alone (`compounds_supported_only_by_curation` in `channel.json`). The candidate set is
+curated, so the channel verifies and ranks what a person chose; it discovers nothing. Direction
+is decided by fixed phrases and cannot tell a finding from a proposal. Grade weights are a
+declared choice, not a measurement. Each of these is a caveat on the channel's output, and each
+is a thing the model evaluation is meant to move.
+
 ## Open
 
 - **Hackathon close date** — unknown, so the 30-day deletion deadline cannot be computed. See

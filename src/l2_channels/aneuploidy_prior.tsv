@@ -1,0 +1,42 @@
+# Curated aneuploidy-stress prior -- the seed set for L2 channel E.
+#
+# WHAT THIS IS. One row per compound that the published literature has tested against an
+# aneuploid or chromosomally unstable cell state. It is a starting list, not a result: the
+# channel ranks these by the verified literature it retrieves for each, and a compound with
+# nothing behind it ranks last or drops out. Nothing here is a claim that a compound works.
+#
+# WHAT THIS IS NOT. Not a diagnosis, not a recommendation, and not the pipeline's finding.
+# The set is curated by a person, so the channel can only verify and grade what a person
+# already chose to list -- stated as a caveat on every output this channel writes. It does
+# not discover a compound nobody entered here.
+#
+# PROVENANCE. Assembled from docs/research/aneuploidy-selective-compounds.md, whose sources
+# are in docs/references.bib. Every anchor DOI below is resolved against Europe PMC at run
+# time and dropped if it does not resolve or has been retracted (CLAUDE.md, Verification).
+#
+# COLUMNS
+#   compound   Molecule name, as an identity to resolve -- one molecule per row. Chloroquine
+#              and hydroxychloroquine are different molecules and get their own rows.
+#   aliases    Synonyms of THE SAME molecule, ';'-separated, OR-ed into the search. Never a
+#              related-but-different compound: that would merge two drugs' evidence.
+#   target     The molecular target, for the rationale and for L4.
+#   axis       The vulnerability the compound is proposed to exploit.
+#   direction  exploit = pressure the aneuploid clone; buffer = relieve aneuploidy stress.
+#   caution    A reason to distrust or exclude this row, carried into every output. Empty
+#              means no caution was recorded, NOT that the compound is safe -- L4 decides.
+#   anchors    Curated citations, 'DOI:<doi>' or 'PMID:<id>', ';'-separated.
+#
+compound	aliases	target	axis	direction	caution	anchors
+chloroquine		lysosomal autophagy	autophagy dependence	exploit		DOI:10.1016/j.cell.2011.01.017
+hydroxychloroquine		lysosomal autophagy	autophagy dependence	exploit	The published aneuploid-selectivity experiments used chloroquine; hydroxychloroquine shares the target but is a distinct molecule, and its own aneuploidy evidence is what this channel counts.	DOI:10.1016/j.cell.2011.01.017
+tanespimycin	17-AAG;17-allylamino-17-demethoxygeldanamycin	HSP90	proteotoxic and chaperone stress	exploit	Cytotoxic and never approved; retained as a mechanistic positive control, not as a candidate for chronic use in a child.	DOI:10.1016/j.cell.2011.01.017;DOI:10.15252/embj.201488648
+bortezomib		26S proteasome	proteostasis load	exploit	Cytotoxic, with peripheral neuropathy and poor CNS penetration; selectivity in non-transformed constitutional aneuploidy is not established.	DOI:10.1126/science.1142210;DOI:10.1038/s41586-020-03114-6
+carfilzomib		26S proteasome	proteostasis load	exploit	Cytotoxic, with cardiotoxicity and poor CNS penetration; same unestablished selectivity as bortezomib.	DOI:10.1038/s41586-020-03114-6
+acadesine	AICAR	AMPK	energy and metabolic stress	exploit		DOI:10.1016/j.cell.2011.01.017;DOI:10.1038/onc.2012.339
+selumetinib		MEK1/2	RAF/MEK/ERK dependence	exploit		DOI:10.1038/s41467-024-52176-x
+trametinib		MEK1/2	RAF/MEK/ERK dependence	exploit		DOI:10.1038/s41467-024-52176-x
+fingolimod	FTY720	sphingosine-1-phosphate receptor	sphingolipid and ceramide metabolism	exploit	The sphingolipid dependency is a yeast result; selectivity in mammalian constitutional aneuploidy is not established, and this compound's anticancer activity is attributed to other mechanisms.	DOI:10.1038/s41586-020-03114-6
+reversine		MPS1 (TTK)	spindle-assembly-checkpoint dependence	exploit	Mechanistically counterproductive here: this proband's candidate gene impairs the spindle-assembly checkpoint already, and the same source reports aneuploid cells are LESS sensitive to short-term chemical SAC inhibition than diploid cells. Listed so the channel records the evidence against it.	DOI:10.1038/s41586-020-03114-6
+AMG 650		KIF18A	mitotic and multipolar-spindle dependence	exploit	Investigational, adult phase 1/2 only, no paediatric data.	DOI:10.1038/s41586-020-03114-6
+RX-3117	fluorocyclopentenyl cytosine	UCK2	1q-trisomy collateral sensitivity	exploit	A cytotoxic antimetabolite, not a chronic preventive; listed for the karyotype-specific concept it demonstrates.	DOI:10.1126/science.adg4521
+3-deazauridine		UCK2	1q-trisomy collateral sensitivity	exploit	A cytotoxic antimetabolite, not a chronic preventive; listed for the karyotype-specific concept it demonstrates.	DOI:10.1126/science.adg4521

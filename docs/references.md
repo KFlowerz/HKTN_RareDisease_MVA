@@ -34,13 +34,19 @@ Cohen-Sharir, Y., McFarland, J. M., Abdusamad, M., Marquis, C., Bernhard, S. V.,
 
 Conlin, L. K., Thiel, B. D., Bonnemann, C. G., Medne, L., Ernst, L. M., Zackai, E. H., Deardorff, M. A., Krantz, I. D., Hakonarson, H., & Spinner, N. B. (2010). Mechanisms of mosaicism, chimerism and uniparental disomy identified by single nucleotide polymorphism array analysis. Human Molecular Genetics, 19(7), 1263–1275. https://doi.org/10.1093/hmg/ddq003
 
+Crossref. (2026). Retrieve metadata: Licensing. Retrieved September 17, 2026, from https://www.crossref.org/documentation/retrieve-metadata/
+
 Cummings, B. B., Karczewski, K. J., Kosmicki, J. A., Seaby, E. G., Watts, N. A., Singer-Berk, M., Mudge, J. M., Karjalainen, J., Satterstrom, F. K., O’Donnell-Luria, A. H., Poterba, T., Seed, C., Solomonson, M., Alföldi, J., Genome Aggregation Database Production Team, Genome Aggregation Database Consortium, Daly, M. J., & MacArthur, D. G. (2020). Transcript expression-aware annotation improves rare variant interpretation. Nature, 581(7809), 452–458. https://doi.org/10.1038/s41586-020-2329-2
 
 Donnelly, N., Passerini, V., Dürrbaum, M., Stingele, S., & Storchová, Z. (2014). HSF1 deficiency and impaired HSP90‐dependent protein folding are hallmarks of aneuploid human cells. The EMBO Journal, 33(20), 2374–2387. https://doi.org/10.15252/embj.201488648
 
 Dürrbaum, M., Kuznetsova, A. Y., Passerini, V., Stingele, S., Stoehr, G., & Storchová, Z. (2014). Unique features of the transcriptional response to model aneuploidy in human cells. BMC Genomics, 15(1). https://doi.org/10.1186/1471-2164-15-139
 
+EMBL-EBI. (2026). Terms of use. Retrieved September 17, 2026, from https://www.ebi.ac.uk/about/terms-of-use/
+
 Ensembl. (2026). Ensembl Canonical transcript (Release 116). Retrieved September 11, 2026, from https://www.ensembl.org/info/genome/genebuild/canonical.html
+
+Ferguson, C., Araújo, D., Faulk, L., Gou, Y., Hamelers, A., Huang, Z., Ide-Smith, M., Levchenko, M., Marinos, N., Nambiar, R., Nassar, M., Parkin, M., Pi, X., Rahman, F., Rogers, F., Roochun, Y., Saha, S., Selim, M., Shafique, Z., … McEntyre, J. (2021). Europe PMC in 2020. Nucleic Acids Research, 49(D1), D1507–D1514. https://doi.org/10.1093/nar/gkaa994
 
 Gargano, M. A., Matentzoglu, N., Coleman, B., Addo-Lartey, E. B., Anagnostopoulos, A. V., Anderton, J., Avillach, P., Bagley, A. M., Bakštein, E., Balhoff, J. P., Baynam, G., Bello, S. M., Berk, M., Bertram, H., Bishop, S., Blau, H., Bodenstein, D. F., Botas, P., Boztug, K., … Robinson, P. N. (2024). The Human Phenotype Ontology in 2024: Phenotypes around the world. Nucleic Acids Research, 52(D1), D1333–D1346. https://doi.org/10.1093/nar/gkad1005
 
@@ -53,6 +59,8 @@ Girish, V., Lakhani, A. A., Thompson, S. L., Scaduto, C. M., Brown, L. M., Hagen
 Guney, E., Menche, J., Vidal, M., & Barábasi, A.-L. (2016). Network-based in silico drug efficacy screening. Nature Communications, 7(1), Article 10331. https://doi.org/10.1038/ncomms10331
 
 Hanks, S., Coleman, K., Reid, S., Plaja, A., Firth, H., FitzPatrick, D., Kidd, A., Méhes, K., Nash, R., Robin, N., Shannon, N., Tolmie, J., Swansbury, J., Irrthum, A., Douglas, J., & Rahman, N. (2004). Constitutional aneuploidy and cancer predisposition caused by biallelic mutations in BUB1B. Nature Genetics, 36(11), 1159–1161. https://doi.org/10.1038/ng1449
+
+Hendricks, G., Tkaczyk, D., Lin, J., & Feeney, P. (2020). Crossref: The sustainable source of community-owned scholarly metadata. Quantitative Science Studies, 1(1), 414–427. https://doi.org/10.1162/qss_a_00022
 
 Human Phenotype Ontology Consortium. (2026a). Human Phenotype Ontology (hp.obo), release 2026-09-01 [Data set]. Retrieved September 17, 2026, from http://purl.obolibrary.org/obo/hp/releases/2026-09-01/hp.obo
 
@@ -184,9 +192,11 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `cummings2020` | doi:10.1038/s41586-020-2329-2 | Crossref | **Author Correction** doi:10.1038/s41586-020-03175-7 — adds a missing consortium member; no change to results (text read via Europe PMC, PMC8064909) | 2026-09-11 |
 | `donnelly2014` | doi:10.15252/embj.201488648 | Crossref | None on record | 2026-09-08 |
 | `durrbaum2014` | doi:10.1186/1471-2164-15-139 | Crossref | None on record | 2026-09-08 |
+| `ferguson2021` | doi:10.1093/nar/gkaa994 | Crossref | None on record | 2026-09-17 |
 | `gargano2024` | doi:10.1093/nar/gkad1005 | Crossref | None on record | 2026-09-17 |
 | `girish2023` | doi:10.1126/science.adg4521 | Crossref | None on record | 2026-09-08 |
 | `guney2016` | doi:10.1038/ncomms10331 | Crossref | None on record | 2026-09-16 |
+| `hendricks2020` | doi:10.1162/qss_a_00022 | Crossref | None on record | 2026-09-17 |
 | `hanks2004` | doi:10.1038/ng1449 | Crossref | None on record | 2026-09-08 |
 | `karczewski2020` | doi:10.1038/s41586-020-2308-7 | Crossref | **Author Correction** doi:10.1038/s41586-020-03174-8 (missing consortium member) and **Addendum** doi:10.1038/s41586-021-03758-y (extends the LoF-tolerance analysis of disease genes). Neither changes the LOFTEE results cited here (text read via Europe PMC, PMC8064911 / PMC8410591) | 2026-09-11 |
 | `kohler2009` | doi:10.1016/j.ajhg.2009.09.003 | Crossref; abstract read via Europe PMC (PMID 19800049) | None on record | 2026-09-17 |
@@ -232,6 +242,8 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `clinvar_reviewstatus` | https://www.ncbi.nlm.nih.gov/clinvar/docs/review_status/ | Review-status-to-star mapping in `src/l0_genomics/clinvar.py` | 2026-09-16 |
 | `ncbi_datapolicy` | https://www.ncbi.nlm.nih.gov/home/about/policies/ | NCBI asserts no restriction on molecular data reuse; submitters may retain rights in their own submissions (Table 4, src/l4_validate/sources.md) | 2026-09-16 |
 | `clinvar_use` | https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ | ClinVar requests attribution when data are redistributed, citing PMID 29165669 | 2026-09-16 |
+| `crossref_metadata_licence` | https://www.crossref.org/documentation/retrieve-metadata/ | Crossref metadata reusable without restriction, the majority CC0; abstracts excepted (Table 7, src/l4_validate/sources.md) | 2026-09-17 |
+| `ebi_terms` | https://www.ebi.ac.uk/about/terms-of-use/ | The terms recorded for Europe PMC in Table 7: attribution expected, provided AS IS without warranty. Europe PMC own copyright page unreadable behind a Cloudflare challenge | 2026-09-17 |
 | `ensemblcanonical` | https://www.ensembl.org/info/genome/genebuild/canonical.html | Ensembl Canonical definition and its relation to MANE Select (release 116) | 2026-09-11 |
 | `gnomad_v411` | https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1.1/vcf/ | Population allele frequencies for the subject's panel alleles in L0, read by whole panel-gene span (decision D8) | 2026-09-17 |
 | `gnomad_policies` | https://gnomad.broadinstitute.org/policies | Primary gnomAD data are CC0; SpliceAI annotations are CC BY-NC 4.0 and are not read (Table 4, src/l4_validate/sources.md) | 2026-09-17 |

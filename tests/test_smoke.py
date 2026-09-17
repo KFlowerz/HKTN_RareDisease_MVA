@@ -52,7 +52,9 @@ STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m not in IMPLEMENTED]
 
 #: Channels already built. A channel moves off the stub list only when it produces a real
 #: ranking from real inputs -- the same one-at-a-time rule the layers follow.
-IMPLEMENTED_CHANNELS = {"src.l2_channels.channel_b_proximity", "src.l2_channels.channel_d_phenotype"}
+IMPLEMENTED_CHANNELS = {"src.l2_channels.channel_b_proximity",
+                        "src.l2_channels.channel_d_phenotype",
+                        "src.l2_channels.channel_e_prior"}
 STUB_CHANNEL_MODULES = [m for m in CHANNEL_MODULES if m not in IMPLEMENTED_CHANNELS]
 
 

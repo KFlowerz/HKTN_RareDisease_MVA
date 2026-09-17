@@ -296,3 +296,46 @@ Channel D's caveats carry this, and the report must.
 feature combination to a third party, and Monarch's website states it runs HotJar and
 Google Analytics. The files are downloaded whole and matched on this machine; see
 [decision D10](../../mngmt/decisions.md).
+
+## Table 7 — literature verification (L2 channel E), added 2026-09-17
+
+Channel E ranks a curated compound list by the literature Europe PMC returns for each, and
+resolves every citation before reporting it. These are the pipeline's **only** outbound
+queries that are not whole-file downloads; what makes that acceptable is that the query
+carries public vocabulary and nothing derived from the subject, enforced in
+`src/l2_channels/literature.py` (`refuse_private`) and asserted in
+`tests/test_l2_literature.py`. Terms read 2026-09-17.
+
+| Role | Source | License | CC-BY-4.0 compatible? | Where it lives |
+|---|---|---|---|---|
+| Record retrieval, identifiers, publication types, MeSH, retraction status | Europe PMC RESTful Web Service | **EMBL-EBI terms of use** (EMBL-EBI hosts the service): free, no key, attribution expected, provided "AS IS" without warranties. Europe PMC's own copyright page could not be read — see below | ✅ For bibliographic metadata | responses cached under `reference_dir/literature/` |
+| Article abstracts (matched locally against fixed patterns) | Europe PMC | Publisher or author copyright; Europe PMC redistributes under each publisher's own terms | ❌ No | **cache only** — never written to an output |
+| DOI resolution and a second retraction check (`update-to`) | Crossref REST API | "Almost all of the metadata we hold is reusable without restriction… considered to be 'facts' which are not copyrightable and are thus in the public domain (CC0)"; Crossref-generated data released as public domain | ✅ Yes | responses cached under `reference_dir/literature/` |
+| Compound identity (ChEMBL id, clinical stage) | Open Targets Platform 26.06 `drug_molecule` | as Table 5 — ChEMBL-derived | ❌ No — treated as SA | `enrichment_dir`, never redistributed |
+
+**Europe PMC's copyright page is unreadable, and that is recorded rather than assumed.**
+Every request to `europepmc.org/Copyright` is answered by a Cloudflare challenge, so the
+page's wording could not be read on 2026-09-17. The terms recorded here are therefore
+EMBL-EBI's, which the service is hosted under and which *were* read, plus the conservative
+treatment of abstracts: they stay in the local cache and no output reproduces them.
+`tests/test_l2_channel_e.py` asserts that abstract text reaches no file the channel writes.
+Revisit this row if the page becomes readable — the same treatment as the OMIM row in
+Table 6.
+
+**What reaches `candidates.tsv`.** The Table 5 identity whitelist (ChEMBL id, drug name,
+type, clinical stage), the channel's own score, the curated `axis`, `target`, `direction`
+and `caution` columns from `src/l2_channels/aneuploidy_prior.tsv` (this project's own
+text), record *counts* per evidence grade, and `endpoint=chemoprevention`.
+
+**What reaches `references.json`.** Bibliographic metadata only — PMID, DOI, title,
+journal, year, publication types, the assigned grade, and retraction status. This is the
+redistributable layer, and it is what lets a reader check every claim the channel makes.
+
+**Rate limits, observed rather than assumed.** Crossref's anonymous pool returned
+`x-rate-limit-limit: 5` per `1s`. One throttle covers both endpoints and is set from the
+tighter of the two limits, a little below it.
+
+**No warranty, no clinical use.** EMBL-EBI provides its resources "AS IS" without
+warranties of any kind and does not guarantee the accuracy of the data nor its suitability
+for any purpose. Nothing this channel produces is a clinical recommendation; see
+[decision D11](../../mngmt/decisions.md).
