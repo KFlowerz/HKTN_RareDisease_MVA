@@ -242,8 +242,30 @@ def build_query(entry: dict, settings: dict) -> str:
         raise ValueError("l2.channel_e.context_terms is empty; a compound name alone would "
                          "retrieve the whole of that drug's literature")
 
+    def render(term: str) -> str:
+        """Quote a phrase; leave a wildcard term bare.
+
+        Europe PMC does **not** expand a wildcard inside quotes. Measured on 2026-09-17,
+        ``TITLE_ABS:"aneuploid*"`` returns 9,711 hits -- exactly what ``TITLE_ABS:"aneuploid"``
+        returns -- while the bare ``TITLE_ABS:aneuploid*`` returns 28,075. Quoting every term
+        therefore silently deleted every wildcard in the config while the query still looked
+        like it had one, and it made the retrieval mean something different from what
+        :func:`.literature.term_pattern` tests locally. A phrase still needs its quotes:
+        unquoted, ``chromosomal instability`` is read as two terms, not one phrase.
+        """
+        term = term.strip()
+        if "*" in term:
+            if any(c.isspace() for c in term):
+                raise ValueError(
+                    f"l2.channel_e term {term!r} has both a wildcard and a space. Europe PMC "
+                    "expands a wildcard only on a bare single term and treats an unquoted "
+                    "phrase as separate terms, so this cannot be expressed; split it into a "
+                    "wildcard term and a quoted phrase.")
+            return f"{field}:{term}"
+        return f'{field}:"{term}"'
+
     def clause(terms):
-        return "(" + " OR ".join(f'{field}:"{t}"' for t in terms) + ")"
+        return "(" + " OR ".join(render(t) for t in terms) + ")"
 
     return f"{clause(names)} AND {clause(context)}"
 
@@ -317,11 +339,18 @@ def classify(pooled, *, require_direction: bool, cooccurrence=None) -> tuple:
               "n_curated": sum(1 for _, o in pooled if o == "curated"),
               "n_withdrawn": 0, "n_adverse_direction": 0, "n_no_cooccurrence": 0,
               "n_no_direction": 0, "n_supporting": 0, "n_supporting_curated": 0}
+    counts["n_uncitable"] = 0
     for record, origin in pooled:
         adverse = literature.matches(record, ADVERSE_PATTERNS)
         support = literature.matches(record, SUPPORT_PATTERNS)
         notes[record.key] = {"support_patterns": list(support),
                              "adverse_patterns": list(adverse)}
+        if not record.citable:
+            # No PMID, no DOI, no Europe PMC id: a reader cannot look it up, so it cannot
+            # carry a claim (CLAUDE.md, Evidence and citations).
+            counts["n_uncitable"] += 1
+            notes[record.key]["excluded"] = "no_resolvable_identifier"
+            continue
         if record.withdrawn:
             counts["n_withdrawn"] += 1
             notes[record.key]["excluded"] = "withdrawn"
@@ -384,7 +413,7 @@ def generate(config: dict) -> None:
     molecules = enrichment.load_molecules(ot_paths["drug_molecule"])
     names, name_stats = enrichment.name_index(ot_paths["drug_molecule"])
 
-    entries, excluded, queries = [], [], []
+    entries, excluded, examined, queries = [], [], [], []
     for row in prior:
         anchors, anchor_report, anchor_provenance = verify_anchors(config, row)
         queries.extend(anchor_provenance)
@@ -429,6 +458,10 @@ def generate(config: dict) -> None:
                  "counts": counts, "notes": notes, "pooled": pooled,
                  "anchor_report": anchor_report, "query": query,
                  "ambiguous_names": ambiguous, "n_anchors_verified": len(anchors)}
+        # Every compound is kept here, ranked or not: the channel-level counts below are
+        # about the literature this run examined, and summing them over ranked compounds
+        # only would undercount exactly the compounds whose citations were dropped.
+        examined.append(entry)
         if not chembl_id:
             excluded.append({**_summary(entry), "reason": "no_chembl_identity"})
             continue
@@ -513,12 +546,20 @@ def generate(config: dict) -> None:
             "compounds_ranked": len(entries),
             "compounds_excluded": len(excluded),
             "records_supporting": sum(e["counts"]["n_supporting"] for e in entries),
-            "records_withdrawn": sum(e["counts"]["n_withdrawn"] for e in entries),
+            # Over every compound examined, not just the ranked ones. A retracted citation
+            # or a genotoxicity paper matters most for a compound that did not make the
+            # table, and counting only survivors would hide it.
+            "records_withdrawn": sum(e["counts"]["n_withdrawn"] for e in examined),
             "records_adverse_direction": sum(e["counts"]["n_adverse_direction"]
-                                             for e in entries),
+                                             for e in examined),
+            "records_without_a_resolvable_identifier": sum(
+                e["counts"]["n_uncitable"] for e in examined),
             "curated_citations_unresolved": sum(
-                1 for e in entries for a in e["anchor_report"]
+                1 for e in examined for a in e["anchor_report"]
                 if a["status"] == "unresolved"),
+            "curated_citations_retracted": sum(
+                1 for e in examined for a in e["anchor_report"]
+                if a["status"] in ("retracted", "expression_of_concern")),
             "compounds_resolved_by_an_ambiguous_synonym": sum(
                 1 for e in entries if e["ambiguous_names"]),
             # The headline honesty number: for these compounds the search added nothing the

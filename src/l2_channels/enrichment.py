@@ -246,38 +246,44 @@ def name_index(paths) -> tuple:
     and L3 aggregates on identifiers, so a name has to become a ChEMBL id somewhere. Doing
     it here keeps that identity the same one Channels B and D used.
 
-    Preferred names win over synonyms and trade names, so ``name`` never loses to another
-    molecule's synonym; among synonyms a collision keeps the first by ChEMBL id, which
-    makes the result order-independent. Collisions are counted, because a name that maps to
-    two molecules is a resolution this channel should not be trusted to have made.
+    A preferred name beats a synonym, so ``name`` never loses to another molecule's
+    synonym. Within each tier a collision keeps the lowest ChEMBL id, so the result does
+    not depend on the order the Parquet parts happen to arrive in -- ``setdefault`` alone
+    made the winner a property of row order, which is not a promise Open Targets makes.
+
+    **Every collision is reported, including one between two preferred names.** That is the
+    worst case, not the benign one: if two molecules are both *called* the same thing,
+    picking either is a coin toss about drug identity. An earlier version subtracted the
+    preferred names from the ambiguous set, which silently reported exactly those as
+    unambiguous.
     """
     preferred: dict = {}
     secondary: dict = {}
-    collisions: set = set()
+    clashed: dict = {"preferred": set(), "secondary": set()}
+
+    def record(tier: str, target: dict, key: str, chembl_id: str) -> None:
+        if not key:
+            return
+        current = target.get(key)
+        if current is None:
+            target[key] = chembl_id
+        elif current != chembl_id:
+            clashed[tier].add(key)
+            target[key] = min(current, chembl_id)
+
     for path in paths:
         for row in _rows(path):
             chembl_id = row.get("id")
             if not chembl_id:
                 continue
-            name = normalise_name(row.get("name") or "")
-            if name:
-                if name in preferred and preferred[name] != chembl_id:
-                    collisions.add(name)
-                preferred.setdefault(name, chembl_id)
+            record("preferred", preferred, normalise_name(row.get("name") or ""), chembl_id)
             for other in _as_list(row.get("synonyms")) + _as_list(row.get("tradeNames")):
-                key = normalise_name(str(other))
-                if not key:
-                    continue
-                if key in secondary and secondary[key] != chembl_id:
-                    collisions.add(key)
-                    secondary[key] = min(secondary[key], chembl_id)
-                else:
-                    secondary.setdefault(key, chembl_id)
+                record("secondary", secondary, normalise_name(str(other)), chembl_id)
+
     index = {**secondary, **preferred}
-    # A preferred name settles its own key, so only a collision among synonyms is left
-    # ambiguous. The names themselves are returned, not just a count: a caller resolving a
-    # handful of compounds needs to know whether *its* names are the ambiguous ones.
-    ambiguous = frozenset(collisions - set(preferred))
+    # A synonym collision that a preferred name settles is not ambiguous -- the preferred
+    # name takes the key outright. A collision between two preferred names always is.
+    ambiguous = frozenset(clashed["preferred"] | (clashed["secondary"] - set(preferred)))
     return index, {"molecule_names": len(preferred), "molecule_synonyms": len(secondary),
                    "ambiguous_synonyms": ambiguous}
 

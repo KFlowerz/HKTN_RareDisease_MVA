@@ -91,8 +91,41 @@ def test_the_query_is_built_from_the_seed_file_and_config_only(tmp_path):
     row = channel.load_prior(_prior(tmp_path, _row(aliases="inv-1")))[0]
     query = channel.build_query(row, channel.DEFAULTS)
     assert '"inventib"' in query and '"inv-1"' in query
-    assert '"aneuploid*"' in query
     literature.refuse_private(query)
+
+
+def test_a_wildcard_term_is_not_quoted_but_a_phrase_is(tmp_path):
+    """Europe PMC does not expand a wildcard inside quotes.
+
+    Measured 2026-09-17: ``TITLE_ABS:"aneuploid*"`` returns 9,711 hits, identical to
+    ``TITLE_ABS:"aneuploid"``, while the bare ``TITLE_ABS:aneuploid*`` returns 28,075.
+    Quoting everything deleted every wildcard in the config while the query still looked
+    like it had one. A phrase keeps its quotes: unquoted it reads as separate terms.
+    """
+    row = channel.load_prior(_prior(tmp_path, _row()))[0]
+    query = channel.build_query(row, {**channel.DEFAULTS,
+                                      "context_terms": ["aneuploid*", "whole-genome doubling"]})
+    assert "TITLE_ABS:aneuploid*" in query
+    assert '"aneuploid*"' not in query
+    assert 'TITLE_ABS:"whole-genome doubling"' in query
+
+
+def test_a_term_with_both_a_wildcard_and_a_space_is_refused(tmp_path):
+    """Europe PMC can express neither reading, so the config cannot mean it."""
+    row = channel.load_prior(_prior(tmp_path, _row()))[0]
+    with pytest.raises(ValueError, match="wildcard and a space"):
+        channel.build_query(row, {**channel.DEFAULTS,
+                                  "context_terms": ["chromosom* instability"]})
+
+
+def test_the_committed_context_terms_all_build(tmp_path):
+    """The shipped config must not contain a term the query builder refuses."""
+    import yaml
+
+    config = yaml.safe_load(Path("config/pipeline.yaml").read_text(encoding="utf-8"))
+    settings = {**channel.DEFAULTS, **config["l2"]["channel_e"]}
+    for row in channel.load_prior():
+        literature.refuse_private(channel.build_query(row, settings))
 
 
 def test_an_empty_context_is_refused(tmp_path):
@@ -183,6 +216,15 @@ def test_a_retrieved_record_mentioning_both_terms_apart_is_excluded():
                       [literature.term_pattern("trisomy")]))
     assert supporting == [] and counts["n_no_cooccurrence"] == 1
     assert notes[apart.key]["excluded"] == "no_sentence_cooccurrence"
+
+
+def test_a_record_with_no_resolvable_identifier_cannot_support_a_candidate():
+    """Every claim carries a citation a reader can resolve (CLAUDE.md)."""
+    nameless = literature.Record(title="Inventib selectively kills aneuploid cells.",
+                                 abstract="Inventib was selective in aneuploid cells.")
+    supporting, counts, _ = channel.classify([(nameless, "retrieved")],
+                                             require_direction=True)
+    assert supporting == [] and counts["n_uncitable"] == 1
 
 
 def test_score_weights_the_grades_it_is_given():
@@ -371,6 +413,42 @@ def test_the_channel_record_says_what_rests_on_curation_alone(monkeypatch, tmp_p
     _, meta, _ = _outputs(config)
     assert meta["counts"]["compounds_supported_only_by_curation"] == 1
     assert meta["counts"]["compounds_ranked"] == 1
+
+
+def test_withdrawn_and_adverse_records_are_counted_for_excluded_compounds_too(monkeypatch,
+                                                                              tmp_path):
+    """A retraction matters most for a compound that did not make the table.
+
+    Two compounds: one ranks, one is dropped for having no supporting record. The dropped
+    one's retracted and genotoxicity papers must still reach the channel-level counts, or
+    the run reports a cleaner literature than it examined.
+    """
+    config = _config(tmp_path)
+    kept = _record(pmid="99000100")
+    withdrawn = _record(pmid="99000101", retracted=True)
+    adverse = _record(pmid="99000102", title="Inventamide is aneugenic.",
+                      abstract="Inventamide induced micronuclei in aneuploid cells.")
+
+    def search(cfg, query, **kw):
+        hits = [kept] if "inventib" in query else [withdrawn, adverse]
+        return list(hits), {"service": "invented", "query": query, "hit_count": len(hits),
+                            "retrieved": "2026-09-17", "response_sha256": "0" * 64,
+                            "records_returned": len(hits), "licence": "invented"}
+
+    _stub(monkeypatch, tmp_path, retrieved=[],
+          prior_rows=(_row(), _row(compound="inventamide", anchors="DOI:10.5555/invented.2")),
+          molecules={"CHEMBL9000001": {"name": "INVENTIB", "drug_type": "Small molecule",
+                                       "clinical_stage": enrichment.APPROVED},
+                     "CHEMBL9000002": {"name": "INVENTAMIDE", "drug_type": "Small molecule",
+                                       "clinical_stage": enrichment.APPROVED}},
+          anchors={"DOI:10.5555/invented.1": kept})
+    monkeypatch.setattr(channel.literature, "search", search)
+    channel.generate(config)
+
+    _, meta, _ = _outputs(config)
+    assert meta["counts"]["compounds_ranked"] == 1
+    assert meta["counts"]["records_withdrawn"] == 1
+    assert meta["counts"]["records_adverse_direction"] == 1
 
 
 def test_the_channel_record_carries_the_queries_and_their_response_hashes(monkeypatch,

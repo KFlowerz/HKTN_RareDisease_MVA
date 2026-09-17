@@ -8,7 +8,9 @@ paper, and a test can never be mistaken for a verified citation.
 
 from __future__ import annotations
 
+import http.client
 import json
+import urllib.error
 
 import pytest
 
@@ -55,12 +57,30 @@ def test_the_refusal_message_does_not_repeat_the_offending_text():
 
 
 @pytest.mark.parametrize("query", [
-    '(TITLE_ABS:"chloroquine") AND (TITLE_ABS:"aneuploid*")',
+    '(TITLE_ABS:chloroquine) AND (TITLE_ABS:aneuploid*)',
     '(TITLE_ABS:"BUB1B" OR TITLE_ABS:"BUBR1") AND (TITLE_ABS:"trisomy")',
     'EXT_ID:21315436 AND SRC:"MED"',
 ])
 def test_allows_a_query_of_public_vocabulary(query):
     literature.refuse_private(query)
+
+
+@pytest.mark.parametrize("doi", [
+    # An AACR DOI ends in something shaped exactly like chromosome 13 at position 1174.
+    "10.1158/0008-5472.CAN-13-1174",
+    "10.1158/1078-0432.CCR-20-1234",
+    # A suffix containing '.g.' reads as an HGVS genomic expression.
+    "10.1002/j.g.12345",
+])
+def test_a_public_doi_is_not_mistaken_for_patient_data(doi):
+    """A guard that cries wolf on a citation gets widened until it stops guarding."""
+    literature.refuse_private(f"DOI:{doi}")
+
+
+def test_a_coordinate_beside_a_doi_is_still_refused():
+    """Masking DOIs must not blind the check to a coordinate elsewhere in the query."""
+    with pytest.raises(ValueError, match="genomic coordinate"):
+        literature.refuse_private('DOI:"10.1158/0008-5472.CAN-13-1174" OR "chr15:40161020"')
 
 
 def test_search_checks_the_query_before_any_request(monkeypatch, tmp_path):
@@ -115,7 +135,21 @@ def test_a_record_missing_every_optional_block_still_parses():
     """Preprints and unindexed records arrive without MeSH, types or a journal."""
     record = literature.parse_record({"id": "99000009", "source": "PPR"})
     assert record.mesh == () and record.pub_types == () and record.journal == ""
-    assert record.key == "99000009" or record.key == ""
+    assert record.key == "PPR:99000009"
+    assert record.citable, "Europe PMC's own id is a resolvable handle"
+
+
+def test_a_record_with_no_identifier_at_all_is_not_citable():
+    """A claim needs a citation a reader can resolve; a title is not one."""
+    record = literature.parse_record({"title": "An invented study with no identifiers."})
+    assert not record.citable and record.key == ""
+
+
+def test_the_deduplication_key_never_falls_back_to_the_title():
+    """Two unrelated records sharing a title must not collapse into one."""
+    a = literature.parse_record({"id": "99000010", "source": "PPR", "title": "Same title."})
+    b = literature.parse_record({"id": "99000011", "source": "PPR", "title": "Same title."})
+    assert a.key != b.key
 
 
 # -------------------------------------------------------------------------- grading
@@ -254,14 +288,63 @@ def test_fetch_identifier_returns_nothing_for_an_unresolvable_citation(monkeypat
     assert record is None and provenance["hit_count"] == 0
 
 
-def test_crossref_reports_an_unresolvable_doi_without_raising(monkeypatch, tmp_path):
-    """Europe PMC has already established the record; Crossref is the second opinion."""
+@pytest.mark.parametrize("error", [
+    ValueError("no such work"),
+    urllib.error.URLError("unreachable"),
+    TimeoutError("read timed out"),          # socket.timeout: an OSError, NOT a URLError
+    http.client.HTTPException("truncated"),
+])
+def test_crossref_survives_any_transport_failure(monkeypatch, tmp_path, error):
+    """Europe PMC has already established the record; Crossref is the second opinion.
+
+    A read timeout is the case that matters: ``socket.timeout`` is a ``TimeoutError``,
+    which is an ``OSError`` but not a ``URLError``, so the narrower spelling let a slow
+    Crossref kill the whole channel.
+    """
     def refuse(url, timeout=60):
-        raise ValueError("no such work")
+        raise error
 
     monkeypatch.setattr(literature, "_get_json", refuse)
     assert literature.crossref({"reference_dir": str(tmp_path)},
                                "10.5555/missing")["resolved"] is False
+
+
+def test_a_crossref_outage_is_not_cached(monkeypatch, tmp_path):
+    """Otherwise one bad minute makes a good DOI unresolvable for the life of the cache.
+
+    Worse, a retraction the publisher deposits later would never be seen, because the
+    lookup that would have found it never runs again.
+    """
+    config = {"reference_dir": str(tmp_path)}
+    calls = []
+
+    def flaky(url, timeout=60):
+        calls.append(url)
+        if len(calls) == 1:
+            raise urllib.error.URLError("transient")
+        return {"message": {"DOI": "10.5555/invented.1", "title": ["Recovered"],
+                            "update-to": [{"type": "retraction", "DOI": "10.5555/r"}]}}
+
+    monkeypatch.setattr(literature, "_get_json", flaky)
+    assert literature.crossref(config, "10.5555/invented.1")["resolved"] is False
+    second = literature.crossref(config, "10.5555/invented.1")
+    assert len(calls) == 2, "the failure was cached instead of retried"
+    assert second["resolved"] is True
+    assert second["update_to"][0]["type"] == "retraction"
+
+
+def test_a_successful_crossref_lookup_is_cached(monkeypatch, tmp_path):
+    calls = []
+
+    def once(url, timeout=60):
+        calls.append(url)
+        return {"message": {"DOI": "10.5555/invented.1", "title": ["A work"]}}
+
+    monkeypatch.setattr(literature, "_get_json", once)
+    config = {"reference_dir": str(tmp_path)}
+    literature.crossref(config, "10.5555/invented.1")
+    literature.crossref(config, "10.5555/invented.1")
+    assert len(calls) == 1
 
 
 def test_the_response_cache_lives_outside_the_repository(tmp_path):

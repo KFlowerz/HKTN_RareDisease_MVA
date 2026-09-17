@@ -122,6 +122,44 @@ def test_load_molecules_keys_on_the_chembl_id(monkeypatch) -> None:
     assert molecules["CHEMBL1"]["clinical_stage"] == "APPROVAL"
 
 
+def test_name_index_prefers_a_name_over_another_molecule_s_synonym(monkeypatch) -> None:
+    _fake_rows(monkeypatch, {"m": [
+        {"id": "CHEMBL1", "name": "INVENTEDAZOLE", "synonyms": ["inv-1"]},
+        {"id": "CHEMBL2", "name": "OTHERAZOLE", "synonyms": ["inventedazole"]},
+    ]})
+    index, stats = enrichment.name_index(["m"])
+    assert index["inventedazole"] == "CHEMBL1"
+    assert index["inv 1"] == "CHEMBL1"
+    # CHEMBL2's synonym lost to CHEMBL1's preferred name, which settles the key outright.
+    assert "inventedazole" not in stats["ambiguous_synonyms"]
+
+
+def test_name_index_reports_two_molecules_sharing_a_preferred_name(monkeypatch) -> None:
+    """The worst collision, not the benign one: picking either is a coin toss on identity.
+
+    An earlier version subtracted preferred names from the ambiguous set, which reported
+    exactly this case as unambiguous.
+    """
+    _fake_rows(monkeypatch, {"m": [
+        {"id": "CHEMBL2", "name": "INVENTEDAZOLE"},
+        {"id": "CHEMBL1", "name": "inventedazole"},
+    ]})
+    index, stats = enrichment.name_index(["m"])
+    assert "inventedazole" in stats["ambiguous_synonyms"]
+    assert index["inventedazole"] == "CHEMBL1", "the winner must not depend on row order"
+
+
+def test_name_index_is_independent_of_row_order(monkeypatch) -> None:
+    rows = [{"id": "CHEMBL9", "synonyms": ["shared"]},
+            {"id": "CHEMBL3", "synonyms": ["shared"]}]
+    _fake_rows(monkeypatch, {"m": rows})
+    forwards, _ = enrichment.name_index(["m"])
+    _fake_rows(monkeypatch, {"m": list(reversed(rows))})
+    backwards, stats = enrichment.name_index(["m"])
+    assert forwards["shared"] == backwards["shared"] == "CHEMBL3"
+    assert "shared" in stats["ambiguous_synonyms"]
+
+
 def test_ensembl_index_filters_on_the_alias_source(tmp_path) -> None:
     path = tmp_path / "aliases.txt"
     path.write_text(

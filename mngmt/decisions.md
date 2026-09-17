@@ -562,6 +562,34 @@ excluded — 3 unapproved, 2 with no ChEMBL identity. Two findings changed the d
   never names the compound in its abstract. A curated anchor is now checked for existence and
   retraction only, and `n_curated_citations_verified` says how much of each rank rests on that.
 
+**Corrected after a multi-agent review, 2026-09-17.** Two of the seven findings changed what
+the channel does rather than how it reads:
+
+- **The wildcards in the config were dead.** `build_query` quoted every term, and Europe PMC
+  does not expand a wildcard inside quotes: measured that day, `TITLE_ABS:"aneuploid*"` returns
+  9,711 hits — exactly what `TITLE_ABS:"aneuploid"` returns — while the bare
+  `TITLE_ABS:aneuploid*` returns 28,075. The query looked like it had a wildcard and did not,
+  and it no longer meant the same thing as the local `term_pattern` check. Wildcard terms are
+  now unquoted and phrases still quoted, since an unquoted phrase reads as separate terms. A
+  term with both is refused: Europe PMC can express neither reading. **Retrieval widened and
+  the ranking did not move** — chloroquine 1 → 4 retrieved records, reversine 12 → 17,
+  tanespimycin 6 → 8 — because the sentence co-occurrence rule absorbed the additional hits.
+  That the two changes cancel is evidence the precision filter is doing what it claims.
+- **A Crossref outage was cached permanently.** A failed lookup was written to the response
+  cache like any other answer, so a DOI Crossref could not resolve once would have stayed
+  unresolved for the life of the cache, and a retraction deposited later would never be seen.
+  Failures are no longer cached. Relatedly, a read timeout (`socket.timeout`, an `OSError` but
+  not a `URLError`) escaped the handler and would have killed the channel.
+
+The other five: a public AACR-style DOI tripped the patient-data guard, because
+`10.1158/0008-5472.CAN-13-1174` ends in something shaped like chromosome 13 at position 1174
+(DOIs are now masked before the coordinate and HGVS checks — a guard that cries wolf on a
+citation gets widened until it stops guarding); two molecules sharing a preferred name were
+reported as unambiguous and resolved by Parquet row order; a record with no PMID, DOI or
+Europe PMC id could be counted as support although no reader could look it up; and the
+channel-level counts of withdrawn and adverse records summed over ranked compounds only,
+hiding exactly the compounds whose citations were dropped.
+
 **What it does not settle.** After filtering, most ranked compounds rest on their curated
 citation alone (`compounds_supported_only_by_curation` in `channel.json`). The candidate set is
 curated, so the channel verifies and ranks what a person chose; it discovers nothing. Direction

@@ -51,7 +51,9 @@ Guardrail
 from __future__ import annotations
 
 import hashlib
+import http.client
 import json
+import logging
 import re
 import time
 import urllib.error
@@ -62,6 +64,8 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from .. import refcache
+
+LOGGER = logging.getLogger(__name__)
 
 EUROPEPMC = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 CROSSREF = "https://api.crossref.org/works/"
@@ -103,12 +107,23 @@ CROSSREF_LICENCE = ("Crossref REST API (terms read 2026-09-17): metadata is reus
 PRIVATE_PATTERNS = (
     (re.compile(r"\bHP:\d{7}\b", re.I), "an HPO term identifier"),
     (re.compile(r"\bOMIM:?\d{6}\b", re.I), "an OMIM identifier"),
-    (re.compile(r"\b(?:chr)?(?:[1-9]|1[0-9]|2[0-2]|X|Y|MT)[:-]\d{3,}\b", re.I),
-     "a genomic coordinate"),
     (re.compile(r"\b[ACGT]{1,}>[ACGT]{1,}\b"), "a variant allele change"),
-    (re.compile(r"\b(?:c|p|g|m|n)\.[0-9A-Za-z_*+>-]{3,}\b"), "an HGVS expression"),
     (re.compile(r"\brs\d{3,}\b", re.I), "a dbSNP identifier"),
 )
+
+#: Checked only after DOIs are masked out -- see :func:`refuse_private`. A DOI's suffix is
+#: arbitrary publisher text and collides with both shapes: ``10.1158/0008-5472.CAN-13-1174``
+#: ends in ``13-1174``, which reads as chromosome 13 at position 1174, and a suffix
+#: containing ``.g.`` reads as an HGVS genomic expression.
+STRUCTURAL_PATTERNS = (
+    (re.compile(r"\b(?:chr)?(?:[1-9]|1[0-9]|2[0-2]|X|Y|MT)[:-]\d{3,}\b", re.I),
+     "a genomic coordinate"),
+    (re.compile(r"\b(?:c|p|g|m|n)\.[0-9A-Za-z_*+>-]{3,}\b"), "an HGVS expression"),
+)
+
+#: A DOI, for masking before the structural patterns run. Deliberately greedy to the next
+#: whitespace or quote: the whole suffix is publisher-chosen and none of it is a coordinate.
+DOI_TOKEN = re.compile(r"\b10\.\d{4,9}/[^\s\"')\]]+")
 
 #: Europe PMC publication types that mark a record as withdrawn from the literature.
 RETRACTED_PUB_TYPES = {"retracted publication", "retraction of publication"}
@@ -154,6 +169,10 @@ class Record:
     module guardrail and :func:`reference`.
     """
 
+    #: Europe PMC's own record id, with :attr:`source` the database it came from (``MED``,
+    #: ``PPR`` for a preprint, ``PAT``…). Kept because a preprint often has neither a PMID
+    #: nor a DOI, and a record a reader cannot look up must not be scored as evidence.
+    epmc_id: str = ""
     pmid: str = ""
     pmcid: str = ""
     doi: str = ""
@@ -170,8 +189,24 @@ class Record:
 
     @property
     def key(self) -> str:
-        """Stable identity for de-duplication: the PMID, else the DOI, else the title."""
-        return self.pmid or self.doi or self.title.lower()
+        """Stable identity for de-duplication: PMID, else DOI, else Europe PMC's own id.
+
+        The title is deliberately *not* a fallback: two records sharing a title are usually
+        the same work, but a record identified only by its title cannot be looked up by a
+        reader, and :attr:`citable` refuses it as evidence.
+        """
+        return self.pmid or self.doi or (f"{self.source}:{self.epmc_id}"
+                                         if self.epmc_id else "")
+
+    @property
+    def citable(self) -> bool:
+        """Whether a reader can resolve this record from what the channel publishes.
+
+        Every claim must carry a citation that resolves (CLAUDE.md). A record with no PMID,
+        no DOI and no Europe PMC id is not one, whatever its title says, so it is not
+        counted as support.
+        """
+        return bool(self.pmid or self.doi or self.epmc_id)
 
     @property
     def withdrawn(self) -> bool:
@@ -182,14 +217,22 @@ class Record:
 def refuse_private(query: str) -> None:
     """Raise if a query contains anything derived from the subject.
 
+    DOIs are masked before the coordinate and HGVS patterns run. A DOI suffix is arbitrary
+    publisher text: ``10.1158/0008-5472.CAN-13-1174`` ends in something shaped exactly like
+    chromosome 13 at position 1174. Without the mask, citing an AACR paper in the seed file
+    would fail the whole channel with a patient-data error about a public DOI -- a guard
+    that cries wolf gets widened until it stops guarding.
+
     Raises:
         ValueError: On an HPO id, an OMIM id, a genomic coordinate, an allele change, an
             HGVS expression or a dbSNP id. The message names the category, never the text
             that matched -- an error string is the one place patient data would escape a
             guard designed to stop exactly that.
     """
-    for pattern, description in PRIVATE_PATTERNS:
-        if pattern.search(query):
+    checks = ([(p, d, query) for p, d in PRIVATE_PATTERNS]
+              + [(p, d, DOI_TOKEN.sub(" ", query)) for p, d in STRUCTURAL_PATTERNS])
+    for pattern, description, haystack in checks:
+        if pattern.search(haystack):
             raise ValueError(
                 f"refusing to send a literature query containing {description}. Queries in "
                 "this channel are built from public vocabulary only -- compound names, gene "
@@ -270,6 +313,7 @@ def parse_record(raw: dict) -> Record:
     if isinstance(info, dict) and isinstance(info.get("journal"), dict):
         journal = _text(info["journal"].get("title"))
     return Record(
+        epmc_id=_text(raw.get("id")),
         pmid=_text(raw.get("pmid")),
         pmcid=_text(raw.get("pmcid")),
         doi=_text(raw.get("doi")).lower(),
@@ -383,27 +427,45 @@ def crossref(config: dict, doi: str) -> dict:
     (retractions and corrections are recorded there when the publisher deposits them).
     An unresolvable DOI returns ``{"resolved": False}``; a service error is not fatal here,
     because Europe PMC has already established that the record exists.
+
+    **A failure is never cached.** ``_cached`` would otherwise write the outage to disk and
+    every later run would reuse it, so a DOI that Crossref could not answer once would stay
+    "unresolved" for good -- and a retraction the publisher deposits next month would never
+    be seen. Only a successful lookup is written.
     """
     digest = hashlib.sha256(f"crossref:{doi.lower()}".encode("utf-8")).hexdigest()
     path = cache_dir(config) / f"crossref.{digest}.json"
+    if path.exists():
+        stored = json.loads(path.read_text(encoding="utf-8"))
+        return {**stored["payload"], "retrieved": stored["retrieved"],
+                "licence": CROSSREF_LICENCE}
 
-    def fetch() -> dict:
-        try:
-            message = _get_json(CROSSREF + urllib.parse.quote(doi, safe=""))["message"]
-        except (urllib.error.HTTPError, urllib.error.URLError, KeyError, ValueError):
-            return {"resolved": False}
-        updates = [{"type": _text(u.get("type")), "doi": _text(u.get("DOI"))}
-                   for u in (message.get("update-to") or []) if isinstance(u, dict)]
-        titles = message.get("title") or []
-        containers = message.get("container-title") or []
-        parts = ((message.get("issued") or {}).get("date-parts") or [[]])[0]
-        return {"resolved": True, "doi": _text(message.get("DOI")).lower(),
-                "title": _text(titles[0]) if titles else "",
-                "container": _text(containers[0]) if containers else "",
-                "year": str(parts[0]) if parts else "",
-                "type": _text(message.get("type")), "update_to": updates}
+    try:
+        message = _get_json(CROSSREF + urllib.parse.quote(doi, safe=""))["message"]
+    # OSError covers URLError and a read timeout alike -- socket.timeout is TimeoutError,
+    # which is an OSError but NOT a URLError, so the narrower spelling let a slow response
+    # kill the channel. HTTPException covers a malformed or truncated reply.
+    except (OSError, http.client.HTTPException, KeyError, ValueError, TypeError) as exc:
+        LOGGER.warning("Crossref did not answer for a DOI (%s); Europe PMC has already "
+                       "resolved the record, so this is reported, not fatal",
+                       type(exc).__name__)
+        return {"resolved": False, "update_to": [], "retrieved": "",
+                "licence": CROSSREF_LICENCE}
 
-    payload, retrieved = _cached(path, fetch)
+    updates = [{"type": _text(u.get("type")), "doi": _text(u.get("DOI"))}
+               for u in (message.get("update-to") or []) if isinstance(u, dict)]
+    titles = message.get("title") or []
+    containers = message.get("container-title") or []
+    parts = ((message.get("issued") or {}).get("date-parts") or [[]])[0]
+    payload = {"resolved": True, "doi": _text(message.get("DOI")).lower(),
+               "title": _text(titles[0]) if titles else "",
+               "container": _text(containers[0]) if containers else "",
+               "year": str(parts[0]) if parts else "",
+               "type": _text(message.get("type")), "update_to": updates}
+    retrieved = date.today().isoformat()
+    path.write_text(json.dumps({"retrieved": retrieved, "fetched_utc":
+                                datetime.now(timezone.utc).isoformat(),
+                                "payload": payload}, sort_keys=True), encoding="utf-8")
     return {**payload, "retrieved": retrieved, "licence": CROSSREF_LICENCE}
 
 
@@ -485,7 +547,8 @@ def matches(record: Record, patterns) -> tuple:
 
 def reference(record: Record) -> dict:
     """The publishable view of a record: bibliographic metadata and status, no abstract."""
-    return {"pmid": record.pmid, "doi": record.doi, "title": record.title,
+    return {"pmid": record.pmid, "doi": record.doi, "epmc_id": record.epmc_id,
+            "title": record.title,
             "journal": record.journal, "year": record.year, "source": record.source,
             "pub_types": list(record.pub_types), "grade": grade(record),
             "retracted": record.retracted,
