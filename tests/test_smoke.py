@@ -42,11 +42,12 @@ HELPER_MODULES = [
 ]
 
 
-#: Layers still unimplemented end to end. L0 and L1 are absent: both are implemented and
-#: both need real input, so an empty config fails on the missing input rather than on an
-#: unimplemented body. Layers move off this list as they are built, one at a time and
-#: deliberately.
-IMPLEMENTED = {"src.l0_genomics.run", "src.l1_target.run"}
+#: Layers still unimplemented end to end. L0, L1 and the L2 runner are absent: each is
+#: implemented and needs real input, so an empty config fails on the missing input rather
+#: than on an unimplemented body. Layers move off this list as they are built, one at a
+#: time and deliberately. (The L2 *runner* is built; most channels behind it are not --
+#: see IMPLEMENTED_CHANNELS.)
+IMPLEMENTED = {"src.l0_genomics.run", "src.l1_target.run", "src.l2_channels.run"}
 STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m not in IMPLEMENTED]
 
 #: Channels already built. A channel moves off the stub list only when it produces a real
@@ -78,6 +79,15 @@ def test_l0_is_partially_implemented() -> None:
     assert callable(l0.run)
     with pytest.raises(KeyError):
         l0.run({})
+
+
+def test_l2_runner_requires_a_channel_map() -> None:
+    """The L2 runner refuses a config with no channel toggles instead of running nothing."""
+    l2 = importlib.import_module("src.l2_channels.run")
+
+    assert callable(l2.run)
+    with pytest.raises(ValueError, match="channels"):
+        l2.run({})
 
 
 def test_l1_requires_a_causal_gene() -> None:

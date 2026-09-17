@@ -66,6 +66,10 @@ REQUIRED_KEYS = ("seed", "data_dir", "results_dir", "channels")
 #: L2 channels or the paid L3 reasoning step.
 MANIFEST_NAME = "_manifest.json"
 
+#: Layers whose output directory is not named after the layer. L2 writes ``results/l2/``,
+#: the path the channels and the delivery plan's gate G3 already name.
+LAYER_OUTPUT_DIRS = {"l2_channels": "l2"}
+
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH) -> dict:
     """Load and validate the pipeline configuration.
@@ -260,7 +264,7 @@ def run(config: dict, *, resume: bool = False, only: str | None = None) -> None:
             _write_manifest(results_dir, manifest)
             raise
 
-        layer_dir = results_dir / name
+        layer_dir = results_dir / LAYER_OUTPUT_DIRS.get(name, name)
         artifacts = (
             sorted(str(p.relative_to(results_dir)) for p in layer_dir.rglob("*") if p.is_file())
             if layer_dir.is_dir()
