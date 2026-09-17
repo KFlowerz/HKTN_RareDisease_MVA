@@ -1,8 +1,9 @@
 """Smoke tests: every layer imports, every ``run()`` is a callable stub.
 
 These do not test behavior -- there is none yet. They guard the scaffold's two
-invariants: the package tree is importable, and the config's two open decisions
-(``causal_gene``, ``therapeutic_endpoint``) have not been quietly filled in.
+invariants: the package tree is importable, and the config's two gate decisions
+(``causal_gene`` at G1, ``therapeutic_endpoint`` at G2) hold values a person recorded,
+never values someone quietly filled in.
 """
 
 from __future__ import annotations
@@ -146,17 +147,38 @@ def test_channel_registry_covers_config_channels() -> None:
     assert set(config["channels"]) == set(CHANNEL_REGISTRY)
 
 
-def test_causal_gene_is_still_a_finding() -> None:
-    """``causal_gene`` must not be hardcoded.
+def test_causal_gene_is_a_recorded_finding() -> None:
+    """``causal_gene`` holds a gene a person decided at G1, traceable to L0's evidence.
 
-    It is a finding from L0, not a setting. A value here before L0 has run means
-    someone guessed, which would silently fabricate the scientific premise of the run.
-    When L0 does produce a call, this test changes to assert the config matches L0's
-    output artifact -- it does not get deleted.
+    This replaces an assertion that it was ``None``. Gate G1 passed on 2026-09-17 (D9),
+    so "still null" is no longer the invariant -- but the reason for the original test
+    has not gone away: a gene nobody recorded is indistinguishable from a gene someone
+    guessed. So the value must be a panel gene, must be named in a G1 decision, and --
+    where L0's artifact exists on this machine -- must be one of L0's candidates. The
+    artifact is gitignored, so on a fresh clone that last check is skipped, not faked.
     """
+    import json
+
+    from src.l0_genomics.run import SAC_PANEL
+
     config = yaml.safe_load((REPO_ROOT / "config" / "pipeline.yaml").read_text())
-    assert config["causal_gene"] is None
+    gene = config["causal_gene"]
     assert config["seed"] == 42
+
+    assert gene in SAC_PANEL, f"causal_gene {gene!r} is not a panel gene"
+    decisions = (REPO_ROOT / "mngmt" / "decisions.md").read_text(encoding="utf-8")
+    assert "Gate G1" in decisions and f"`causal_gene: {gene}`" in decisions, (
+        f"causal_gene is {gene!r} but no G1 decision in mngmt/decisions.md records it"
+    )
+
+    call = REPO_ROOT / config.get("results_dir", "results") / "l0_genomics" / "causal_gene_call.json"
+    if not call.exists():
+        pytest.skip("L0 has not been run on this machine; the candidate check needs its artifact")
+    candidates = json.loads(call.read_text(encoding="utf-8"))["candidate_genes"]
+    assert gene in candidates, (
+        f"causal_gene {gene!r} is not among L0's current candidates {candidates} -- "
+        "G1 is reopened, not silently updated (D9)"
+    )
 
 
 def test_therapeutic_endpoint_is_decided_and_documented() -> None:

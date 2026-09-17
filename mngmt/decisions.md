@@ -359,15 +359,71 @@ biallelic.
 
 ---
 
+## D9 — Gate G1: `causal_gene` is BUB1B (2026-09-17)
+
+Gate G1. `causal_gene: BUB1B` in [config/pipeline.yaml](../config/pipeline.yaml). Decided by the
+maintainer on 2026-09-17, as drafted, after reviewing the L0 evidence below. L0 proposed; a person
+decided — the pipeline never set this value itself.
+
+The evidence: `results/l0_genomics/causal_gene_call.json` (seed=42), with D6's
+`clinvar_crossref.json` and D8's `gnomad_frequencies.json`. Stated here at category level on
+purpose: exact alleles, record ids and counts stay in those gitignored artifacts, because in a
+population of roughly 50 patients a specific variant can identify a child.
+
+**For** (pipeline results, seed=42, ClinVar fileDate 2026-09-13, gnomAD v4.1.1):
+- Of the six panel genes, only one carries any PASS loss-of-function allele (`per_gene` in
+  `causal_gene_call.json`).
+- That allele truncates the protein on the MANE Select transcript, outside the last exon, and
+  ClinVar holds it as pathogenic with two-star review status for mosaic variegated aneuploidy
+  syndrome 1 (`clinvar_crossref.json`).
+- The second allele is a missense variant in the protein kinase domain, residues 766–1050 of
+  the 1,050-residue protein (The UniProt Consortium, 2026; matched to the MANE Select
+  translation's length). It has no ClinVar record, and gnomAD reports it extremely rare and
+  never homozygous, at a position both gnomAD data sets sampled
+  (`gnomad_frequencies.json`).
+- The pattern is the reported one. BUB1B was established as an MVA gene through truncating and
+  missense mutations (Hanks et al., 2004), and in patients with biallelic mutations "a missense
+  mutation pairs with a truncating mutation", with the missense change "consistently" in or near
+  the BUBR1 kinase domain (Suijkerbuijk et al., 2010). Both quotations are from the abstracts;
+  the full texts were not read.
+
+**Against, or unsettled** — carried into the report wherever the call is used:
+- **Phase.** The pair is unphased. With no parental samples and no recontact, a cis arrangement
+  — both on one copy, the other intact — cannot be excluded. This is the largest remaining
+  uncertainty and no available data can close it.
+- **The missense allele is untested.** The literature supports the *pattern*; nothing shows
+  *this* change impairs BUBR1. Rarity is necessary, not sufficient.
+- **Unseen second hits.** Copy number, structural, deep-intronic and mosaic variants are not
+  assessed from a called VCF (`caveats` in `causal_gene_call.json`).
+- **No detectable constitutional aneuploidy.** `aneuploidy_burden.json` (seed=42) reports every
+  chromosome as `baseline` or `below_detection_limit`. This does not exclude low-level mosaicism
+  below the method's limit, but it is not supporting evidence, and the report must say so.
+
+**What it does and does not mean.** It fixes the gene the drug search is organised around.
+It is not a diagnosis, not a classification of either allele, and not a clinical statement
+([COMPLIANCE.md](../COMPLIANCE.md)).
+
+**Why decide now rather than wait.** No data this project may use can close the largest
+uncertainty: phase needs parental samples or recontact, both excluded. Leaving G1 open would not
+make the call more certain; it would leave every downstream layer running on the development
+fixture instead of this child's disease.
+
+**Obliges.**
+
+- The four uncertainties above travel with the gene into the report, the video and every
+  candidate page. The call is never described as a diagnosis or as "confirmed".
+- L1 and every L2 channel are re-run against BUB1B; results produced on the development fixture
+  are not reported as this child's.
+- `tests/test_smoke.py` asserts the configured gene is a panel gene recorded in this log, and,
+  where L0's artifact exists locally, that it is one of L0's candidates — so the value cannot
+  drift from the evidence without a failing test.
+- Revisit if L0 is re-run and its candidates change (a new ClinVar or gnomAD release, a panel
+  change, a corrected VCF). A changed candidate list reopens G1; it does not silently update it.
+
+---
+
 ## Open
 
-- **`causal_gene`** (gate G1) — still `null`. A finding from L0, never a setting. The evidence is
-  assembled: `results/l0_genomics/causal_gene_call.json` (seed=42) reports one gene with a LoF
-  allele paired with a protein-altering second allele; D6's cross-reference
-  (`clinvar_crossref.json`) says what ClinVar holds about each, and D8's lookup
-  (`gnomad_frequencies.json`) how often gnomAD observed them. What the evidence cannot settle is
-  recorded with it: the pair is unphased, and the second allele is absent from ClinVar. G1 is a
-  person reading that and deciding.
 - **Hackathon close date** — unknown, so the 30-day deletion deadline cannot be computed. See
   [docs/data_custody.md](../docs/data_custody.md).
 - **APA title casing** in [docs/references.md](../docs/references.md) — Crossref preserves publisher

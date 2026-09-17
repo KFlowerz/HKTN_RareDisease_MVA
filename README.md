@@ -88,11 +88,14 @@ pytest -q                         # smoke test: every layer imports, run() is ca
 
 ## Configuration
 
-[config/pipeline.yaml](config/pipeline.yaml) drives everything. Two fields are deliberately `null` and
-**must not be hardcoded**:
+[config/pipeline.yaml](config/pipeline.yaml) drives everything. Two fields are gate decisions, set by
+a person from recorded evidence and **never hardcoded or guessed**:
 
-- `causal_gene` — set only after L0 / Track-1 reconciliation.
-- `therapeutic_endpoint` — the primary open scientific decision:
+- `causal_gene` — `BUB1B`, decided at gate G1 on 2026-09-17 from L0's candidate call
+  ([decision D9](mngmt/decisions.md)). A research premise, not a diagnosis; its uncertainties are
+  recorded with it.
+- `therapeutic_endpoint` — `chemoprevention`, meaning *secondary* prevention, decided at gate G2 on
+  2026-09-08 ([decision D4](mngmt/decisions.md)). The admissible values:
   - `chemoprevention` — aneuploidy-buffering; remove pre-malignant clones
   - `symptomatic` — phenotype-directed
   - `mitotic_fidelity` — restore the SAC; largely undruggable, discuss-only
@@ -112,7 +115,7 @@ Individual channels are toggled under `channels:`.
 ## Repository layout
 
 ```
-├── config/pipeline.yaml       # seed, paths, causal_gene (null), endpoint (null), channel toggles
+├── config/pipeline.yaml       # seed, paths, causal_gene (G1), endpoint (G2), channel toggles
 ├── docs/architecture.md       # full architecture write-up
 ├── src/
 │   ├── pipeline.py            # orchestrator

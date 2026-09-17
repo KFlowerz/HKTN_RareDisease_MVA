@@ -20,7 +20,11 @@ reference_dir: ~/.cache/mva-track2/reference
 # See src/l2_channels/enrichment.py and src/l4_validate/sources.md Table 5.
 enrichment_dir: ~/.cache/mva-track2/enrichment
 
-causal_gene: null            # still open -- set only from L0's call, never guessed
+# Gate G1, decided 2026-09-17 (mngmt/decisions.md D9) from L0's candidate call and its
+# ClinVar and gnomAD evidence. A research premise for the drug search, NOT a diagnosis:
+# the pair is unphased, and D9's uncertainties travel with this value into every output.
+# Change it only through a new recorded decision.
+causal_gene: BUB1B
 
 # L0 variant annotation runs LOCALLY -- no patient variant may leave the machine
 # (COMPLIANCE.md), which rules out Ensembl's VEP REST API. The snpEff version is pinned in

@@ -21,10 +21,12 @@ are now in [`../references.bib`](../references.bib) with keys, and rendered in
 
 **Scope limits — this document presupposes two decisions the pipeline exists to make.**
 Its original title named "BUB1B & TRIP13 Genotypes" and its framing assumes
-`therapeutic_endpoint = chemoprevention`. Both are `null` in
-[`../../config/pipeline.yaml`](../../config/pipeline.yaml) by hard constraint 5, and `causal_gene`
-comes from L0. Read every genotype-specific passage as **conditional** — *if* L0 calls BUB1B or
-TRIP13, *then* the following applies. Nothing here may set either value.
+`therapeutic_endpoint = chemoprevention`. Both were open when it was written; both have since been
+decided on the pipeline's own evidence, not on this document's framing — `therapeutic_endpoint` at
+gate G2 (2026-09-08, D4) and `causal_gene: BUB1B` at gate G1 (2026-09-17, D9), see
+[`../../mngmt/decisions.md`](../../mngmt/decisions.md). TRIP13-specific passages therefore do not
+apply to this proband, and BUB1B-specific passages apply under D9's stated uncertainties. Nothing
+here set either value, and nothing here may change them.
 
 **Channel scoping — required to protect the design.** This document may seed the **Channel E**
 literature prior, which is that channel's job. It must **not** additionally select Channel C's

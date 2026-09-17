@@ -16,8 +16,12 @@ Read the hard constraints before writing anything.
 4. Governance files — `.gitignore`, [DATA.md](DATA.md), [COMPLIANCE.md](COMPLIANCE.md) — must exist and
    must never be weakened. When touching `.gitignore`, verify every required pattern is still present and
    only ever add.
-5. Leave `causal_gene` as `null` in [config/pipeline.yaml](config/pipeline.yaml). **Do not invent it.**
-   It is a finding from L0, never a setting, and there is no Track-1 answer to reconcile against.
+5. `causal_gene` **was decided at gate G1 on 2026-09-17** — `BUB1B`, by the maintainer, from L0's
+   candidate call and its ClinVar and gnomAD evidence. See [mngmt/decisions.md](mngmt/decisions.md)
+   D9. It is a research premise, **not a diagnosis**: the allele pair is unphased, and D9's
+   uncertainties travel with it into every output. Never change it without a new recorded
+   decision, never describe it as confirmed, and never set a gene from anything but a person's
+   G1 decision. There is no Track-1 answer to reconcile against.
    `therapeutic_endpoint` **was decided at gate G2 on 2026-09-08** — `chemoprevention`, meaning
    *secondary* prevention. See
    [mngmt/decisions.md](mngmt/decisions.md) D4. Do not revert it to `null`; do not restate it as
