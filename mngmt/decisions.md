@@ -121,8 +121,9 @@ without guessing the causal gene.
 - L4's genotoxic gate binds hard: much of the mechanistically interesting literature is cytotoxic,
   and a cancer-predisposed child is the worst possible recipient of a genotoxin. The resulting
   exclusions table is a headline result, not a loss.
-- L4's `bbb_penetration` criterion is **not** required. The documented phenotype does not establish a CNS requirement so the scaffold's assumption of CNS
-  involvement does not hold. Record the criterion as not-applicable rather than scoring it.
+- L4's `bbb_penetration` criterion is **not** required. The documented phenotype does not
+  establish a CNS requirement, so the scaffold's assumption of CNS involvement does not
+  hold. Record the criterion as not-applicable rather than scoring it.
 - L5 states secondary prevention explicitly, and never uses efficacy language.
 - The L4 benchmark's positive set stays coherent: "does the pipeline recover known
   aneuploidy/SAC-relevant compounds?" is a chemoprevention-shaped question. A different endpoint

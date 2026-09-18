@@ -75,10 +75,11 @@ TRIAGE_RULES = (
 HARD_RULES = TRIAGE_RULES[:3]
 
 #: `bbb_penetration` is scored only when the endpoint calls for CNS exposure. Under
-#: `chemoprevention` (gate G2) it does **not**: The documented phenotype does not establish a CNS requirement so the scaffold's
-#: assumption of CNS involvement does not hold for this subject. Record the rule as
-#: `not_applicable` with that reason rather than scoring it, and never let a
-#: BBB-penetrant agent outrank a non-penetrant one on a criterion that does not apply.
+#: `chemoprevention` (gate G2) it does **not**: the documented phenotype does not establish
+#: a CNS requirement, so the scaffold's assumption of CNS involvement does not hold for
+#: this subject. Record the rule as `not_applicable` with that reason rather than scoring
+#: it, and never let a BBB-penetrant agent outrank a non-penetrant one on a criterion that
+#: does not apply.
 ENDPOINTS_REQUIRING_CNS_EXPOSURE = frozenset()
 
 #: Pharmacologic classes that are disqualifying on their face. openFDA's Established
@@ -391,8 +392,9 @@ def bbb_rule(endpoint: str) -> Verdict:
                        "This endpoint requires CNS exposure, and no CNS-penetration "
                        "evidence source is wired in.")
     return Verdict("bbb_penetration", "not_applicable", "endpoint_has_no_cns_requirement",
-                   "", "", "The documented phenotype does not establish a CNS requirement, so "
-                           "blood-brain-barrier penetration is not a criterion here "
+                   "", "", "The documented phenotype does not establish a CNS "
+                           "requirement, so blood-brain-barrier penetration is not a "
+                           "criterion here "
                            "(decision D4). Recorded rather than scored, so a penetrant "
                            "agent never outranks a non-penetrant one on a criterion that "
                            "does not apply.")

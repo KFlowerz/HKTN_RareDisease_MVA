@@ -226,3 +226,97 @@ def test_no_patient_data_files_present() -> None:
         if ".git" not in path.parts
     ]
     assert offenders == [], f"genomic files found in repo: {offenders}"
+
+
+#: Constraint 7 forbids writing the subject's clinical features into any committed file.
+#: These match the *form* of that leak -- an assertion about this individual -- rather than
+#: a clinical vocabulary, because the vocabulary is unbounded and the repo legitimately
+#: discusses MVA's textbook features. Attribution is what makes a feature identifying.
+#:
+#: The first version keyed on the word "proband" alone and missed the worst instance in the
+#: repository, which named the subject through the phenotype document instead. Both forms
+#: are matched now.
+PHENOTYPE_ATTRIBUTION = (
+    (r"\bproband'?s?\s+(?:has|had|presents|shows|exhibits|lacks)\b",
+     "a clinical assertion about the proband"),
+    (r"\bproband'?s\s+(?:actual\s+|documented\s+)?(?:HPO|phenotype)\b",
+     "a reference to the proband's phenotype"),
+    (r"\b(?:documented|supplied|subject'?s?)\s+phenotype\s+"
+     r"(?:has|had|shows|includes|contains|lacks|records)\b",
+     "a characterisation of the documented phenotype"),
+    (r"\bphenotype\s+document\s+records\b",
+     "a clinical fact attributed to the phenotype document"),
+)
+
+#: HPO ids are checked only outside ``tests/``. Tests are required to use invented terms
+#: (CLAUDE.md constraint 7) and two real ids appear there deliberately, as the fixtures
+#: proving ``literature.refuse_private`` blocks an HPO id from reaching Europe PMC. That
+#: exemption is a real gap: this guard cannot tell an invented id from a subject's own.
+#: What it does cover is the surface the leak actually used -- prose in docs and source.
+HPO_ID = r"\bHP:\d{7}\b"
+
+#: Ontology structural terms, not clinical features: "All", "Mode of inheritance",
+#: "Phenotypic abnormality". Channel D needs these to walk the ontology.
+HPO_STRUCTURAL = frozenset({"HP:0000001", "HP:0000005", "HP:0000118"})
+
+#: The one sanctioned statement of the subject's clinical basis, kept by the maintainer's
+#: decision because D4 is unintelligible without its premise and the fact is close to the
+#: base rate for this genotype (roughly 75% of BUB1B MVA patients develop cancer). It is
+#: matched against the whole line so a second occurrence elsewhere in the same file still
+#: fails; the delivery plan used to restate it and now points at D4 instead.
+SANCTIONED = ((
+    "mngmt/decisions.md",
+    "The proband has already had one: the phenotype document records a malignancy",
+),)
+
+#: This file necessarily contains the patterns themselves, so it cannot be scanned with
+#: them. Nothing else is exempt.
+GUARD_FILE = "tests/test_smoke.py"
+
+
+def test_no_subject_phenotype_in_tracked_files() -> None:
+    """Constraint 7: no clinical feature of the subject in any committed file.
+
+    A specific combination of features identifies in a population of roughly fifty, and
+    this repository becomes public before judging. Vigilance already failed here twice --
+    once when a term reached a committed file despite the rule being written in three
+    places, and again when the sweep for it keyed on the wrong word -- so the rule is
+    enforced rather than remembered.
+    """
+    import re
+    import subprocess
+
+    tracked = subprocess.run(
+        ["git", "ls-files"], cwd=REPO_ROOT, capture_output=True, text=True, check=True
+    ).stdout.split()
+
+    offenders = []
+    for rel in tracked:
+        if rel == GUARD_FILE:
+            continue
+        path = REPO_ROOT / rel
+        try:
+            content = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+
+        checks = list(PHENOTYPE_ATTRIBUTION)
+        if not rel.startswith("tests/"):
+            checks.append((HPO_ID, "an HPO term id"))
+
+        for pattern, description in checks:
+            for found in re.finditer(pattern, content):
+                if found.group(0) in HPO_STRUCTURAL:
+                    continue
+                start = content.rfind("\n", 0, found.start()) + 1
+                end = content.find("\n", found.end())
+                whole_line = content[start: end if end != -1 else len(content)]
+                if any(rel == f and s in whole_line for f, s in SANCTIONED):
+                    continue
+                line = content.count("\n", 0, found.start()) + 1
+                offenders.append(f"{rel}:{line} contains {description}")
+
+    assert offenders == [], (
+        "subject clinical data in committed files (CLAUDE.md constraint 7):\n  "
+        + "\n  ".join(offenders)
+    )

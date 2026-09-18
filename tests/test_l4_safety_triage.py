@@ -271,7 +271,7 @@ def test_no_marketing_record_fails_closed():
 
 
 def test_bbb_is_recorded_as_not_applicable_under_this_endpoint():
-    """D4: the BBB penetration is not a hard criterion under this endpoint."""
+    """D4: BBB penetration is not a hard criterion under this endpoint."""
     verdict = st.bbb_rule("chemoprevention")
     assert verdict.verdict == "not_applicable"
     assert not verdict.excluded

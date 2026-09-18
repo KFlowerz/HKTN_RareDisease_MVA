@@ -37,7 +37,8 @@ Guardrail
     (``COMPLIANCE.md``) -- this work must not widen it.
 
     **Say "secondary prevention", not "chemoprevention", wherever the endpoint is named.**
-    The ranked list addresses recurrence and second-primary risk -- not prevention of a first cancer (``mngmt/decisions.md`` D4).
+    The ranked list addresses recurrence and second-primary risk -- not prevention of a
+    first cancer (``mngmt/decisions.md`` D4).
     The unqualified word overstates the claim, and this is a report about a child.
 
     Every candidate table carries the **hypothesis-generation-only** disclaimer, the
