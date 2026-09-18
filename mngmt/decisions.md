@@ -782,11 +782,13 @@ FDA's own Established Pharmacologic Class vocabulary, an affirmative finding in 
 matters because section 13.1 is absent from many labels that a pharmacologic class alone
 would condemn.
 
-**The headline result is an exclusion, not a nomination.** Of 1,963 candidates, **41
-survive and 1,922 are excluded**. The largest single reason is `insufficient_evidence`
-(1,479): openFDA describes drugs marketed in the United States, and the channels nominate
+**The headline result is an exclusion, not a nomination.** Of 1,963 candidates, **83
+survive and 1,880 are excluded**. The largest single reason is `insufficient_evidence`
+(1,231): openFDA describes drugs marketed in the United States, and the channels nominate
 from a much wider pool. That is a coverage fact and is reported as one, never disguised as
-a safety finding.
+a safety finding. Only 5 survivors carry support from more than one channel, and
+**trametinib is the only one of those on a mechanistic axis** -- the other four reach the
+list through channel D's symptomatic route.
 
 **Selumetinib is excluded by its own label, and this is the most important thing L4 found.**
 The curated prior called it the most paediatric-ready compound on the RAF/MEK/ERK axis.
@@ -824,12 +826,14 @@ set *is* channel E's seed file, so channel E's recovery of it is 100% by constru
 measures nothing; it is reported as `circular` and kept out of the headline. So is the
 combined ranking, which inherits channel E's contribution.
 
-> **Channel B — network proximity, which never saw the positive set — recovers 7 of 13
-> known aneuploidy-selective compounds with AUROC 0.80 (95% bootstrap CI 0.63–0.94).**
+> **Channel B — network proximity, which never saw the positive set — recovers 7 of 18
+> known aneuploidy-selective compound names with AUROC 0.80 (95% bootstrap CI
+> 0.63–0.94).**
 
 That is the project's first independent validation signal: a method that knows nothing
 about the aneuploidy literature ranks its compounds above chance. The interval is wide
-because the set has 13 compounds, and the point estimate is not a measurement on its own.
+because the set has 18 names covering 13 compounds, and the point estimate is not a
+measurement on its own.
 Channel D recovers none, which is expected — it ranks against a symptomatic endpoint.
 
 **What this obliges.**
@@ -841,6 +845,45 @@ Channel D recovers none, which is expected — it ranks against a symptomatic en
   more channels or better identity coverage, not a softer gate.
 - Nothing in the benchmark may be used to re-tune a channel without re-freezing the
   positive set and disclosing the reuse.
+
+**Corrected after a multi-agent review, 2026-09-18.** The review found eight issues in the
+committed L3 and L4 code, and the first of them meant this decision's original numbers
+described a filter that was not doing what it claimed.
+
+- **The hard genotoxic gate was failing open.** The negation handling cancelled an
+  affirmative finding whenever *any* negation cue appeared earlier in the clause, so
+  ordinary label prose cleared real findings: "Patients with **non**-Hodgkin lymphoma had
+  an increased risk of secondary malignancies", "Although **no** increase in tumors was
+  seen at low dose, the drug was clastogenic", "In **non**-clinical studies the compound
+  was clastogenic", "Inventib, which has **no** effect on fertility, was carcinogenic in
+  mice". Cue-scanning is replaced by explicit negated *spans* that must **cover** the
+  matched term. Failing open is the one direction this rule must never fail, and it was.
+- **The paediatric rule excluded drugs that are approved for children.** Almost every
+  paediatric approval states its own lower bound as a denial -- trametinib is approved from
+  1 year of age and the same section says "have not been established ... less than 1 year
+  old" -- and checking denials first let that floor veto the approval. Establishment is now
+  checked first, with denial spans masking any age band inside them so a denial cannot
+  clear a drug either.
+
+  This changes what a passing paediatric verdict *means*, and the caveats now say so: it
+  means the label establishes use in **some** paediatric band, which is quoted in the
+  verdict. Whether that band covers this child is an age question this layer cannot answer,
+  because the proband's age is patient data and never enters the pipeline.
+
+The counts above are from the corrected run. For the record, the three states were 41
+survivors (both bugs present), 14 (genotoxic gate fixed), and 83 (both fixed). The first
+figure was the one originally recorded here, and it was wrong in both directions at once.
+
+The remaining six findings did not change a verdict but each would have: merging every
+matching label instead of an arbitrary first one, AUROC emitting a bare `NaN` that made
+`recovery.json` unparseable, bootstrap intervals falling outside [0, 1] from resampling
+ranks as though distinct, the positive set ignoring aliases and under-reporting recovery,
+a clearing verdict quoting the section's opening rather than the sentence that cleared it,
+and blank drug names when a parent id was absent from the molecule release.
+
+**What this says about the process.** Both behaviour-changing bugs were in code I had read
+line by line and believed correct, and one of them was introduced *by* my own earlier fix
+to the same function. The review is not optional for this layer.
 
 **What it does not settle.** Drug interactions are not assessed at all: the NLM RxNav
 interaction API was discontinued on 2024-01-02 and no structured, licence-clean source with

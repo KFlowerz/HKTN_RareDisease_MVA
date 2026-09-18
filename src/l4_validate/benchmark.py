@@ -67,7 +67,12 @@ def positive_set(path: Path = None) -> tuple:
     unnoticed is not blinded.
     """
     rows = channel_e_prior.load_prior(path or channel_e_prior.PRIOR_FILE)
-    names = sorted({r["compound"].strip().lower() for r in rows})
+    # Aliases count. The ranking carries Open Targets' preferred names, and channel E
+    # resolves several compounds through an alias -- AMG 650, RX-3117, 17-AAG, AICAR --
+    # so matching the `compound` column alone silently under-reports recovery and makes
+    # the benchmark look worse than the pipeline actually is.
+    names = sorted({n.strip().lower() for r in rows
+                    for n in [r["compound"], *r["aliases"]] if n.strip()})
     digest = hashlib.sha256("\n".join(names).encode("utf-8")).hexdigest()
     return names, digest
 
@@ -92,23 +97,45 @@ def recovery(ranked: list, positives: set, key: str = "drug_name") -> dict:
                               for k in ENRICHMENT_AT}}
 
 
-def auroc(positions: list, n_ranked: int, n_positives: int) -> float:
-    """AUROC of the ranking against every other ranked item.
+def _fmt(value) -> str:
+    """AUROC for a CSV cell. Undefined stays empty rather than becoming a fake number."""
+    return "" if value is None else f"{value:.4f}"
 
-    Equivalent to the Mann-Whitney U statistic normalised by the number of pairs: the
-    probability that a randomly chosen positive outranks a randomly chosen negative.
-    0.5 is chance. Returns ``float('nan')`` when there is nothing to compare.
+
+def negative_fractions(positions: list, n_ranked: int, n_positives: int) -> list:
+    """Per positive, the fraction of negatives it outranks.
+
+    The mean of these is the AUROC, and having them individually is what makes an honest
+    bootstrap possible: resampling *these* values is resampling positives, whereas
+    resampling raw positions and recomputing breaks the formula's assumption that ranks
+    are distinct (a duplicated rank was counted as two positives above itself, which put
+    confidence intervals outside [0, 1]).
     """
     n_negatives = n_ranked - n_positives
     if n_positives <= 0 or n_negatives <= 0:
-        return float("nan")
-    # Sum over positives of how many negatives they beat. A positive at position p has
-    # (p - 1) items above it, of which (number of positives above it) are not negatives.
-    better = 0
+        return []
+    out = []
     for index, position in enumerate(sorted(positions), start=1):
         negatives_above = (position - 1) - (index - 1)
-        better += n_negatives - negatives_above
-    return better / (n_positives * n_negatives)
+        out.append((n_negatives - negatives_above) / n_negatives)
+    return out
+
+
+def auroc(positions: list, n_ranked: int, n_positives: int):
+    """AUROC of the ranking against every other ranked item.
+
+    The Mann-Whitney U statistic normalised by the number of pairs: the probability that a
+    randomly chosen positive outranks a randomly chosen negative. 0.5 is chance.
+
+    Returns ``None`` -- not NaN -- when there is nothing to compare, because the result is
+    written to JSON and a bare ``NaN`` token makes the file unreadable to any strict
+    parser. This is the ordinary case for a channel with no negatives, so it would have
+    happened on essentially every real run.
+    """
+    fractions = negative_fractions(positions, n_ranked, n_positives)
+    if not fractions:
+        return None
+    return sum(fractions) / len(fractions)
 
 
 def bootstrap_auroc(positions: list, n_ranked: int, n_positives: int, *, seed: int,
@@ -118,18 +145,15 @@ def bootstrap_auroc(positions: list, n_ranked: int, n_positives: int, *, seed: i
     With a positive set this small the interval is wide, which is the point: it stops a
     point estimate from being read as a measurement.
     """
-    if n_positives <= 1:
+    fractions = negative_fractions(positions, n_ranked, n_positives)
+    if len(fractions) <= 1:
         return {"samples": 0, "ci_low": None, "ci_high": None,
                 "note": "too few positives to resample"}
     rng = random.Random(seed)
     values = []
     for _ in range(samples):
-        drawn = [rng.choice(positions) for _ in positions]
-        value = auroc(sorted(drawn), n_ranked, n_positives)
-        if value == value:  # not NaN
-            values.append(value)
-    if not values:
-        return {"samples": 0, "ci_low": None, "ci_high": None, "note": "no valid samples"}
+        drawn = [rng.choice(fractions) for _ in fractions]
+        values.append(sum(drawn) / len(drawn))
     values.sort()
     return {"samples": len(values),
             "ci_low": round(values[int(0.025 * (len(values) - 1))], 4),
@@ -235,14 +259,15 @@ def run_blinded(config: dict) -> dict:
         writer.writerow(["scope", "n_ranked", "n_positives_found", "auroc", "ci_low",
                          "ci_high", "circular"])
         writer.writerow(["combined", combined["n_ranked"], combined["n_positives_found"],
-                         f"{combined['auroc']:.4f}", combined["auroc_ci"].get("ci_low"),
+                         _fmt(combined["auroc"]), combined["auroc_ci"].get("ci_low"),
                          combined["auroc_ci"].get("ci_high"), False])
         for channel in channels:
             result = per_channel[channel]
             writer.writerow([channel, result["n_ranked"], result["n_positives_found"],
-                             f"{result['auroc']:.4f}", result["auroc_ci"].get("ci_low"),
+                             _fmt(result["auroc"]), result["auroc_ci"].get("ci_low"),
                              result["auroc_ci"].get("ci_high"), result["circular"]])
 
-    LOGGER.info("benchmark: %d positive(s); combined AUROC %.3f; independent channels %s",
-                len(names), combined["auroc"], ", ".join(independent) or "none")
+    LOGGER.info("benchmark: %d positive(s); combined AUROC %s; independent channels %s",
+                len(names), _fmt(combined["auroc"]) or "undefined",
+                ", ".join(independent) or "none")
     return report

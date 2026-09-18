@@ -433,7 +433,7 @@ sentence it rested on, trimmed but never paraphrased, plus the SPL section numbe
 would cite. That is what makes the exclusions table auditable rather than a list of
 assertions, and it is only possible because openFDA is a US-Government work.
 
-**Absence of a field is never evidence of safety.** 1,479 of 1,922 exclusions are
+**Absence of a field is never evidence of safety.** 1,231 of 1,880 exclusions are
 `insufficient_evidence`, overwhelmingly because openFDA carries no label for that
 candidate — it describes drugs marketed in the United States, and the channels nominate
 from a wider pool. Reported as a coverage fact, not as a safety finding.

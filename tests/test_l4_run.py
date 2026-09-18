@@ -66,6 +66,36 @@ def _marketed():
     return labels_mod.Marketing(statuses=frozenset({"Prescription"}))
 
 
+# ------------------------------------------------------------------ identity lookup
+
+
+def test_for_identity_merges_every_matching_label_not_just_the_first():
+    """A name-resolved candidate carries dozens of RxCUIs; picking the first is a coin toss.
+
+    A boxed malignancy warning filed under one of a molecule's other identifiers would
+    otherwise never be seen -- the same failure as reading no label at all, while looking
+    like a clean result.
+    """
+    index = {
+        "rxcui:1": labels_mod.Label(sections={CARC: "Inventib was not genotoxic."}),
+        "rxcui:2": labels_mod.Label(sections={
+            "boxed_warning": "There is an increased risk of secondary malignancies."}),
+    }
+    merged = labels_mod.for_identity(index, ("1", "2"), ())
+    assert merged.has(CARC) and merged.has("boxed_warning")
+
+
+def test_for_identity_merges_marketing_statuses():
+    index = {"rxcui:1": labels_mod.Marketing(statuses=frozenset({"Discontinued"})),
+             "rxcui:2": labels_mod.Marketing(statuses=frozenset({"Prescription"}))}
+    merged = labels_mod.for_identity(index, ("1", "2"), ())
+    assert merged.marketed, "a molecule marketed under any identifier is marketed"
+
+
+def test_for_identity_returns_none_when_nothing_matches():
+    assert labels_mod.for_identity({}, ("1",), ("U",)) is None
+
+
 # ---------------------------------------------------------------------- the layer
 
 
@@ -198,9 +228,38 @@ def test_auroc_is_zero_when_positives_trail_the_ranking():
     assert benchmark.auroc([8, 9, 10], n_ranked=10, n_positives=3) == pytest.approx(0.0)
 
 
-def test_auroc_is_undefined_without_negatives():
-    value = benchmark.auroc([1, 2], n_ranked=2, n_positives=2)
-    assert value != value  # NaN
+def test_auroc_is_none_not_nan_without_negatives():
+    """A bare NaN token makes recovery.json unreadable to any strict JSON parser, and a
+    channel with no negatives is the ordinary case, not an edge one."""
+    assert benchmark.auroc([1, 2], n_ranked=2, n_positives=2) is None
+
+
+def test_the_benchmark_report_is_strict_json(tmp_path, monkeypatch):
+    """Written and read back with the default parser, which rejects NaN."""
+    config = _config(tmp_path)
+    _l3_table(Path(config["results_dir"]),
+              [{"chembl_id": "C1", "drug_name": "INVENTIB", "rank_prior": "0.5"}])
+    monkeypatch.setattr(benchmark, "positive_set", lambda path=None: (["inventib"], "abc"))
+    benchmark.run_blinded(config)
+    text = (Path(config["results_dir"]) / "l4" / "benchmark" / "recovery.json").read_text(
+        encoding="utf-8")
+    assert "NaN" not in text
+    json.loads(text, parse_constant=lambda c: (_ for _ in ()).throw(
+        AssertionError(f"non-standard JSON constant {c!r}")))
+
+
+def test_the_bootstrap_interval_stays_within_zero_and_one():
+    """Resampling raw positions produced duplicated ranks and intervals below zero."""
+    ci = benchmark.bootstrap_auroc([34, 37, 40], n_ranked=40, n_positives=3, seed=42)
+    assert 0.0 <= ci["ci_low"] <= ci["ci_high"] <= 1.0
+
+
+def test_the_positive_set_includes_aliases():
+    """Channel E resolves several compounds through an alias, and the ranking carries the
+    Open Targets preferred name, so matching the compound column alone under-reports."""
+    names, _ = benchmark.positive_set()
+    assert "aicar" in names, "acadesine's alias must count as the same compound"
+    assert "acadesine" in names
 
 
 def test_the_bootstrap_interval_is_reported_for_a_small_set():

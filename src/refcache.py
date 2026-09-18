@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import time
 import urllib.request
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -96,6 +97,18 @@ def fetch(url: str, dest: Path) -> dict:
     is the worse half of that bug -- a corrupt cache file that looks complete.
     """
     if not dest.exists():
+        # A killed run leaves its pid-named partial behind, and no later run would ever
+        # reuse or remove it -- these are multi-gigabyte files. Sweep any that are more
+        # than a day old before starting; a concurrent download's partial is minutes old
+        # and is never touched.
+        cutoff = time.time() - 86400
+        for stale in dest.parent.glob(f"{dest.name}.*.part"):
+            try:
+                if stale.stat().st_mtime < cutoff:
+                    stale.unlink()
+            except OSError:  # another process may be mid-cleanup; not worth failing over
+                pass
+
         part = dest.with_name(f"{dest.name}.{os.getpid()}.part")
         request = urllib.request.Request(url, headers=USER_AGENT)
         try:

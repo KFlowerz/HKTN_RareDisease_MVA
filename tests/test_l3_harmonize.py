@@ -212,6 +212,26 @@ def test_build_resolves_by_unii_and_falls_back_to_name(monkeypatch, tmp_path):
     assert stats["identities_out"] == 3 and stats["collapsed_ids"] == 1
 
 
+def test_a_blank_name_falls_through_to_a_member_that_has_one(monkeypatch, tmp_path):
+    """An empty drug_name loses name-based RxCUI resolution and every benchmark match.
+
+    It happens when the parent id is absent from the molecule release, so the parent row
+    contributes no name and the first member's name is blank.
+    """
+    _molecules(monkeypatch, [
+        {"id": "CHEMBL9000002", "name": "", "parentId": "CHEMBL9000001"},
+        {"id": "CHEMBL9000003", "name": "INVENTIB", "parentId": "CHEMBL9000001"},
+    ])
+    unichem = _unichem(tmp_path, [])
+    openfda = _openfda(tmp_path, [])
+    monkeypatch.setattr(harmonize, "ensure_sources",
+                        lambda config: ({"unichem": unichem, "openfda": [openfda]}, []))
+    monkeypatch.setattr(harmonize.enrichment, "ensure_datasets",
+                        lambda config, datasets, channel=None: ({"drug_molecule": ["p"]}, []))
+    identities, _, _ = harmonize.build({}, ["CHEMBL9000002", "CHEMBL9000003"])
+    assert identities["CHEMBL9000002"].name == "INVENTIB"
+
+
 def test_build_returns_an_identity_for_every_input_id(monkeypatch, tmp_path):
     """Nothing is dropped for being unresolvable."""
     _molecules(monkeypatch, [{"id": f"CHEMBL900000{i}", "name": f"INV{i}"} for i in range(3)])

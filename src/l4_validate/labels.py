@@ -267,17 +267,35 @@ def load_marketing(paths, rxcuis: set, uniis: set) -> tuple:
 
 
 def for_identity(index: dict, rxcui, unii):
-    """The entry matching any of a candidate's identifiers, or ``None``.
+    """Every entry matching any of a candidate's identifiers, merged, or ``None``.
 
-    RxCUI is tried before UNII: an RxCUI names a clinical drug, a UNII names a substance,
-    and the label that matters is the one for the product a clinician would prescribe.
+    **All matches are merged, not just the first.** A candidate resolved by name carries
+    every RxCUI that openFDA files under that name -- dozens, for a common generic -- and
+    returning whichever came first made the chosen label arbitrary. A boxed malignancy
+    warning filed under one of the molecule's other identifiers would never be seen, which
+    is the same failure as reading no label at all while looking like a clean result.
+
+    Merging is the conservative reading and matches what :func:`load_labels` already does
+    across a molecule's several SPLs: a warning present on any of them is a warning.
     """
-    for value in rxcui or ():
-        hit = index.get(f"rxcui:{value}")
-        if hit is not None:
-            return hit
-    for value in unii or ():
-        hit = index.get(f"unii:{value}")
-        if hit is not None:
-            return hit
-    return None
+    keys = [f"rxcui:{v}" for v in rxcui or ()] + [f"unii:{v}" for v in unii or ()]
+    found = [index[k] for k in keys if k in index]
+    if not found:
+        return None
+    if len(found) == 1:
+        return found[0]
+
+    if isinstance(found[0], Marketing):
+        return Marketing(
+            statuses=frozenset().union(*(m.statuses for m in found)),
+            application_numbers=tuple(sorted({a for m in found
+                                              for a in m.application_numbers})))
+
+    sections: dict = {}
+    for label in found:
+        for name, text in label.sections.items():
+            existing = sections.get(name, "")
+            if text and text not in existing:
+                sections[name] = f"{existing} {text}".strip()
+    return Label(sections=sections,
+                 spl_ids=tuple(sorted({s for label in found for s in label.spl_ids})))

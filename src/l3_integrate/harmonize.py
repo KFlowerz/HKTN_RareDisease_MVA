@@ -350,8 +350,12 @@ def build(config: dict, chembl_ids) -> tuple:
     stats["collapsed_ids"] = 0
     for key, members in sorted(groups.items()):
         row = identity_rows.get(key, {})
+        # The first member whose name is non-empty, not simply the first member: when the
+        # parent id is absent from the molecule release, taking the first member's blank
+        # name left the candidate with no drug_name at all -- and therefore no name-based
+        # RxCUI resolution and no benchmark match, all from an empty string.
         name = row.get("name") or next(
-            (identity_rows.get(m, {}).get("name", "") for m in sorted(members)), "")
+            (n for m in sorted(members) if (n := identity_rows.get(m, {}).get("name"))), "")
 
         # A parent's own UNII first, then any member's: the parent is the substance the
         # registry knows, and a salt form's UNII is a different registered substance.

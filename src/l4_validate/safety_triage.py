@@ -123,9 +123,9 @@ NEGATIVE_GENOTOXICITY_PATTERNS = tuple(re.compile(p, re.I) for p in (
     r"\bnot\s+(?:been\s+)?shown\s+to\s+be\s+(?:carcinogenic|mutagenic|genotoxic)\b",
 ))
 
-#: Section 8.4 statements that paediatric use is *not* established. Checked before the
-#: affirmative patterns: a label commonly establishes use in one age band and denies it in
-#: another, and the denial is the part that binds for a child outside the approved band.
+#: Section 8.4 statements that paediatric use is *not* established. Checked only when no
+#: establishment is found: a paediatric approval states its own lower bound as a denial,
+#: and reading that floor as a veto excludes drugs that are approved for children.
 PEDIATRIC_NOT_ESTABLISHED = tuple((name, re.compile(p, re.I)) for name, p in (
     # The gap between the subject and the verb is real label text: "Safety and
     # effectiveness in pediatric patients below 12 years of age have not been
@@ -174,42 +174,62 @@ class Verdict:
                 "snippet": self.snippet}
 
 
-#: Words that negate a finding when they appear before it in the same sentence. Section
-#: 13.1 is written almost entirely in these constructions -- "was not mutagenic", "no
-#: evidence of carcinogenicity", "negative in the Ames assay" -- so a pattern that matches
-#: the bare term reads a clean safety record as a positive finding.
-NEGATION_CUES = re.compile(
-    r"\b(?:not|no|non|never|neither|nor|without|negative|absence|lack(?:s|ed|ing)?|"
-    r"free)\b", re.I)
-#: Where a negation's scope ends. Sentence punctuation, plus contrast conjunctions: a label
-#: reporting "negative in the Ames assay but was clastogenic in human lymphocytes" carries
-#: a real positive finding after the "but", and scanning back past it to the earlier
-#: "negative" would cancel exactly the finding that matters.
+#: The genotoxicity vocabulary, shared by the affirmative patterns and the negated spans
+#: below so the two cannot drift apart.
+_TERMS = r"(?:carcinogenic\w*|mutagenic\w*|clastogenic\w*|genotoxic\w*|aneugen\w+|" \
+         r"tumou?rigenic\w*)"
+
+#: Spans of text that *explicitly* negate a finding. A negation suppresses an affirmative
+#: match only when it **covers** that match -- not merely when it appears earlier in the
+#: clause.
 #:
-#: Commas are deliberately NOT boundaries. "was not carcinogenic, mutagenic, or
-#: clastogenic" is one negation governing a list, and breaking on the commas would read
-#: the last two terms as positive findings.
-_SENTENCE_START = re.compile(r"[.;:]\s|\b(?:but|however|whereas|nevertheless|yet)\b",
-                             re.I)
+#: An earlier version scanned backwards for any negation cue in the clause, and it made the
+#: hard genotoxic gate fail **open** on ordinary label prose:
+#:
+#:   "Patients with non-Hodgkin lymphoma had an increased risk of secondary malignancies."
+#:   "Although no increase in tumors was seen at low dose, the drug was clastogenic."
+#:   "In non-clinical studies the compound was clastogenic."
+#:   "Inventib, which has no effect on fertility, was carcinogenic in mice."
+#:
+#: Every one of those is a real finding, and every one was silently cleared -- "non-" in
+#: non-Hodgkin and non-clinical read as a negator, and a negation in one clause cancelled a
+#: finding in the next. Failing open is the one direction this rule must never fail.
+NEGATED_SPANS = tuple(re.compile(p, re.I) for p in (
+    # "was not carcinogenic, mutagenic, or clastogenic" -- one negation over a whole list,
+    # so the span must stretch to the last term in the run.
+    r"\b(?:not|neither|nor)\b[\w\s,-]{0,40}?\b" + _TERMS +
+    r"(?:[\s,]+(?:or|and|nor)?[\s,]*" + _TERMS + r")*",
+    # "no evidence of carcinogenicity", "no increase in tumors"
+    r"\bno\s+(?:evidence|increase|significant\s+increase)\s+(?:of|in)\s+[\w\s,-]{0,40}?"
+    r"(?:" + _TERMS + r"|tumou?rs?|neoplasms?|micronucle\w+)",
+    # "negative in the Ames assay"
+    r"\bnegative\b[\w\s]{0,30}?\b(?:ames|bacterial\s+reverse\s+mutation|micronucleus|"
+    r"chromosom\w+\s+aberration|mouse\s+lymphoma)\b",
+    r"\bnot\s+(?:been\s+)?shown\s+to\s+be\s+[\w\s]{0,20}?" + _TERMS,
+    r"\bwithout\s+(?:evidence\s+of\s+)?[\w\s]{0,20}?" + _TERMS,
+))
 
 
-def _negated(text: str, start: int) -> bool:
-    """Whether a match at ``start`` sits after a negation cue in its own sentence.
+def _negated_ranges(text: str) -> list:
+    """Character ranges covered by an explicit negation."""
+    return [m.span() for pattern in NEGATED_SPANS for m in pattern.finditer(text)]
 
-    Scoped to the sentence so that a negative result in one sentence cannot cancel a
-    positive finding in the next. This is the same problem channel D hit with the
-    phenotype document, and it is handled the same way: conservatively, and in the
-    direction that keeps a real finding rather than discarding it.
 
-    The asymmetry is deliberate. Reading "was not clastogenic" as a positive finding costs
-    a candidate -- it excluded selumetinib, the single most paediatric-ready compound in
-    this pipeline, on a sentence that says the opposite. Reading a genuine finding as
-    negated costs a wrong inclusion, which is why the affirmative patterns are written
-    tightly and every exclusion carries the sentence it was drawn from.
+def _negated(text: str, start: int, ranges=None) -> bool:
+    """Whether a match at ``start`` falls inside an explicitly negated span.
+
+    Containment, not proximity. "was not mutagenic or clastogenic" negates both terms
+    because the span covers both; "although no increase in tumors was seen, it was
+    clastogenic" negates only the tumour clause, because that is all its span covers.
+
+    The asymmetry is deliberate and runs the other way from the earlier version. Reading
+    "was not clastogenic" as a finding costs a candidate -- it excluded selumetinib on a
+    sentence saying the opposite. Reading a real finding as negated lets a genotoxin
+    through to a child with a chromosome-instability syndrome. Only an explicit negation
+    that covers the term suppresses it.
     """
-    boundaries = [m.end() for m in _SENTENCE_START.finditer(text, 0, start)]
-    sentence_start = boundaries[-1] if boundaries else 0
-    return bool(NEGATION_CUES.search(text, sentence_start, start))
+    ranges = _negated_ranges(text) if ranges is None else ranges
+    return any(lo <= start < hi for lo, hi in ranges)
 
 
 def _matched(text: str, patterns) -> tuple:
@@ -219,9 +239,10 @@ def _matched(text: str, patterns) -> tuple:
     test and then a positive micronucleus assay is a positive finding, and stopping at the
     first match would return whichever came first in the text.
     """
+    ranges = _negated_ranges(text)
     for name, pattern in patterns:
         for found in pattern.finditer(text):
-            if not _negated(text, found.start()):
+            if not _negated(text, found.start(), ranges):
                 return name, found
     return None, None
 
@@ -276,10 +297,14 @@ def genotoxic_rule(label, pharm_classes) -> Verdict:
                        labels_mod.SECTIONS[section], labels_mod.snippet(text, found))
 
     for pattern in NEGATIVE_GENOTOXICITY_PATTERNS:
-        if pattern.search(text):
+        negative = pattern.search(text)
+        if negative:
+            # The match, not the pattern: passing `found` here (always None at this point)
+            # quoted the section's first 600 characters instead of the sentence that
+            # actually cleared the candidate.
             return Verdict("genotoxic_or_cancer_risk", "pass", "negative_findings_reported",
                            section, labels_mod.SECTIONS[section],
-                           labels_mod.snippet(text, found))
+                           labels_mod.snippet(text, negative))
 
     # A section that says neither is not a clearance.
     return Verdict("genotoxic_or_cancer_risk", "excluded", "insufficient_evidence", section,
@@ -303,14 +328,33 @@ def pediatric_rule(label) -> Verdict:
                        "The label carries no paediatric-use section. Absence is not "
                        "evidence of safety in children; this rule fails closed.")
 
+    # Establishment is checked FIRST, and an established band wins.
+    #
+    # Almost every paediatric approval states its own lower bound as a denial: trametinib
+    # is approved from 1 year of age, and the same section says "have not been established
+    # ... in pediatric patients less than 1 year old". Checking denials first let that
+    # floor veto the approval, and excluded the one candidate this pipeline most wanted to
+    # keep. A drug approved for some paediatric band is a paediatric drug.
+    #
+    # Whether the established band covers *this* child is an age question, and this layer
+    # cannot answer it: the proband's age is patient data and never enters the pipeline
+    # (CLAUDE.md constraint 7). The band is quoted in the verdict so a clinician reading
+    # the output can make that judgement themselves.
+    # Denial spans are computed first and used as a mask, not as a verdict: an age band
+    # inside a denial ("not been established in pediatric patients 6 years and older") is
+    # not an establishment, and the age_band pattern would otherwise read it as one.
+    denials = [m.span() for _, pattern in PEDIATRIC_NOT_ESTABLISHED
+               for m in pattern.finditer(text)]
+    for name, pattern in PEDIATRIC_ESTABLISHED:
+        for found in pattern.finditer(text):
+            if not any(lo <= found.start() < hi for lo, hi in denials):
+                return Verdict("pediatric_use", "pass", name, section,
+                               labels_mod.SECTIONS[section],
+                               labels_mod.snippet(text, found))
+
     name, found = _matched(text, PEDIATRIC_NOT_ESTABLISHED)
     if name:
         return Verdict("pediatric_use", "excluded", name, section,
-                       labels_mod.SECTIONS[section], labels_mod.snippet(text, found))
-
-    name, found = _matched(text, PEDIATRIC_ESTABLISHED)
-    if name:
-        return Verdict("pediatric_use", "pass", name, section,
                        labels_mod.SECTIONS[section], labels_mod.snippet(text, found))
 
     return Verdict("pediatric_use", "excluded", "insufficient_evidence", section,

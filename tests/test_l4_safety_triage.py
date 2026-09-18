@@ -43,6 +43,40 @@ def test_negation_is_scoped_to_the_clause(text, expected):
     assert name == expected
 
 
+@pytest.mark.parametrize("text, expected", [
+    # Every one of these was silently cleared by an earlier cue-scanning implementation.
+    # The genotoxic gate is the one rule in this pipeline that must never fail open.
+    ("Patients with non-Hodgkin lymphoma had an increased risk of secondary malignancies.",
+     "malignancy_risk"),
+    ("Although no increase in tumors was seen at low dose, the drug was clastogenic.",
+     "clastogenic_finding"),
+    ("In non-clinical studies the compound was clastogenic.", "clastogenic_finding"),
+    ("The free base was clastogenic in human lymphocytes.", "clastogenic_finding"),
+    ("Inventib, which has no effect on fertility, was carcinogenic in mice.",
+     "carcinogenic_finding"),
+])
+def test_a_negation_elsewhere_in_the_clause_does_not_clear_a_finding(text, expected):
+    """Negation must COVER the term, not merely precede it somewhere in the clause."""
+    name, _ = st._matched(text, st.GENOTOXIC_PATTERNS)
+    assert name == expected
+
+
+def test_the_selumetinib_sentence_is_still_a_finding():
+    """The verdict that justifies this whole layer must survive every negation change."""
+    text = ("Selumetinib did result in an increase in micronucleated immature erythrocytes "
+            "(chromosome aberrations) in mouse micronucleus studies, predominantly via an "
+            "aneugenic mode of action, but at doses > 160 mg/kg.")
+    assert st._matched(text, st.GENOTOXIC_PATTERNS)[0] == "aneugenic_finding"
+
+
+def test_the_trametinib_sentence_is_still_clear():
+    """And so must the one that keeps the candidate the pipeline actually recommends."""
+    text = ("Carcinogenicity studies with trametinib have not been conducted. Trametinib "
+            "was not genotoxic in studies evaluating reverse mutations in bacteria, "
+            "chromosomal aberrations in mammalian cells, or micronuclei in rats.")
+    assert st._matched(text, st.GENOTOXIC_PATTERNS)[0] is None
+
+
 def test_a_comma_list_stays_under_one_negation():
     """'not carcinogenic, mutagenic, or clastogenic' is one negation over three terms."""
     assert st._matched("Drug was not carcinogenic, mutagenic, or clastogenic.",
@@ -105,6 +139,18 @@ def test_a_negative_genotoxicity_section_passes():
     assert verdict.verdict == "pass" and verdict.reason == "negative_findings_reported"
 
 
+def test_a_clearing_verdict_quotes_the_sentence_that_cleared_it():
+    """A pass is a claim too, and a reader must be able to check which sentence made it."""
+    label = _label(**{CARC: (
+        "Section 13.1 Carcinogenesis, Mutagenesis, Impairment of Fertility. "
+        "Long preamble about study design that says nothing either way. "
+        "Inventib was not genotoxic in the Ames assay.")})
+    verdict = st.genotoxic_rule(label, ())
+    assert verdict.verdict == "pass"
+    assert "was not genotoxic" in verdict.snippet
+    assert "Long preamble" not in verdict.snippet
+
+
 def test_a_section_that_says_neither_fails_closed():
     """'No carcinogenicity studies have been conducted' is not a clearance."""
     label = _label(**{CARC: "No carcinogenicity studies have been conducted."})
@@ -150,12 +196,48 @@ def test_an_established_age_band_passes():
     assert st.pediatric_rule(label).verdict == "pass"
 
 
-def test_a_denial_beats_an_establishment_in_the_same_section():
-    """A label may establish one age band and deny another; the denial binds."""
-    label = _label(pediatric_use=("Safety and effectiveness have been established in "
-                                  "pediatric patients 12 years and older. Safety and "
-                                  "effectiveness in pediatric patients below 12 years "
-                                  "have not been established."))
+def test_an_established_band_beats_its_own_lower_bound():
+    """A paediatric approval states its floor as a denial; that floor is not a veto.
+
+    Trametinib is approved from 1 year of age and its label says, in the same section,
+    "have not been established ... in pediatric patients less than 1 year old". An earlier
+    version checked denials first and excluded it -- the one candidate that had both
+    literature support and a clean genotoxicity record.
+
+    Whether the band covers *this* child is an age question this layer cannot answer: the
+    proband's age is patient data and never enters the pipeline.
+    """
+    label = _label(pediatric_use=(
+        "The safety and effectiveness of MEKINIST in combination with dabrafenib have "
+        "been established in pediatric patients 1 year of age and older. The safety and "
+        "effectiveness of MEKINIST have not been established for these indications in "
+        "pediatric patients less than 1 year old."))
+    verdict = st.pediatric_rule(label)
+    assert verdict.verdict == "pass"
+    assert "1 year of age and older" in verdict.snippet, "the band must be quoted"
+
+
+def test_an_age_band_inside_a_denial_is_not_an_establishment():
+    """Checking establishment first must not let a denial's own age band clear the drug."""
+    label = _label(pediatric_use=("Safety and effectiveness have not been established in "
+                                  "pediatric patients 6 years of age and older."))
+    assert st.pediatric_rule(label).excluded
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("INVENTIB is indicated in pediatric patients 2 years and older.", "pass"),
+    ("INVENTIB is not indicated in pediatric patients.", "excluded"),
+    ("INVENTIB is contraindicated in pediatric patients under 2 years.", "excluded"),
+    ("Use in pediatric patients is not recommended in children.", "excluded"),
+])
+def test_checking_establishment_first_did_not_make_the_rule_permissive(text, expected):
+    """'not indicated' contains 'indicated'; the denial mask must still catch it."""
+    assert st.pediatric_rule(_label(pediatric_use=text)).verdict == expected
+
+
+def test_a_blanket_denial_with_no_established_band_excludes():
+    label = _label(pediatric_use=("Safety and effectiveness in pediatric patients have "
+                                  "not been established."))
     assert st.pediatric_rule(label).excluded
 
 

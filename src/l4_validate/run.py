@@ -82,9 +82,11 @@ CAVEATS = (
     "Nothing in this pipeline is a clinical recommendation.",
     "openFDA states its data is not for clinical use and may be incomplete or inaccurate. "
     "Every verdict drawn from it inherits that.",
-    "Paediatric use is read from Section 8.4 as written. A label establishing use in one "
-    "age band and denying it in another is treated as an exclusion, because the denial is "
-    "what binds for a child outside the approved band.",
+    "Paediatric use passing means the label establishes use in SOME paediatric age band, "
+    "which is quoted in the verdict. It does not mean the band covers this child. Matching "
+    "an age band to the proband is a clinical judgement, and this layer cannot make it: "
+    "the proband's age is patient data and never enters the pipeline. A reader with the "
+    "quoted band can make it.",
     "Blood-brain-barrier penetration is recorded as not applicable, not scored: the "
     "documented phenotype does not establish a CNS requirement (decision D4).",
     "Drug interactions are not assessed. The NLM RxNav interaction API was discontinued "
