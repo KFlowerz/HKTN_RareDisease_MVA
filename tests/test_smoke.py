@@ -48,7 +48,7 @@ HELPER_MODULES = [
 #: time and deliberately. (The L2 *runner* is built; most channels behind it are not --
 #: see IMPLEMENTED_CHANNELS.)
 IMPLEMENTED = {"src.l0_genomics.run", "src.l1_target.run", "src.l2_channels.run",
-               "src.l3_integrate.run"}
+               "src.l3_integrate.run", "src.l4_validate.run"}
 STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m not in IMPLEMENTED]
 
 #: Channels already built. A channel moves off the stub list only when it produces a real

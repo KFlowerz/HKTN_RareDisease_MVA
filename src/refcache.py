@@ -88,14 +88,26 @@ def fetch(url: str, dest: Path) -> dict:
 
     The partial file is written beside the target and renamed on completion, so an
     interrupted download cannot be mistaken for a complete one on the next run.
+
+    The partial name carries the process id, so two runs fetching the same release do not
+    write to one another's temporary file. They did: a second process renamed the first's
+    ``.part`` out from under it, and the first then failed on a file that no longer
+    existed. Both would otherwise have been writing interleaved bytes into one path, which
+    is the worse half of that bug -- a corrupt cache file that looks complete.
     """
     if not dest.exists():
-        part = dest.with_name(dest.name + ".part")
+        part = dest.with_name(f"{dest.name}.{os.getpid()}.part")
         request = urllib.request.Request(url, headers=USER_AGENT)
-        with urllib.request.urlopen(request, timeout=300) as response, open(part, "wb") as handle:
-            while chunk := response.read(1 << 20):
-                handle.write(chunk)
-        part.rename(dest)
+        try:
+            with urllib.request.urlopen(request, timeout=300) as response, \
+                    open(part, "wb") as handle:
+                while chunk := response.read(1 << 20):
+                    handle.write(chunk)
+            # Another process may have finished the same file first; that is fine, and its
+            # copy is as good as this one. Replace atomically either way.
+            part.replace(dest)
+        finally:
+            part.unlink(missing_ok=True)
         retrieved = date.today().isoformat()
     else:
         retrieved = datetime.fromtimestamp(dest.stat().st_mtime, timezone.utc).date().isoformat()

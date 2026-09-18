@@ -406,3 +406,46 @@ while looking like a technical detail.
 **openFDA's own warning travels with the data.** It states its data is not for clinical use
 and may be incomplete or inaccurate. Nothing in this pipeline is a clinical recommendation;
 see [decision D14](../../mngmt/decisions.md).
+
+## Table 9 — safety triage and benchmark (L4), added 2026-09-18
+
+Everything L4 decides on is US-Government public domain, so every verdict can quote the
+sentence it rested on and that quotation is redistributable. Terms as Table 1; the bulk
+releases were read 2026-09-18.
+
+| Role | Source | License | CC-BY-4.0 compatible? | Where it lives |
+|---|---|---|---|---|
+| Carcinogenesis and mutagenesis text (SPL 13.1, with 13 as fallback) | openFDA `drug/label` bulk, export 2026-09-18 (262,883 records, 14 parts) | US-Gov public domain | ✅ Yes | `reference_dir` |
+| Paediatric use (SPL 8.4), boxed warning, warnings, contraindications | openFDA `drug/label` bulk | US-Gov public domain | ✅ Yes | `reference_dir` |
+| Current marketing status per product | openFDA `drug/drugsfda` bulk, export 2026-09-18 (29,335 records) | US-Gov public domain | ✅ Yes | `reference_dir` |
+| Established Pharmacologic Class / mechanism of action | openFDA `openfda` block, attached at L3 | US-Gov public domain | ✅ Yes | carried on the L3 row |
+| Benchmark positive set | `src/l2_channels/aneuploidy_prior.tsv` | This project's own curation | ✅ Yes | committed |
+
+**Field names are verified against the release, not assumed.** The carcinogenesis section
+is `carcinogenesis_and_mutagenesis_and_impairment_of_fertility`. An earlier guess at
+`carcinogenesis_and_mutagenesis_of_fertility` matched nothing in 262,883 records and
+silently excluded **every** candidate as `insufficient_evidence` — a wrong field name that
+looked exactly like a strict safety filter working. Any new field read here is confirmed
+against the corpus first.
+
+**Snippets are quotable because the source is public domain.** Each verdict carries the
+sentence it rested on, trimmed but never paraphrased, plus the SPL section number a reader
+would cite. That is what makes the exclusions table auditable rather than a list of
+assertions, and it is only possible because openFDA is a US-Government work.
+
+**Absence of a field is never evidence of safety.** 1,479 of 1,922 exclusions are
+`insufficient_evidence`, overwhelmingly because openFDA carries no label for that
+candidate — it describes drugs marketed in the United States, and the channels nominate
+from a wider pool. Reported as a coverage fact, not as a safety finding.
+
+**openFDA's own warning travels with every verdict:** its data is not for clinical use and
+may be incomplete or inaccurate. Nothing this layer produces is a clinical recommendation.
+
+**No interaction claim is made.** The NLM RxNav drug-interaction API was discontinued on
+2024-01-02 and no structured, licence-clean DDI source with severity exists (see *Currency
+gotchas* above). L4 therefore makes no interaction claim rather than an unsourced one, and
+says so in its caveats.
+
+**The benchmark's positive set is this project's own file**, which is why channel E cannot
+be scored on it — see [decision D15](../../mngmt/decisions.md). The headline is channel B's
+recovery, because channel B never saw the set.

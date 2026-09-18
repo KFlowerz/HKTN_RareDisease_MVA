@@ -763,6 +763,92 @@ D2's per-candidate field contract is **not** satisfied — `rationale`,
 time. Keeping the reasoning step separate is the point: it costs API spend, and a failure
 in a later stage must never force it to re-run.
 
+## D15 — L4 triages on openFDA label text, fails closed, and the exclusions are the result (2026-09-18)
+
+Implemented in [src/l4_validate/safety_triage.py](../src/l4_validate/safety_triage.py),
+[labels.py](../src/l4_validate/labels.py), [benchmark.py](../src/l4_validate/benchmark.py)
+and [run.py](../src/l4_validate/run.py). Output: `results/l4/`. Sources in Table 9 of
+[src/l4_validate/sources.md](../src/l4_validate/sources.md).
+
+**Three hard rules, in order: genotoxicity, paediatric use, currently marketed.** Each is an
+exclusion, never a penalty, and no channel-consensus score overrides one. Two further rules
+are recorded rather than scored: blood-brain-barrier penetration is `not_applicable` under
+this endpoint (D4), and clinical status quotes whatever boxed warning or contraindication
+the label carries.
+
+**Genotoxicity is decided from three independent signals**, any one of which excludes: the
+FDA's own Established Pharmacologic Class vocabulary, an affirmative finding in SPL section
+13.1, and an increased-malignancy statement in a boxed warning. More than one source
+matters because section 13.1 is absent from many labels that a pharmacologic class alone
+would condemn.
+
+**The headline result is an exclusion, not a nomination.** Of 1,963 candidates, **41
+survive and 1,922 are excluded**. The largest single reason is `insufficient_evidence`
+(1,479): openFDA describes drugs marketed in the United States, and the channels nominate
+from a much wider pool. That is a coverage fact and is reported as one, never disguised as
+a safety finding.
+
+**Selumetinib is excluded by its own label, and this is the most important thing L4 found.**
+The curated prior called it the most paediatric-ready compound on the RAF/MEK/ERK axis.
+Its FDA label says: *"Selumetinib did result in an increase in micronucleated immature
+erythrocytes (chromosome aberrations) in mouse micronucleus studies, predominantly via an
+**aneugenic** mode of action."* An aneugenic drug for a child whose syndrome is mosaic
+variegated **aneuploidy** is the worst nomination this pipeline could make, and the
+curated prior would have made it. The safety layer caught it from primary label text.
+
+**Trametinib survives on the same axis**, with the same channel-E evidence behind it
+(Zerbib 2024): *"Trametinib was not genotoxic in studies evaluating reverse mutations in
+bacteria, chromosomal aberrations in mammalian cells…"*, and paediatric use established
+from 1 year of age. So L4's output is not "the MEK axis is unsafe" but "on the MEK axis,
+trametinib is the defensible candidate and selumetinib is not" — a conclusion no channel
+reached and the curated prior got backwards.
+
+**The dose caveat is carried, not resolved.** Selumetinib's aneugenicity is reported at
+doses roughly 38 times the clinical Cmax. The rule excludes on the finding regardless of
+that margin; a pharmacologist would weigh it. The exclusion therefore ships with the
+sentence that produced it, dose context included, so a reader can disagree with the rule
+rather than having to trust it.
+
+**Negation handling is the difference between those two verdicts**, and it took two
+iterations to get right. An affirmative-pattern match is discarded when a negation cue
+precedes it in the same clause, with clause scope ending at sentence punctuation *and* at
+contrast conjunctions — "negative in the Ames assay **but** was clastogenic" is a positive
+finding. Commas are deliberately not boundaries, because "not carcinogenic, mutagenic, or
+clastogenic" is one negation governing three terms. The first version had no negation
+handling at all and excluded selumetinib on the sentence saying it was *not* clastogenic —
+the right answer for the wrong reason, which is worse than a wrong answer because it looks
+correct.
+
+**The benchmark is blinded by excluding the channel that cannot be blinded.** The positive
+set *is* channel E's seed file, so channel E's recovery of it is 100% by construction and
+measures nothing; it is reported as `circular` and kept out of the headline. So is the
+combined ranking, which inherits channel E's contribution.
+
+> **Channel B — network proximity, which never saw the positive set — recovers 7 of 13
+> known aneuploidy-selective compounds with AUROC 0.80 (95% bootstrap CI 0.63–0.94).**
+
+That is the project's first independent validation signal: a method that knows nothing
+about the aneuploidy literature ranks its compounds above chance. The interval is wide
+because the set has 13 compounds, and the point estimate is not a measurement on its own.
+Channel D recovers none, which is expected — it ranks against a symptomatic endpoint.
+
+**What this obliges.**
+
+- The exclusions table ships with the results and is a headline result in the report, not
+  an appendix. What the pipeline refused to propose for a cancer-predisposed child is as
+  informative as what it nominated, and here it is more so.
+- No rule may be relaxed to increase the survivor count. If 41 is too few, the answer is
+  more channels or better identity coverage, not a softer gate.
+- Nothing in the benchmark may be used to re-tune a channel without re-freezing the
+  positive set and disclosing the reuse.
+
+**What it does not settle.** Drug interactions are not assessed at all: the NLM RxNav
+interaction API was discontinued on 2024-01-02 and no structured, licence-clean source with
+severity exists, so this layer makes no interaction claim rather than an unsourced one.
+The rules are lexical and cannot read a label the way a pharmacologist does. And the
+survivors are still unreasoned — D2's `rationale`, `contradicting_evidence` and
+`confidence` fields await L3's Claude step.
+
 ## Open
 
 - **Which date the organizers mean by "Hackathon close"** — taken as submission close (D12), which is

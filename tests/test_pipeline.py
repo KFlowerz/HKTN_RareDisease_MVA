@@ -25,7 +25,12 @@ def _write_config(tmp_path: Path, **overrides) -> Path:
     body = {
         "seed": 42,
         "data_dir": "./data",
-        "results_dir": "./results",
+        # An absolute tmp path, NOT "./results": load_config resolves a relative value
+        # against the repository root, so the suite was writing into -- and reading from --
+        # the real results directory. Once L4 was implemented that made this test run the
+        # layer against production artifacts and the multi-gigabyte openFDA cache, taking
+        # 75 seconds and reporting "complete" for a layer it meant to find unimplemented.
+        "results_dir": str(tmp_path / "results"),
         "causal_gene": None,
         "therapeutic_endpoint": None,
         "model": "claude-opus-5",
@@ -120,15 +125,16 @@ def test_stub_layer_records_not_implemented_and_stops(tmp_path: Path, data_root:
     The distinction matters: a layer that ran and produced nothing is a scientific claim;
     a layer that was never implemented is not.
 
-    Targets L4 explicitly. L0, L1, the L2 runner and L3 are no longer stubs -- they need a
-    real VCF, a causal gene, a channel map and an L2 status record respectively -- so this
-    asserts the manifest behaviour on a layer that genuinely is one.
+    Targets L5 explicitly. Every earlier layer is implemented and fails on its missing
+    input instead -- a real VCF, a causal gene, a channel map, an L2 status record, an L3
+    table -- so this asserts the manifest behaviour on the one layer that genuinely is a
+    scaffold. It has moved down the stack as layers were built, which is the intent.
     """
     config = pipeline.load_config(_write_config(tmp_path))
-    pipeline.run(config, only="l4_validate")
+    pipeline.run(config, only="l5_report")
 
     manifest = json.loads((config["results_dir"] / pipeline.MANIFEST_NAME).read_text(encoding="utf-8"))
-    assert manifest["layers"]["l4_validate"]["status"] == "not_implemented"
+    assert manifest["layers"]["l5_report"]["status"] == "not_implemented"
     assert manifest["seed"] == 42
     assert manifest["causal_gene"] is None
 
