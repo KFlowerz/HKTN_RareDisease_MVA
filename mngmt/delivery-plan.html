@@ -361,8 +361,12 @@
 
         <div class="phase-gates">
           <div class="gate">
-            <div class="gid">GATE G1 &mdash; CAUSAL GENE</div>
+            <div class="gid">GATE G1 &mdash; PASSED 2026-09-17</div>
             <h3>The premise is a finding, not a setting</h3>
+            <p><strong>Signed by the maintainer on 2026-09-17:</strong> <code>causal_gene: BUB1B</code>, from
+              L0's candidate call with its ClinVar and gnomAD evidence (<a href="decisions.md">D9</a>). A
+              research premise, not a diagnosis &mdash; the allele pair is unphased, and D9's uncertainties
+              travel with it into every output. There was no Track-1 answer to reconcile against.</p>
             <p>Only after L0 reconciles with Track 1 does <code>causal_gene</code> move off <code>null</code> in
               <code>config/pipeline.yaml</code> &mdash; set from the L0 artifact, with that
               artifact's path and seed recorded next to it.</p>
@@ -410,8 +414,19 @@
 
         <div class="phase-gates">
           <div class="gate">
-            <div class="gid">GATE G3 &mdash; END OF W3</div>
+            <div class="gid">GATE G3 &mdash; PASSED 2026-09-18</div>
             <h3>Three channels producing, independently</h3>
+            <p><strong>Signed by the maintainer on 2026-09-18</strong> against the run that finished
+              2026-09-17 22:01 UTC (<code>results/l2/channels.json</code>, seed 42):
+              <code>complete: [phenotype, prior, proximity]</code> &mdash; channel B 2,568 rows, channel D 28,
+              channel E 8, each with per-candidate provenance. <code>kg</code> and <code>signature</code> are
+              recorded <em>not_implemented</em>, not empty. See <a href="decisions.md">D13</a>.</p>
+            <p><strong>What was signed, and what was not.</strong> That the three are independent enough for L3
+              to aggregate, and that each one's weaknesses travel into the report rather than being smoothed
+              away &mdash; not that the candidates are good. They are not yet: channel B's top five are one
+              molecule and its salt forms, channel D reaches antileishmanials through phenotype similarity, and
+              bortezomib &mdash; a cytotoxic agent &mdash; sits near the top of two channels. Those are L4's to
+              exclude and G4's to publish.</p>
             <p>Pass condition: at least three channels have written ranked tables to
               <code>results/l2/&lt;channel&gt;/</code> with per-candidate provenance. Below three, cross-channel
               convergence is not a meaningful signal and L3's aggregation claim weakens &mdash; say so in the

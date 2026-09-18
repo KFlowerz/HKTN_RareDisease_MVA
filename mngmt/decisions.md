@@ -636,6 +636,55 @@ scope by default: L3, L4 and L5 are all still scaffolds, and the gates they serv
 submission sweep) were sized for a schedule that assumed less time, not more. Any replan is its
 own decision.
 
+## D13 — Gate G3 passed: three channels producing independently (2026-09-18)
+
+Signed by the maintainer on 2026-09-18, against the L2 run that finished 2026-09-17 22:01 UTC.
+
+**The evidence.** `results/l2/channels.json`, seed 42, `causal_gene: BUB1B`:
+`complete: [phenotype, prior, proximity]`, `n_complete: 3`. Channel B wrote 2,568 ranked rows,
+channel D 28, channel E 8, each with per-candidate provenance. `kg` and `signature` are recorded
+`not_implemented` rather than empty, which is the distinction the runner exists to preserve — an
+empty list is a scientific claim, an exception is not.
+
+**What the signature covers.** That the three channels are independent enough for L3 to
+rank-aggregate across them, and that each one's weaknesses travel into the report rather than
+being smoothed away.
+
+**What it explicitly does not cover: that the candidates are good.** They are not yet, and the
+sign-off was made with these three facts in front of it:
+
+- **Channel B's top five are not five drugs.** Bortezomib, bortezomib D-mannitol, ixazomib,
+  ixazomib citrate, carfilzomib — salt and co-crystal forms competing with their own parents.
+  Open Targets records `parentId = CHEMBL325041` on the D-mannitol form, so L3's identity
+  harmonisation can collapse them. All five also carry `n_targets_in_module = 0`: proximity is a
+  distance measure, so that is legal, but the top of B is not "hits the disease module".
+- **Channel D reaches antileishmanials** (miltefosine, amphotericin B) through the disease route.
+  The method matched a disease whose *annotated features* resemble the phenotype, not one the
+  child has. That is D10's similarity-is-not-identity caveat firing, visibly, in the output.
+- **Bortezomib sits near the top of both B and E**, which will read as convergence. It is
+  cytotoxic, and channel E's own caution column already calls it unsuitable for chronic
+  prevention. For a cancer-predisposed child it is close to the worst possible nomination.
+
+**What this obliges.**
+
+- **L4's genotoxic and cytotoxic exclusion binds hard**, and the compounds above are the first
+  test of it. G4 publishes the exclusions table as a headline result, not an appendix.
+- **L3 harmonises identity before aggregating**, on the RxCUI backbone, so a molecule and its
+  salt form cannot occupy two ranks (D2's field contract already requires this).
+- **Convergence is not counted naively.** Channel B scores 2,566 of the approved drugs it could
+  reach, so a high rank there is weak evidence alone and agreement between B and anything else is
+  close to uninformative. Agreement between D and E, or a drug placing well in B *and* appearing
+  in both others, is the signal worth weighting. L3 must say which kind of convergence produced
+  each rank rather than reporting a bare channel count.
+- **The independence claim has a ceiling, and the report states it.** B, D and E all reach drug
+  identity and indications through Open Targets/ChEMBL. Three channels agreeing is not three
+  independent pieces of evidence when they share a substrate.
+
+**What it does not settle.** Channels A and C remain unbuilt. G3's condition is three, not five,
+and the two stubs are recorded as such — but cross-channel convergence over three channels that
+share a drug substrate is a thinner claim than the architecture was designed to make, and the
+report says so rather than implying five-channel consensus was achieved and trimmed.
+
 ## Open
 
 - **Which date the organizers mean by "Hackathon close"** — taken as submission close (D12), which is
