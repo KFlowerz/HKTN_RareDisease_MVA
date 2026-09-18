@@ -68,7 +68,10 @@ MANIFEST_NAME = "_manifest.json"
 
 #: Layers whose output directory is not named after the layer. L2 writes ``results/l2/``,
 #: the path the channels and the delivery plan's gate G3 already name.
-LAYER_OUTPUT_DIRS = {"l2_channels": "l2"}
+#: Layers whose output directory is not named after the layer. Without an entry here the
+#: manifest looks in the wrong place and silently records a completed layer as producing
+#: nothing, which reads as a failure that did not happen.
+LAYER_OUTPUT_DIRS = {"l2_channels": "l2", "l3_integrate": "l3"}
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH) -> dict:

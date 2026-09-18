@@ -359,3 +359,50 @@ tighter of the two limits, a little below it.
 warranties of any kind and does not guarantee the accuracy of the data nor its suitability
 for any purpose. Nothing this channel produces is a clinical recommendation; see
 [decision D11](../../mngmt/decisions.md).
+
+## Table 8 — drug identity harmonisation (L3), added 2026-09-18
+
+L3 must give every candidate one identity before anything is aggregated, or a molecule and
+its own salt form compete for rank and the cross-channel convergence signal is destroyed.
+Two steps, and only the second produces anything publishable. Terms read 2026-09-18.
+
+| Role | Source | License | CC-BY-4.0 compatible? | Where it lives |
+|---|---|---|---|---|
+| Which molecules are formulations of which (`parentId`) | Open Targets Platform 26.06 `drug_molecule` | as Table 5 — ChEMBL-derived | ❌ No — treated as SA | `enrichment_dir`, never redistributed |
+| ChEMBL id → UNII | UniChem whole-source mapping `src1src14` (EMBL-EBI) | **No licence statement readable** — see below | ❌ Treated as ChEMBL-derived | `enrichment_dir`, never redistributed |
+| UNII → RxCUI, plus pharmacologic classes | openFDA NDC Directory + Drugs@FDA bulk | US-Government work, **public domain** | ✅ Yes | `reference_dir` |
+
+**Why not RxNav, which would answer this in one call per drug.** Channel D's candidates are
+derived from the subject's phenotype, so the *set* of drugs asked about is itself a weak
+statement about the child. A bulk file is asked about nothing. This is the same rule the
+rest of the pipeline follows, applied to the one case where the convenient route is a
+per-item query — and it is why the crosswalk is assembled from two bulk files instead.
+
+**Why not RxNorm's own full release.** It requires a UMLS licence key. A judge rebuilding
+from this repository alone could not run it, which the reproducibility requirement in
+`CLAUDE.md` rules out.
+
+**UniChem states no licence this project could read**, on 2026-09-18: its FAQ is a
+script-only page and the FTP `README` carries none. The mapping is therefore treated as
+ChEMBL-derived — UniChem is hosted alongside ChEMBL at EMBL-EBI — and kept in the
+non-redistributed zone with everything else under decision D7. This is the conservative
+reading, recorded rather than assumed, the same way the OMIM row in Table 6 and the
+Europe PMC row in Table 7 are.
+
+**What reaches a redistributed output.** The Table 2 identity whitelist (ChEMBL id, drug
+name, type, clinical stage) plus `rxcui`, `unii`, `pharm_class_epc` and `pharm_class_moa`,
+which are openFDA's and public domain. The ChEMBL→UNII mapping itself and the `parentId`
+relation never leave; they are used to compute identity and then discarded.
+
+**Coverage is partial, and it is reported per row.** Of 2,575 ChEMBL ids across the three
+channels, 865 resolved to an RxCUI through a registered substance (UNII), 251 through a
+name match, and 854 not at all — roughly 45% unresolved. The gap is not an error: openFDA
+covers products marketed in the United States, and many ChEMBL-approved drugs are approved
+elsewhere. `rxcui_resolution` records which route produced each row, so a name match is
+never mistaken for a registry match, and an unresolved candidate is kept and labelled
+rather than dropped. Dropping them would silently restrict the pipeline to the US market
+while looking like a technical detail.
+
+**openFDA's own warning travels with the data.** It states its data is not for clinical use
+and may be incomplete or inaccurate. Nothing in this pipeline is a clinical recommendation;
+see [decision D14](../../mngmt/decisions.md).

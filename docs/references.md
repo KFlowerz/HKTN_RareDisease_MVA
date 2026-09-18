@@ -42,7 +42,9 @@ Donnelly, N., Passerini, V., Dürrbaum, M., Stingele, S., & Storchová, Z. (2014
 
 Dürrbaum, M., Kuznetsova, A. Y., Passerini, V., Stingele, S., Stoehr, G., & Storchová, Z. (2014). Unique features of the transcriptional response to model aneuploidy in human cells. BMC Genomics, 15(1). https://doi.org/10.1186/1471-2164-15-139
 
-EMBL-EBI. (2026). Terms of use. Retrieved September 17, 2026, from https://www.ebi.ac.uk/about/terms-of-use/
+EMBL-EBI. (2026a). Terms of use. Retrieved September 17, 2026, from https://www.ebi.ac.uk/about/terms-of-use/
+
+EMBL-EBI. (2026b). UniChem whole-source mapping: ChEMBL to FDA/USP SRS (UNII) [Data set]. Retrieved September 18, 2026, from https://ftp.ebi.ac.uk/pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id1/src1src14.txt.gz
 
 Ensembl. (2026). Ensembl Canonical transcript (Release 116). Retrieved September 11, 2026, from https://www.ensembl.org/info/genome/genebuild/canonical.html
 
@@ -73,6 +75,8 @@ INSERM US14 – Orphanet. (2026). Orphadata: Legal notice. Retrieved September 1
 Karczewski, K. J., Francioli, L. C., Tiao, G., Cummings, B. B., Alföldi, J., Wang, Q., Collins, R. L., Laricchia, K. M., Ganna, A., Birnbaum, D. P., Gauthier, L. D., Brand, H., Solomonson, M., Watts, N. A., Rhodes, D., Singer-Berk, M., England, E. M., Seaby, E. G., Kosmicki, J. A., … MacArthur, D. G. (2020). The mutational constraint spectrum quantified from variation in 141,456 humans. Nature, 581(7809), 434–443. https://doi.org/10.1038/s41586-020-2308-7
 
 Köhler, S., Schulz, M. H., Krawitz, P., Bauer, S., Dölken, S., Ott, C. E., Mundlos, C., Horn, D., Mundlos, S., & Robinson, P. N. (2009). Clinical diagnostics in human genetics with semantic similarity searches in ontologies. The American Journal of Human Genetics, 85(4), 457–464. https://doi.org/10.1016/j.ajhg.2009.09.003
+
+Kolde, R., Laur, S., Adler, P., & Vilo, J. (2012). Robust rank aggregation for gene list integration and meta-analysis. Bioinformatics, 28(4), 573-580. https://doi.org/10.1093/bioinformatics/btr709
 
 Landrum, M. J., Lee, J. M., Benson, M., Brown, G. R., Chao, C., Chitipiralla, S., Gu, B., Hart, J., Hoffman, D., Jang, W., Karapetyan, K., Katz, K., Liu, C., Maddipatla, Z., Malheiro, A., McDaniel, K., Ovetsky, M., Riley, G., Zhou, G., … Maglott, D. R. (2018). ClinVar: Improving access to variant interpretations and supporting evidence. Nucleic Acids Research, 46(D1), D1062–D1067. https://doi.org/10.1093/nar/gkx1153
 
@@ -154,6 +158,8 @@ Torres, E. M., Sokolsky, T., Tucker, C. M., Chan, L. Y., Boselli, M., Dunham, M.
 
 Williams, B. R., Prabhu, V. R., Hunter, K. E., Glazier, C. M., Whittaker, C. A., Housman, D. E., & Amon, A. (2008). Aneuploidy Affects Proliferation and Spontaneous Immortalization in Mammalian Cells. Science, 322(5902), 703–709. https://doi.org/10.1126/science.1160058
 
+U.S. Food and Drug Administration. (2026). openFDA NDC Directory and Drugs@FDA bulk downloads [Data set]. Retrieved September 18, 2026, from https://open.fda.gov/apis/downloads/
+
 Wright, C. F., FitzPatrick, D. R., Ware, J. S., Rehm, H. L., & Firth, H. V. (2023). Importance of adopting standardized MANE transcripts in clinical reporting. Genetics in Medicine, 25(2), Article 100331. https://doi.org/10.1016/j.gim.2022.10.013
 
 Yost, S., de Wolf, B., Hanks, S., Zachariou, A., Marcozzi, C., Clarke, M., de Voer, R. M., Etemad, B., Uijttewaal, E., Ramsay, E., Wylie, H., Elliott, A., Picton, S., Smith, A., Smithson, S., Seal, S., Ruark, E., Houge, G., Pines, J., et al. (2017). Biallelic TRIP13 mutations predispose to Wilms tumor and chromosome missegregation. Nature Genetics, 49(7), 1148–1151. https://doi.org/10.1038/ng.3883
@@ -202,6 +208,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `hanks2004` | doi:10.1038/ng1449 | Crossref | None on record | 2026-09-08 |
 | `karczewski2020` | doi:10.1038/s41586-020-2308-7 | Crossref | **Author Correction** doi:10.1038/s41586-020-03174-8 (missing consortium member) and **Addendum** doi:10.1038/s41586-021-03758-y (extends the LoF-tolerance analysis of disease genes). Neither changes the LOFTEE results cited here (text read via Europe PMC, PMC8064911 / PMC8410591) | 2026-09-11 |
 | `kohler2009` | doi:10.1016/j.ajhg.2009.09.003 | Crossref; abstract read via Europe PMC (PMID 19800049) | None on record | 2026-09-17 |
+| `kolde2012` | doi:10.1093/bioinformatics/btr709 | Crossref | None on record | 2026-09-18 |
 | `landrum2018` | doi:10.1093/nar/gkx1153 | Crossref | None on record. Crossref registers the online-first date (2017-11); the article is the 2018 NAR database issue, 46(D1) | 2026-09-16 |
 | `loh2018` | doi:10.1038/s41586-018-0321-x | Crossref | None on record | 2026-09-08 |
 | `ly2012` | doi:10.1038/onc.2012.339 | Crossref | None on record | 2026-09-08 |
@@ -257,6 +264,8 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `monarch_terms` | https://github.com/monarch-initiative/monarch-app/blob/main/frontend/src/pages/knowledgeGraph/PageTerms.vue | Intended use, warranty and liability terms (Table 6) | 2026-09-17 |
 | `mondo_licence` | https://github.com/monarch-initiative/mondo/blob/master/LICENSE | Mondo is CC BY 4.0 | 2026-09-17 |
 | `opentargets_licence` | https://platform-docs.opentargets.org/licence | CC0 mark on Platform data, with ChEMBL CC BY-SA 3.0 listed as a source in the same table (decision D7) | 2026-09-16 |
+| `openfda_ndc` | https://open.fda.gov/apis/downloads/ | RxCUI, UNII and pharmacologic classes for L3 identity harmonisation; US-Government public domain (Table 8) | 2026-09-18 |
+| `unichem_mapping` | https://ftp.ebi.ac.uk/pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id1/ | ChEMBL-to-UNII crosswalk; no readable licence, treated as ChEMBL-derived and never redistributed (Table 8) | 2026-09-18 |
 | `orphadata_legal` | https://www.orphadata.com/legal-notice/ | Orphadata Science datasets CC BY 4.0; other content needs consent | 2026-09-17 |
 | `snpeffdocs` | https://pcingola.github.io/SnpEff/snpeff/commandline/ | snpEff `-canon` = longest CDS; `-tag` filtering | 2026-09-11 |
 | `uniprot_O60566` | https://rest.uniprot.org/uniprotkb/O60566.json | BUBR1 length (1,050 aa) and protein kinase domain (766–1050), release 2026_03 | 2026-09-17 |

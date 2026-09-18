@@ -61,6 +61,14 @@ gnomad:
   release: "4.1.1"
   datasets: [exomes, genomes]
 
+# L3 integration (decision D14). Identity is harmonised onto the parent ChEMBL molecule
+# before anything is aggregated, then ranks are combined by Robust Rank Aggregation.
+l3:
+  # A channel ranking more than this fraction of the candidate pool cannot discriminate,
+  # so its agreement alone is not reported as convergence. Channel B ranks essentially
+  # every approved drug with a target in the interactome, which is why this exists.
+  broad_channel_fraction: 0.5
+
 # Gate G2, decided 2026-09-08 (mngmt/decisions.md D4).
 # chemoprevention | symptomatic | mitotic_fidelity
 #

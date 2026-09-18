@@ -685,6 +685,84 @@ and the two stubs are recorded as such — but cross-channel convergence over th
 share a drug substrate is a thinner claim than the architecture was designed to make, and the
 report says so rather than implying five-channel consensus was achieved and trimmed.
 
+## D14 — L3 harmonises on the parent molecule and aggregates by RRA; RxCUI is attached, not required (2026-09-18)
+
+Implemented in [src/l3_integrate/harmonize.py](../src/l3_integrate/harmonize.py),
+[aggregate.py](../src/l3_integrate/aggregate.py) and [run.py](../src/l3_integrate/run.py).
+Output: `results/l3/`. Licences in Table 8 of
+[src/l4_validate/sources.md](../src/l4_validate/sources.md).
+
+**Identity: the primary key is the parent ChEMBL molecule, not the RxCUI.** `CLAUDE.md`
+specifies RxCUI as the backbone, and it remains the cross-system identifier every candidate
+carries where one exists. It is not the *key*, because it cannot be: of 2,575 ChEMBL ids
+across the three channels, 45% resolve to no RxCUI at all from the public sources this
+project can use. Making RxCUI the key would silently drop nearly half the pipeline —
+mostly drugs approved outside the United States — while looking like plumbing.
+
+The key is therefore Open Targets' `parentId`, which is complete, local, and a curated
+assertion rather than our string matching. A second pass merges identities whose *whole*
+RxCUI set is identical and non-empty, which catches formulation pairs `parentId` does not
+record. On the real data that is not hypothetical: ixazomib and ixazomib citrate arrived as
+two identities holding identical RxCUI sets and took ranks 2 and 3. 2,575 ChEMBL ids
+collapse to 1,963 molecules — 612 duplicates that would otherwise have competed with their
+own parents for rank and split the convergence signal.
+
+**Crosswalk: ChEMBL → UNII → RxCUI, from two bulk files.**
+
+- **Not RxNav**, which would answer this in one call per drug. Channel D's candidates are
+  derived from the subject's phenotype, so the *set* of drugs asked about is itself a weak
+  statement about the child. A bulk file is asked about nothing. This is the pipeline's
+  standing rule applied to the one case where the convenient route is a per-item query.
+- **Not RxNorm's full release**, which needs a UMLS licence key. A judge rebuilding from
+  this repository alone could not run it.
+- **UniChem has no RxNorm source** — checked 2026-09-18, 25 sources, none of them RxNorm —
+  so the route goes through UNII, which both UniChem and openFDA carry.
+- Resolution route is recorded per candidate: 865 by UNII, 251 by name, 854 unresolved. A
+  name match is a weaker claim than a registered-substance match and is labelled as one.
+
+**Aggregation: Robust Rank Aggregation** (Kolde et al., 2012), over ranks normalised within
+each channel. A candidate absent from a channel contributes nothing rather than a penalty —
+channel E ranks 8 compounds from a curated file, and the 2,560 drugs it never considered
+are not evidence against them.
+
+**Convergence is reported by kind, not as a count.** A channel that ranks more than half the
+candidate pool cannot discriminate, whatever its internal score says. Channel B ranks 2,566
+of 1,963 molecules' worth of the pool and is automatically flagged *broad*; agreement with
+it is labelled `mixed`, agreement between two narrow channels `discriminating`. Reporting a
+bare "supported by 2 channels" would let the weakest possible agreement read as the
+strongest.
+
+**The first real run produced a result that matters more than the ranking (seed 42).**
+
+> **No candidate has `discriminating` convergence. Channels D and E do not overlap at all.**
+
+26 rows are `mixed` — each is one narrow channel plus channel B — and 1,937 are single-
+channel. The architecture's headline claim is cross-channel convergence, and at the level
+that would carry weight, there is currently none. The explanation is not a bug: channel D
+answers a symptomatic question and channel E a chemoprevention one, so they are ranking
+against different endpoints and are not expected to agree. But it means the report cannot
+present convergence as an achieved result on three channels, and must say this plainly.
+It is also the strongest argument yet for building channel C, which would be the first
+additional narrow channel aimed at the same endpoint as E.
+
+**What the top of the table says, and why it is not alarming.** The highest-ranked rows are
+proteasome inhibitors and cytotoxic nucleoside analogues — bortezomib, ixazomib,
+carfilzomib, gemcitabine, fludarabine, clofarabine, pemetrexed — plus a cluster of HIF-PHI
+anaemia drugs. Channel D contributes withdrawn anti-obesity agents, among them **lorcaserin,
+withdrawn in 2020 over an increased incidence of cancer**. None of this has been through a
+safety filter, because L3 ranks and does not judge. It is L4's first and most important
+test, and the exclusions table is the result that belongs in the report beside the survivors.
+
+It also exposes a limitation to encode in L4: Open Targets' `maximumClinicalStage` of
+`APPROVAL` means *was approved*, not *is marketed*. Withdrawn drugs carry it.
+
+**What this does not settle.** The Claude reasoning step is deliberately not built yet, so
+D2's per-candidate field contract is **not** satisfied — `rationale`,
+`contradicting_evidence`, `confidence` and the safety fields are all outstanding.
+`integration.json` records the gap explicitly rather than letting L5 discover it at render
+time. Keeping the reasoning step separate is the point: it costs API spend, and a failure
+in a later stage must never force it to re-run.
+
 ## Open
 
 - **Which date the organizers mean by "Hackathon close"** — taken as submission close (D12), which is
