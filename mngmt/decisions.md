@@ -893,12 +893,154 @@ The rules are lexical and cannot read a label the way a pharmacologist does. And
 survivors are still unreasoned — D2's `rationale`, `contradicting_evidence` and
 `confidence` fields await L3's Claude step.
 
+## D16 — Track 2 takes three submissions, so a defensible entry is banked early (2026-09-18)
+
+Recorded on 2026-09-18 from the organizers' own application source, not from the
+announcement that summarised it.
+
+**What changed.** Track 2 accepts **three** submissions per Hugging Face user, not one.
+`MAX_TRACK2_SUBMISSIONS = 3` in the challenge Space's `config.py`, enforced in
+`tabs/submit_track2.py`, whose submit tab reads: "You are allowed up to 3 submissions in
+case you need to make updates to your findings/methods. The panel will only review your
+latest entry, so make sure your final submission is the one you want reviewed." The
+methods form's Track 2 sheet says "Track 2 accepts one final submission per team" — one
+*reviewed* submission, three uploads. The limit is per HF user, and the rules ask a team
+to nominate one submitter.
+
+[CLAUDE.md](../CLAUDE.md) and [SCAFFOLD_PROMPT.md](../SCAFFOLD_PROMPT.md) both recorded
+"Single submission". Both are corrected by this decision.
+
+**What is decided.** A complete, defensible submission is banked by **2026-10-10**, two
+weeks before the 2026-10-24 deadline, and improved afterwards if time allows. The banked
+entry must stand on its own: report, repository and video, with no placeholder promising
+work that a later attempt will supply.
+
+**Why this resolves what D12 left open.** D12 recorded that the deadline was 19 days later
+than assumed and declined to spend the time, because "more time is not more scope by
+default". The missing input was the attempt count. Under a single submission every scope
+call had to be right first time, which argued for holding everything back to one carefully
+chosen shot. Under three, an early bank costs only the work of packaging, and converts the
+remaining weeks from slack into revision cycles. The risk being managed changes from *is
+the scope right* to *is anything unshippable on the day*, and the second is the risk that
+actually materialises.
+
+**What it does not decide.** Which channels ship. L3's reasoning step, L5, and channels A
+and C are all outstanding, and cutting any of them is its own decision — this one only
+fixes when a shippable state must exist.
+
+**What it obliges.**
+
+- The repository is **public before final evaluations begin** (announcement #10: repos may
+  stay private during the hackathon but "must be made public once final evaluations
+  begin"). Judging opens 2026-10-24, so the flip happens at or before the bank date. It is
+  blocked until the constraint-7 history rewrite lands — subject clinical data in `git log`
+  would publish on the day the repository opens.
+- Every submission carries the methods description form, whose only required question is
+  the generative-AI disclosure answered in D17.
+- The banked entry is a dry run of the submission mechanics, not just the content. Two
+  attempts remain after it.
+
+---
+
+## D17 — The pipeline's reasoning step runs locally; development assistance is disclosed (2026-09-18)
+
+Decided by the maintainer on 2026-09-18. This is the first decision recorded about
+third-party LLM data handling; [COMPLIANCE.md](../COMPLIANCE.md) had no clause on it.
+
+**The rule being met.** The organizers distinguish a **processor** from a **recipient**: a
+service that "processes data solely to return a result to you, takes no rights in it, and
+cannot use it for its own purposes is a tool", and is permitted. Two conditions: no
+training on inputs or outputs with no rights taken in either, and retention limited to
+short-lived logs for abuse monitoring or debugging. Their deletion list names "prompts/logs
+containing pasted variant data" explicitly. Asked whether a consumer subscription with the
+training toggle off is sufficient, they answered that it "may be acceptable, but we cannot
+confirm that simply having 'Help improve our AI models' turned off is sufficient" —
+recommending either verifying the applicable terms and documenting them, or using an
+offering whose data-handling terms are explicit.
+
+**What is decided, in two parts.**
+
+1. **The pipeline's reasoning step runs on a local open-weights model.** No inputs or
+   outputs leave the machine, so neither condition has to be argued: there is no provider,
+   no retention window and no terms to interpret. `src/l3_integrate/claude_reasoning.py`
+   is rescoped accordingly.
+2. **Development assistance is Claude Code on a Claude Pro subscription with "Help improve
+   our AI models" disabled**, and is disclosed rather than avoided. Nothing in the rules
+   prohibits generative AI; the requirement is disclosure, and the only restriction is the
+   data-handling one above.
+
+**Local is not a correction of an unsafe design.** The step was already specified to send
+no patient data — gene symbols, drug identifiers, public pathway terms and channel scores
+only, with a fail-closed assertion before serialisation. Running locally buys something
+narrower and still worth having: the claim stops depending on anyone's reading of a
+contract, and the answer to a judge is one sentence instead of a paragraph of interpretation.
+
+**What the hardware costs.** 6 GB of VRAM caps this at a 7–8B instruct model at Q4_K_M.
+For 83 survivors with the adversarial second pass, expect one to two hours per full run —
+acceptable, because D1 already made this a batch pipeline rather than an application, and
+a long deterministic batch is easier to defend than a fast one. Three consequences follow
+and are binding on the implementation:
+
+- **Calibration moves out of the model.** A 7B is poorly calibrated, and a number that
+  looks calibrated is worse than none. The model fills a rubric; the score is computed in
+  Python from those fields, so calibration is code that can be tested.
+- **The no-new-mechanism rule is enforced, not instructed.** Every citation key in the
+  output is checked against the supplied evidence packet and dropped if absent — the same
+  shape as `literature.refuse_private` and `enrichment.publishable`, failing closed.
+- **Structured output uses constrained decoding**, since there is no server-side schema
+  enforcement locally.
+
+**What was measured before deciding.** A pattern scan of the local Claude Code transcripts
+(30.6 MB, 9 files) found variant identifiers derived from the subject — two coding changes,
+two protein changes and two coordinates, consistent with the G1 discussion that named the
+candidate pair. No HPO term ids appear anywhere in the repository or its history that are
+not invented, ontology-structural, or the fixtures proving `refuse_private` blocks an HPO
+id from reaching Europe PMC.
+
+**What is not established, stated rather than glossed.** The training setting is verified
+*now*; nothing in the account records when it was last changed, so "off throughout" is the
+maintainer's attestation rather than a measurement. The Consumer Terms retain two
+carve-outs regardless of the setting — content submitted as feedback, and content flagged
+for safety review. And the scan covered Claude Code transcripts on disk only: any claude.ai
+web sessions are server-side and were not measured, which is why the custody register now
+carries both surfaces.
+
+**The disclosure.** The methods form's one required question asks for provider, plan or
+tier, and the relevant setting. The answer is:
+
+> Anthropic, Claude Code (Claude Opus 5), Claude Pro consumer subscription, "Help improve
+> our AI models" disabled — chats and coding sessions not used for training. Used for
+> implementation, code review and documentation. The pipeline's own reasoning step runs a
+> local open-weights model; no candidate data is sent to any hosted service.
+
+**What it obliges.**
+
+- The gated dataset is never opened in an assistant session, and prompts carry gene
+  symbols, drug identifiers and public database fields only.
+- Session transcripts are a registered custody location (`C7`) and are purged on the same
+  deadline as everything else.
+- No hosted-API reasoning step may be added without superseding this decision.
+- This project's own rule stays **stricter than the organizers'**: their deletion list
+  permits keeping HPO terms, while constraint 7 forbids committing them at all. That gap
+  is deliberate and must not be "corrected" toward the looser line.
+
+---
+
 ## Open
 
 - **Which date the organizers mean by "Hackathon close"** — taken as submission close (D12), which is
-  the earlier and safer reading. Worth asking them, because the alternative is a month later and the
-  chosen deadline falls one day before judging ends. See [docs/data_custody.md](../docs/data_custody.md).
-- **Whether the extra 19 days change the plan** — the delivery plan still ends 2026-10-05 and the
-  remaining 2.7 weeks are unallocated on purpose (D12).
+  the earlier and safer reading. **Worth asking them, and more urgently than D12 recorded:** the
+  official rules say judging "takes place over approximately 2-3 months following submission close",
+  which runs past the 2026-11-24 the published timeline shows. On the chosen reading the data is
+  deleted with one to two months of judging still to run, not one day.
+  See [docs/data_custody.md](../docs/data_custody.md).
+- **Which channels ship.** D16 fixes when a shippable state must exist, not what is in it. Channels
+  A and C are unbuilt, and channel C is the strongest argument for convergence precisely because
+  channels D and E currently overlap in nothing.
 - **APA title casing** in [docs/references.md](../docs/references.md) — Crossref preserves publisher
   casing; a sentence-case pass is owed before submission.
+- **[src/purge.py](../src/purge.py) is still a scaffold** — all five functions raise. `COMPLIANCE.md`
+  commits this project to evidencing deletion with its attestation, and the register now carries
+  seven locations, so the gap widens as the work proceeds. Nothing mechanically checks a register
+  row's format either, which is why `C7` was added by hand and verified by reading. Due before
+  2026-11-23, and it is the one obligation that outlives the submission.

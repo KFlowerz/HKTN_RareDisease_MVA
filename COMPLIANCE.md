@@ -4,7 +4,23 @@
 - Delete all data within 30 days of Hackathon close; email confirmation to
   RarediseaserealkidMVAhackathon2026@synapse.org.
 - Manuscript embargo until organizers post their summary/preprint; code/outputs shareable anytime.
-- Required attribution block (Sage Bionetworks, MVA Society, Hugging Face, BEACON, AWS, Anthropic, family).
+- **Required acknowledgement — reproduce verbatim.** The rules mandate this exact text in any
+  publication, preprint, conference abstract, or public communication arising from participation:
+
+  > "This work was made possible through the Hackathon, organized by Sage Bionetworks in partnership
+  > with the MVA Society, Hugging Face, and BEACON (The Benchmarking, Evaluation, and Assessment
+  > Consortium for Science), with prize sponsorship from AWS and Anthropic. We are deeply grateful to
+  > the child and their family who generously contributed their data and their story to advance
+  > research into this rare disease. We acknowledge their trust in making this Hackathon possible."
+
+  The dataset must also be cited using the reference on the Hackathon Synapse page at the time of
+  publication.
+- **Third-party LLM services are tools, not recipients** (decision D17). A service may be used only
+  where it does not train on inputs or outputs, takes no rights in either, and retains nothing beyond
+  short-lived operational logs. The pipeline's reasoning step runs a **local** model, so no candidate
+  data leaves the machine. Development assistance is disclosed — provider, plan and the training
+  setting — in the methods description form. Assistant session transcripts are patient-derived
+  custody (`C7`) and are purged on the same deadline as the dataset.
 - Re-identification-avoidance: publish nothing that could re-identify the child/family.
 - **The dataset's own phenotype document sets a specific boundary** (verified 2026-09-07): no
   publication or communication arising from this challenge may include information that could

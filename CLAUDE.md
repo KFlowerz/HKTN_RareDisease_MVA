@@ -71,7 +71,8 @@ clinical recommendation; any recontact with the family; any efficacy claim.
 `chemoprevention` (aneuploidy-buffering / remove pre-malignant clones) | `symptomatic` (phenotype-directed)
 | `mitotic_fidelity` (restore SAC — largely undruggable, discuss-only). Default `null`.
 
-**Judging rubric.** Scientific Rigor 35%, Impact 25%, Innovation 25%, Scalability 15%. Single submission;
+**Judging rubric.** Scientific Rigor 35%, Impact 25%, Innovation 25%, Scalability 15%. Up to three
+submissions, of which the panel reviews only the latest (D16);
 deliverables are a written report + this repo + a 3-minute video.
 
 ---

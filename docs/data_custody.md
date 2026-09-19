@@ -49,14 +49,19 @@ Status values: `planned` (registered, not yet created) · `active` (holds bytes)
 |---|---|---|---|---|
 | `C1` | `$MVA_DATA_ROOT/raw` (WSL ext4, outside the repo) | The gated dataset as downloaded — VCF, tabix index, phenotype `.docx`, README (5 files, 303 MB). FASTQ deliberately not fetched. | `rm -rf`, then `fstrim` on the mount | **active** |
 | `C2` | `$MVA_DATA_ROOT/hf-cache` (`HF_HOME`) | Hub `blobs/` (the real bytes), `snapshots/` symlinks, `trees/`, `refs/`, `xet/` chunk cache, `.incomplete` partials. Currently 468 KB / 4 files — `--local-dir` wrote real files without duplicating blobs here. | `hf cache rm` + `hf cache prune`, then `rm -rf` of the root | **active** |
-| `C3` | `<repo>/results/` | Pipeline intermediates derived from C1 — L0 variant calls, per-chromosome BAF and depth vectors, burden | `rm -rf` contents, keep `.gitkeep` | planned |
+| `C3` | `<repo>/results/` | Pipeline intermediates derived from C1 — L0 variant calls, per-chromosome BAF and depth vectors, burden; L2 channel D's evidence carries the subject's HPO ids | `rm -rf` contents, keep `.gitkeep` | **active** |
 | `C4` | `<repo>/notebooks/` | Saved cell outputs, **if** any cell ever renders patient-derived rows | Strip outputs; verify no genomic content in tracked `.ipynb` | planned |
 | `C5` | WSL distro VHDX free space | Remnant blocks from deleted files (deletion is not overwriting) | `fstrim -av` inside WSL after C1–C3 | planned |
 | `C6` | Shell history, terminal scrollback, editor workspace state | Only if a record is ever printed | Prevented rather than purged — see below | n/a |
+| `C7` | Assistant session transcripts — Claude Code's local `.jsonl` store, plus any claude.ai web sessions held server-side | Prompts and tool output from development. Measured 2026-09-18: variant identifiers derived from the subject are present in the local store (30.6 MB, 9 files). The web sessions were not measured and are enumerated via the account's **Export data**. | Delete the local store; delete the conversations in the account, which removes them from history immediately and from back-end storage within 30 days | **active** |
 
-`C6` is mitigated at the source: L0's guardrail forbids logging patient-derived values at INFO, and
-no channel sends patient data to an external API. It is listed because acknowledging an
-unpurgeable surface honestly is worth more than omitting it.
+`C6` is mitigated at the source: L0's guardrail forbids logging patient-derived values at INFO,
+and **no pipeline channel sends patient data to an external API** — which is a narrower claim
+than it first reads, and deliberately so. It is about the channels. It says nothing about
+development assistance, which is `C7` and is a separate surface with its own measurement and
+its own terms (decision D17). `C6` is listed because acknowledging an unpurgeable surface
+honestly is worth more than omitting it, and `C7` exists because the original wording invited
+the reader to conclude something broader than it ever claimed.
 
 ### Two traps this register exists to catch
 

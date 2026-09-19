@@ -158,6 +158,6 @@ def test_manifest_records_model_choice(tmp_path: Path, data_root: Path) -> None:
     """The model that ran is resolvable from config, not hardcoded in source."""
     from src.l3_integrate.claude_reasoning import DEFAULT_MODEL, resolve_model
 
-    config = pipeline.load_config(_write_config(tmp_path, model="claude-sonnet-5"))
-    assert resolve_model(config) == "claude-sonnet-5"
+    config = pipeline.load_config(_write_config(tmp_path, model="llama-3.1-8b-instruct-q4_k_m"))
+    assert resolve_model(config) == "llama-3.1-8b-instruct-q4_k_m"
     assert resolve_model({}) == DEFAULT_MODEL
