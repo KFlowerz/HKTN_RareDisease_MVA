@@ -69,6 +69,16 @@ l3:
   # every approved drug with a target in the interactome, which is why this exists.
   broad_channel_fraction: 0.5
 
+  # The reasoning step needs a local model server running (docs/runtime.md). When it is
+  # unreachable, L3 still writes a complete aggregation and records the gap in
+  # integration.json's field_contract -- the ranking is valid without it, and a missing
+  # rationale is a documented hole rather than a failed run.
+  reasoning: true
+  # Scope when L4 has not run yet. After L4 exists the step narrows to its survivors,
+  # which is what the dossier needs.
+  reasoning_top_n: 100
+  reasoning_timeout_seconds: 300
+
 # Gate G2, decided 2026-09-08 (mngmt/decisions.md D4).
 # chemoprevention | symptomatic | mitotic_fidelity
 #
@@ -77,10 +87,15 @@ l3:
 # The report must say so; "chemoprevention" alone overstates it.
 therapeutic_endpoint: chemoprevention
 
-# Model for the L3 Claude-in-the-loop reasoning step. Config-driven so the value the
-# report names is the value that ran, and so it lands in results/_manifest.json rather
-# than being buried in source. Ids are complete as written -- never append a date suffix.
-model: claude-opus-5
+# Model for the L3 reasoning step (decision D17). A LOCAL open-weights model, not a
+# hosted one. Config-driven so the value the report names is the value that ran, and so
+# it lands in results/_manifest.json rather than being buried in source.
+model: qwen2.5-7b-instruct-q4_k_m
+
+# Where that model is served. MUST be loopback: the step refuses any other host, because
+# a local model behind a routable socket is a hosted API and reopens everything D17
+# settled. Setup is in docs/runtime.md.
+reasoning_endpoint: http://127.0.0.1:8080
 
 channels: {kg: true, proximity: true, signature: true, phenotype: true, prior: true}
 

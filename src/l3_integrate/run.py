@@ -14,14 +14,18 @@ Outputs
         per-channel ranks, supporting channels, convergence kind, and identifiers
       - ``integration.json`` -- method, parameters, counts, source provenance, caveats
 
+      - ``reasoning/`` -- per-candidate rationale, contradicting evidence and confidence,
+        when the local-model step ran (decision D17)
+
     These rows must satisfy the **per-candidate field contract** in
     ``mngmt/decisions.md`` (decision D2), because L5 renders the candidate dossier from
     them and is forbidden to compute anything itself. The reasoning fields --
-    ``rationale``, ``contradicting_evidence``, ``confidence`` -- are **not** emitted yet;
-    they come from the Claude step, which is deliberately a separate stage so that a
-    failure downstream never forces an expensive re-run. Until that stage exists this
-    layer's output is explicitly incomplete against D2, and says so in ``integration.json``
-    rather than presenting a partial contract as a finished one.
+    ``rationale``, ``contradicting_evidence``, ``confidence`` -- come from the local-model
+    step, which is deliberately a separate stage: it needs a model server, and a ranking
+    that took minutes to compute must not be lost because a service was not running. When
+    it does not run, this layer still writes a complete ranking and records the gap under
+    ``field_contract.reasoning`` in ``integration.json``, rather than presenting a partial
+    contract as a finished one or failing outright.
 
 Guardrail
     Identity harmonization happens **before** aggregation. Aggregating on drug names would
@@ -53,6 +57,7 @@ from pathlib import Path
 
 # Imported by name, not as `from ..l2_channels import run`: that package re-exports its
 # own run() function under the same name, which shadows the submodule.
+from . import claude_reasoning
 from ..l2_channels.run import STATUS_FILE as L2_STATUS_FILE
 from ..l2_channels.run import output_root as l2_output_root
 from . import aggregate as aggregate_mod
@@ -65,7 +70,11 @@ INTEGRATION_FILE = "integration.json"
 #: The column every channel writes, and the only one this layer needs from them.
 IDENTITY_COLUMN = "chembl_id"
 
-DEFAULTS = {"broad_channel_fraction": aggregate_mod.BROAD_CHANNEL_FRACTION}
+DEFAULTS = {"broad_channel_fraction": aggregate_mod.BROAD_CHANNEL_FRACTION,
+            "reasoning": True,
+            "reasoning_top_n": 100,
+            "reasoning_timeout_seconds": 300,
+            "reasoning_probe_seconds": 5}
 
 CAVEATS = (
     "This layer ranks; it does not judge. Safety, paediatric suitability and the exclusion "
@@ -201,6 +210,23 @@ def run(config: dict) -> None:
                     + [item.ranks.get(c, "") for c in channels])
     _write_tsv(out_dir / CANDIDATES_FILE, header, rows)
 
+    # The reasoning step (D17) is a separate stage on purpose: it needs a local model
+    # server, and a ranking that took minutes to compute must not be lost because a
+    # service was not running. A failure is recorded in the field contract below, which
+    # exists so L5 never discovers a missing field at render time.
+    reasoning_fields = ["rationale", "contradicting_evidence", "confidence",
+                        "evidence_grade", "references"]
+    reasoning_status = "disabled"
+    if settings.get("reasoning"):
+        try:
+            claude_reasoning.reason_over_candidates(config)
+            reasoning_status = "complete"
+        except (OSError, ValueError, KeyError) as error:
+            reasoning_status = f"unavailable: {type(error).__name__}: {error}"
+            LOGGER.warning("L3 reasoning did not run (%s); the ranking is unaffected and "
+                           "the gap is recorded in %s", error, INTEGRATION_FILE)
+    satisfied_by_reasoning = reasoning_status == "complete"
+
     (out_dir / INTEGRATION_FILE).write_text(json.dumps({
         "layer": "l3_integrate",
         "finished_utc": datetime.now(timezone.utc).isoformat(),
@@ -231,15 +257,17 @@ def run(config: dict) -> None:
         "counts": {**harmonise_stats,
                    **{k: v for k, v in aggregate_stats.items() if k != "channels"}},
         "field_contract": {
-            "satisfied": sorted(set(header)),
-            "outstanding": ["rationale", "contradicting_evidence", "confidence",
-                            "confidence_basis", "evidence_grade", "references",
-                            "safety_verdict"],
-            "note": ("Decision D2's per-candidate contract is NOT yet satisfied. The "
-                     "reasoning fields come from the Claude step and the safety fields "
-                     "from L4; both are separate stages so that a failure in one never "
-                     "forces an expensive re-run of the other. This file records the gap "
-                     "rather than letting L5 discover it at render time."),
+            "satisfied": sorted(set(header) | (set(reasoning_fields)
+                                               if satisfied_by_reasoning else set())),
+            "outstanding": (["confidence_basis", "safety_verdict"] if satisfied_by_reasoning
+                            else sorted(set(reasoning_fields)
+                                        | {"confidence_basis", "safety_verdict"})),
+            "reasoning": reasoning_status,
+            "note": ("Decision D2's per-candidate contract. The reasoning fields come "
+                     "from the local-model step (D17) and the safety fields from L4; both "
+                     "are separate stages so that a failure in one never forces an "
+                     "expensive re-run of the other. This file records what is present "
+                     "rather than letting L5 discover a gap at render time."),
         },
         "sources": provenance,
         "caveats": list(CAVEATS),

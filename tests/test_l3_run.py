@@ -48,8 +48,13 @@ def _status(results: Path, complete: dict, not_implemented=()) -> None:
 
 
 def _config(tmp_path: Path) -> dict:
+    # Reasoning off: these tests cover harmonisation and rank aggregation, and should not
+    # depend on a model server being up. The reasoning step has its own tests, and L3
+    # records its absence in integration.json rather than failing -- which is asserted in
+    # test_field_contract_reports_reasoning_absence below.
     return {"seed": 42, "results_dir": str(tmp_path / "results"),
-            "causal_gene": "INVGENE", "therapeutic_endpoint": "chemoprevention"}
+            "causal_gene": "INVGENE", "therapeutic_endpoint": "chemoprevention",
+            "l3": {"reasoning": False}}
 
 
 def _stub_harmonize(monkeypatch) -> None:
@@ -160,7 +165,7 @@ def test_each_channel_gets_its_own_rank_column(tmp_path, monkeypatch):
     assert by_id["C2"]["rank_beta"] and by_id["C2"]["rank_alpha"] == ""
 
 
-def test_the_record_states_the_field_contract_is_not_yet_satisfied(tmp_path, monkeypatch):
+def test_the_record_states_which_fields_are_missing(tmp_path, monkeypatch):
     """L5 must not discover missing reasoning fields at render time (D2)."""
     config = _setup(tmp_path, monkeypatch, {"alpha": ["C1"], "beta": ["C1"]})
     l3.run(config)
@@ -168,7 +173,31 @@ def test_the_record_states_the_field_contract_is_not_yet_satisfied(tmp_path, mon
                       .read_text(encoding="utf-8"))
     outstanding = set(meta["field_contract"]["outstanding"])
     assert {"rationale", "contradicting_evidence", "confidence"} <= outstanding
-    assert "NOT yet satisfied" in meta["field_contract"]["note"]
+    assert meta["field_contract"]["reasoning"] == "disabled"
+
+
+def test_field_contract_reports_reasoning_absence(tmp_path, monkeypatch):
+    """With reasoning on but no server, L3 still completes and says what is missing.
+
+    The ranking costs minutes of harmonisation and aggregation. Losing it because a
+    model server was not running would be the wrong trade, and silently omitting the
+    reasoning fields would leave L5 to discover the gap at render time. So the layer
+    succeeds, and the gap is a recorded fact.
+    """
+    config = _setup(tmp_path, monkeypatch, {"alpha": ["C1"], "beta": ["C1"]})
+    # Point at a loopback port with nothing on it, and keep the probe short: a dead
+    # loopback port does not refuse under WSL mirrored networking, it hangs.
+    config["reasoning_endpoint"] = "http://127.0.0.1:8099"
+    config["l3"] = {"reasoning": True, "reasoning_probe_seconds": 1}
+
+    l3.run(config)
+
+    out = Path(config["results_dir"]) / "l3"
+    assert (out / "candidates.tsv").exists(), "the ranking must survive a missing server"
+    meta = json.loads((out / "integration.json").read_text(encoding="utf-8"))
+    assert meta["field_contract"]["reasoning"].startswith("unavailable")
+    assert "rationale" in meta["field_contract"]["outstanding"]
+    assert not (out / "reasoning" / "rationales.json").exists()
 
 
 def test_the_caveats_travel_with_the_result(tmp_path, monkeypatch):
