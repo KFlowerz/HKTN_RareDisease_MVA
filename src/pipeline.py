@@ -35,6 +35,7 @@ Guardrail
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -186,6 +187,58 @@ def seed_everything(seed: int) -> None:
     LOGGER.info("seeded all RNGs with %d", seed)
 
 
+#: Libraries whose version changes the numbers, not just the wrapping. Recorded per run so
+#: two artifacts that disagree can be traced to the thing that differed. snpEff and
+#: bcftools are deliberately absent -- they are external executables, and L0 records its
+#: own tool versions where it invokes them.
+NUMERIC_DEPENDENCIES = ("numpy", "scipy", "pandas", "networkx", "sklearn", "h5py",
+                        "pyarrow", "matplotlib")
+
+
+def _environment() -> dict:
+    """Interpreter and library versions, plus whether hash randomization was fixed.
+
+    An unpinned environment is the failure this records: results computed with a different
+    numpy are close, different, and silently so. Nothing in a TSV of floats says which
+    library produced it, so the manifest has to.
+    """
+    import importlib
+    import platform
+    import sys
+
+    versions = {}
+    for name in NUMERIC_DEPENDENCIES:
+        try:
+            versions[name] = getattr(importlib.import_module(name), "__version__", "unknown")
+        except ImportError:
+            versions[name] = "not installed"
+    return {
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "packages": versions,
+        # Set at launch or not at all: Python fixes the hash seed before any code runs.
+        "pythonhashseed": os.environ.get("PYTHONHASHSEED", "unset"),
+    }
+
+
+def _config_digest(config: dict) -> dict:
+    """SHA-256 of the config file's bytes, and of the resolved values that drove the run.
+
+    The path alone does not identify a run -- the file changes. The file's digest pins what
+    was on disk; the resolved digest pins what was actually used after environment
+    overrides (``$MVA_DATA_ROOT``, ``$MVA_REF_ROOT``) were applied, which is what a reader
+    comparing two artifacts actually wants to know.
+    """
+    path = Path(config.get("config_path") or "")
+    file_digest = None
+    if path.is_file():
+        file_digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    resolved = json.dumps({k: str(v) for k, v in sorted(config.items())
+                           if k != "config_path"}, sort_keys=True)
+    return {"file_sha256": file_digest,
+            "resolved_sha256": hashlib.sha256(resolved.encode("utf-8")).hexdigest()}
+
+
 def _read_manifest(results_dir: Path) -> dict:
     """Return the run manifest, or a fresh one if none exists."""
     path = results_dir / MANIFEST_NAME
@@ -254,6 +307,8 @@ def run(config: dict, *, resume: bool = False, only: str | None = None) -> None:
     manifest["run_started_utc"] = datetime.now(timezone.utc).isoformat()
     manifest["seed"] = config["seed"]
     manifest["config_path"] = str(config.get("config_path", ""))
+    manifest["config"] = _config_digest(config)
+    manifest["environment"] = _environment()
     manifest["causal_gene"] = config.get("causal_gene")
     manifest["therapeutic_endpoint"] = config.get("therapeutic_endpoint")
 

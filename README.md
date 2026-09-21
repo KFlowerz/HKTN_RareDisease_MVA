@@ -102,7 +102,9 @@ child's result from it is not. In a ~50-patient population that profile is close
 ## Quickstart
 
 ```bash
-conda env create -f environment.yml
+# environment.lock.yml is the exact linux-64 solve that produced the committed results.
+# environment.yml is the portable pinned form — use it if the lock will not solve.
+conda env create -f environment.lock.yml
 conda activate mva-track2
 
 # L0's local variant annotator database (public reference data, not patient data).
@@ -113,10 +115,38 @@ snpEff download -noLog GRCh38.115
 mkdir -p data results
 
 # download the gated dataset into ./data — see DATA.md
-python -m src.pipeline            # currently raises NotImplementedError at L0
 
-pytest -q                         # smoke test: every layer imports, run() is callable
+# PYTHONHASHSEED must be set AT LAUNCH. Python fixes its string-hash seed before any code
+# runs, so the pipeline cannot set it for itself — it can only warn, which it does. Without
+# it, anything that iterates a set of strings can order differently between runs.
+PYTHONHASHSEED=42 python -m src.pipeline
+
+PYTHONHASHSEED=42 pytest -q
 ```
+
+### Reproducibility
+
+Re-running a layer on unchanged inputs reproduces it **byte for byte**, timestamps aside.
+Verified on L4 (`survivors.tsv`, `excluded.tsv` and the benchmark identical, including its
+2,000-sample bootstrap interval) and on L5 (all four figures identical by checksum).
+
+Every run writes `results/_manifest.json` recording the seed, the **SHA-256 of the config
+that drove it**, and the versions of the libraries that decide the numbers. Two artifacts
+that disagree can be traced to which of those differed.
+
+| Pinned | How |
+|---|---|
+| Libraries | `environment.lock.yml` (exact) and `environment.yml` (portable) |
+| ClinVar | a dated weekly release, not the rolling `clinvar.vcf.gz` |
+| STRING / Reactome / gnomAD / MANE / HPO / Monarch / Open Targets / LINCS | version or release date in `config/pipeline.yaml` |
+| Every cached download | SHA-256 recorded beside the result |
+| The model step | `temperature 0` and a fixed seed |
+
+**Two things stay outside that envelope, by nature.** Channel E queries Europe PMC live, so
+its literature reflects the index on the day it ran — responses are cached with their query
+date and a response hash, and the date is part of the result. And the local model step is
+deterministic in its *settings*; llama.cpp does not guarantee identical output across
+builds and hardware, so that is a setting, not a promise.
 
 ## Configuration
 

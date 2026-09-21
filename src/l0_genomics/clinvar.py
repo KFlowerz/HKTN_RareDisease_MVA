@@ -65,7 +65,16 @@ from .. import refcache
 from . import annotate
 from . import transcripts as tx
 
-CLINVAR_URL = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz"
+#: A **dated** weekly release, never the rolling ``clinvar.vcf.gz``. That file is always
+#: reachable and never reproducible: NCBI replaces its contents every week, so two runs a
+#: fortnight apart cross-reference the subject's alleles against different archives and
+#: nothing in the output would say so. The release actually used is pinned in
+#: ``config/pipeline.yaml`` and recorded in ``docs/references.md``.
+CLINVAR_URL = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260913.vcf.gz"
+#: Where NCBI moves a dated release once the next one lands. Tried after the primary, so
+#: the pin keeps working when the release rotates out of the top-level directory.
+CLINVAR_ARCHIVE_URL = ("https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/"
+                       "archive_2.0/2026/clinvar_20260913.vcf.gz")
 #: ClinVar is a US-Government work in the public domain; NCBI asks for citation, not
 #: permission. Clean for a redistributed CC-BY-4.0 output (``../l4_validate/sources.md``).
 LICENCE = "US-Gov public domain"
@@ -352,9 +361,14 @@ def match_allele(allele, call, records, protein: dict) -> dict:
 
 def cross_reference(config: dict, alleles, calls: dict, regions: dict, *, pad: int) -> dict:
     """Cross-reference every panel allele. ``calls`` maps variant id to its VariantCall."""
-    url = (config.get("clinvar") or {}).get("url", CLINVAR_URL)
+    settings = config.get("clinvar") or {}
+    url = settings.get("url", CLINVAR_URL)
+    # Same release, other location. NCBI rotates a dated file into archive_2.0/ when the
+    # next weekly lands, so the pin has to name both or it expires on its own.
+    fallbacks = list(settings.get("fallback_urls") or
+                     ([CLINVAR_ARCHIVE_URL] if url == CLINVAR_URL else []))
     release = refcache.reference_dir(config) / url.rsplit("/", 1)[-1]
-    provenance = refcache.fetch(url, release)
+    provenance = refcache.fetch_first([url, *fallbacks], release)
     file_date, records = load_records(release, regions, pad=pad)
 
     by_gene: dict = {gene: [] for gene in regions}

@@ -269,10 +269,13 @@
   organization = {National Center for Biotechnology Information},
   title        = {{ClinVar} {GRCh38} {VCF}},
   year         = {2026},
-  url          = {https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/},
+  url          = {https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260913.vcf.gz},
   note         = {Data set, release with fileDate 2026-09-13, no DOI. Retrieved 2026-09-16.
                   The release L0's cross-reference matched against; its SHA-256 is recorded
-                  in results/l0_genomics/clinvar_crossref.json.},
+                  in results/l0_genomics/clinvar_crossref.json. The URL names the DATED
+                  file, not the rolling clinvar.vcf.gz, whose contents NCBI replaces weekly
+                  -- config/pipeline.yaml pins the same one and falls back to
+                  archive_2.0/2026/ once NCBI rotates it out of the release directory.},
 }
 
 @misc{ncbi_datapolicy,

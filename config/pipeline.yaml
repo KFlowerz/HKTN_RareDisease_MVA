@@ -51,7 +51,15 @@ annotator:
 # classifies nothing. See src/l0_genomics/clinvar.py.
 clinvar:
   enabled: true
-  url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
+  # PINNED to a dated weekly release. The rolling clinvar.vcf.gz is always reachable and
+  # never reproducible -- NCBI replaces its contents weekly, so two runs a fortnight apart
+  # would cross-reference this child's alleles against different archives and no output
+  # would say so. This is the release docs/references.md records as `clinvar20260913`.
+  url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260913.vcf.gz
+  # Same bytes, other location: NCBI moves a dated release into archive_2.0/ once the next
+  # weekly lands, so naming only the primary would expire this pin on its own.
+  fallback_urls:
+    - https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/archive_2.0/2026/clinvar_20260913.vcf.gz
 
 # L0 population frequency (decision D8). gnomAD is read by whole panel-gene span over
 # HTTPS -- never by the subject's coordinates -- and only its CC0 count/frequency fields.

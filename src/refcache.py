@@ -127,3 +127,47 @@ def fetch(url: str, dest: Path) -> dict:
 
     return {"url": url, "file": dest.name, "bytes": dest.stat().st_size,
             "sha256": sha256(dest), "retrieved": retrieved}
+
+
+def fetch_first(urls, dest: Path) -> dict:
+    """Try each URL in turn until one downloads. Returns the provenance of the one used.
+
+    For a release that is **pinned by version but moves**. ClinVar is the case this exists
+    for: NCBI serves the current dated weekly release from the release directory and
+    shuffles it into ``archive_2.0/`` when the next one lands, so a URL that is correct
+    today returns 404 in a fortnight. Pinning to the rolling ``clinvar.vcf.gz`` instead
+    would be reachable forever and reproducible never -- the file's *contents* change
+    weekly, which is the thing reproducibility cares about.
+
+    The provenance records which URL actually served the bytes, and how many were tried,
+    so a result can say where its data came from rather than where it was meant to.
+
+    Args:
+        urls: candidate URLs, most-preferred first. All must be the same release.
+        dest: the cache path. A cached file short-circuits every URL.
+
+    Raises:
+        ValueError: If ``urls`` is empty.
+        URLError: The last failure, if every URL fails. The earlier ones are attached to
+            the message so a judge sees that the archive was tried, not just the primary.
+    """
+    candidates = list(urls)
+    if not candidates:
+        raise ValueError("fetch_first needs at least one URL")
+    if dest.exists():
+        return fetch(candidates[0], dest)
+
+    failures = []
+    for index, url in enumerate(candidates):
+        try:
+            record = fetch(url, dest)
+        except Exception as error:  # noqa: BLE001 -- retried below, re-raised if last
+            failures.append(f"{url} -> {type(error).__name__}: {error}")
+            if index == len(candidates) - 1:
+                raise type(error)(
+                    f"every candidate URL for {dest.name} failed. Tried: "
+                    + " | ".join(failures)) from error
+            continue
+        return {**record, "urls_tried": index + 1,
+                "alternates_available": len(candidates) - 1}
+    raise AssertionError("unreachable")  # pragma: no cover

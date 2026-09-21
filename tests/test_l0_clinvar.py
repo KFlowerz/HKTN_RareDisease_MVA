@@ -361,7 +361,13 @@ def test_the_source_never_builds_a_per_variant_query() -> None:
     source = Path(clinvar.__file__).read_text(encoding="utf-8")
     for forbidden in ("eutils", "esearch", "efetch", "/api/", "?term=", "requests."):
         assert forbidden not in source
-    assert clinvar.CLINVAR_URL.endswith("clinvar.vcf.gz")
+    # A whole VCF release with no query attached. Asserted on the shape rather than on a
+    # literal filename: the URL is now pinned to a DATED weekly release
+    # (clinvar_YYYYMMDD.vcf.gz) instead of the rolling clinvar.vcf.gz, and the property
+    # that matters here is "a whole file, not a lookup", which both forms satisfy.
+    for url in (clinvar.CLINVAR_URL, clinvar.CLINVAR_ARCHIVE_URL):
+        assert url.endswith(".vcf.gz")
+        assert "?" not in url and "=" not in url
 
 
 # ------------------------------------------------- reading a cached release

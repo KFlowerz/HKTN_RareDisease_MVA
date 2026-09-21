@@ -9,31 +9,44 @@ name: mva-track2
 #      a CC-BY-4.0 result. conda-forge and bioconda are community channels with no such
 #      condition.
 channels: [conda-forge, bioconda, nodefaults]
+
+# EVERY VERSION IS PINNED, and that is a reproducibility requirement rather than tidiness.
+# This pipeline reports a bootstrap confidence interval, a rank aggregation and a set of
+# connectivity scores; numpy and scipy decide those digits. An unpinned environment
+# rebuilt two months later produces numbers that are close, different, and silently so --
+# the worst failure mode available, because nothing in the output marks it.
+#
+# Pinned to the versions that produced the committed results. `environment.lock.yml` holds
+# the exact linux-64 solve including builds and transitive dependencies; this file is the
+# portable, readable form. If conda cannot solve these on another platform, relax the
+# tooling pins (jupyterlab, pytest, pip) first and the numeric core last, and say in the
+# report that the environment differed.
 dependencies:
-  - python=3.11
-  - pandas
-  - numpy
-  - scipy
-  - networkx
-  - scikit-learn
-  - pyyaml
-  - matplotlib-base  # L5's figures. The -base build omits the GUI toolkits: L5 renders
-                     # PNGs through the Agg backend and never opens a window, and the Qt
-                     # stack is a large dependency for a pipeline that runs headless.
-  - h5py           # reads the LINCS L1000 .gctx releases L2 channel C scores against.
+  - python=3.11.16
+  - pandas=3.0.5
+  - numpy=2.4.6
+  - scipy=1.17.1
+  - networkx=3.6.1
+  - scikit-learn=1.9.0
+  - pyyaml=6.0.3
+  - matplotlib-base=3.11.2  # L5's figures. The -base build omits the GUI toolkits: L5
+                            # renders PNGs through the Agg backend and never opens a
+                            # window, and the Qt stack is a large dependency for a
+                            # pipeline that runs headless.
+  - h5py=3.16.0    # reads the LINCS L1000 .gctx releases L2 channel C scores against.
                    # A .gctx is HDF5, so it cannot be read from a compressed stream --
                    # see src/l2_channels/lincs.py.
-  - pyarrow        # reads the Parquet drug-target release L2 channel B joins on.
+  - pyarrow=25.0.0 # reads the Parquet drug-target release L2 channel B joins on.
                    # That release is licence-restricted and never redistributed --
                    # see src/l4_validate/sources.md and src/l2_channels/enrichment.py.
-  - pysam
-  - bcftools
+  - pysam=0.24.0
+  - bcftools=1.24
   - snpeff=5.4.0c   # L0's LOCAL variant annotator. Pinned: its databases are built per
                     # snpEff version. Brings its own openjdk. See the README for the
                     # database download and the flags every invocation must carry.
-  - jupyterlab
-  - pytest          # README quickstart runs `pytest -q`; declared so it is not implicit
-  - pip
+  - jupyterlab=4.6.3
+  - pytest=9.1.1    # README quickstart runs `pytest -q`; declared so it is not implicit
+  - pip=26.2.1
   - pip:
       - anthropic
       - huggingface_hub

@@ -1365,6 +1365,17 @@ screenshots.
   here — that channel C would supply the convergence channels D and E do not — did not survive
   calibration, and the submission cannot claim discriminating cross-channel convergence.
   A curated aneuploidy gene set remains the one untried proxy; see D19's Open.
+- **Reproducibility is now pinned, and two gaps remain by nature** (2026-09-21). Re-running a layer
+  on unchanged inputs reproduces it byte for byte — verified on L4, including its 2,000-sample
+  bootstrap interval, and on L5. Every conda dependency now carries a version, `environment.lock.yml`
+  holds the exact linux-64 solve, ClinVar is pinned to a dated weekly release instead of the rolling
+  `clinvar.vcf.gz` (with an archive fallback, since NCBI rotates dated files out), `PYTHONHASHSEED=42`
+  is in the documented invocation, and `results/_manifest.json` records the config SHA-256 and the
+  versions of the libraries that decide the numbers. **Still outside that envelope:** channel E
+  queries Europe PMC live, so its literature is as of the day it ran (cached with query date and
+  response hash), and the local model step is deterministic in its settings — llama.cpp does not
+  guarantee identical output across builds and hardware, so that is a setting, not a promise. Both
+  are stated in the README rather than claimed away.
 - **APA title casing** in [docs/references.md](../docs/references.md) — Crossref preserves publisher
   casing; a sentence-case pass is owed before submission.
 - **[src/purge.py](../src/purge.py) is still a scaffold** — all five functions raise. `COMPLIANCE.md`

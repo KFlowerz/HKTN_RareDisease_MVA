@@ -259,7 +259,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | Key | URL | What it supports | Checked |
 |---|---|---|---|
 | `clinvar20260905` | https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/ | Public P/LP variant set for the transcript-policy benchmark (fileDate 2026-09-05) | 2026-09-11 |
-| `clinvar20260913` | https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/ | Clinical interpretations cross-referenced against the subject's panel alleles in L0 (fileDate 2026-09-13) | 2026-09-16 |
+| `clinvar20260913` | https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20260913.vcf.gz | Clinical interpretations cross-referenced against the subject's panel alleles in L0 (fileDate 2026-09-13). Pinned to the **dated** file; the rolling `clinvar.vcf.gz` is replaced weekly and would not reproduce | 2026-09-16 |
 | `clinvar_reviewstatus` | https://www.ncbi.nlm.nih.gov/clinvar/docs/review_status/ | Review-status-to-star mapping in `src/l0_genomics/clinvar.py` | 2026-09-16 |
 | `ncbi_datapolicy` | https://www.ncbi.nlm.nih.gov/home/about/policies/ | NCBI asserts no restriction on molecular data reuse; submitters may retain rights in their own submissions (Table 4, src/l4_validate/sources.md) | 2026-09-16 |
 | `clinvar_use` | https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ | ClinVar requests attribution when data are redistributed, citing PMID 29165669 | 2026-09-16 |
