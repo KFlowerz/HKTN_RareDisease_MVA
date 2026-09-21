@@ -1013,13 +1013,77 @@ tier, and the relevant setting. The answer is:
 > implementation, code review and documentation. The pipeline's own reasoning step runs a
 > local open-weights model; no candidate data is sent to any hosted service.
 
+**Amended after a runtime spike, 2026-09-20.** The decision above was written from
+specifications; this section records what the hardware actually does. Three of its
+assumptions were wrong, and one of them forbade the only approach that works.
+
+**Measured** (GTX 1060 6 GB, driver 528.49, Qwen2.5-7B-Instruct Q4_K_M, llama.cpp
+b11065 Vulkan backend, full offload, 8192-token context):
+
+| Measure | Result |
+|---|---|
+| Prompt processing | 181 tok/s at 512, 175 tok/s at 1536 |
+| Generation | 24.0 tok/s at 128, 23.7 tok/s at 256 |
+| Peak VRAM | 5,370 MiB used, 672 MiB free |
+| Determinism | three identical requests at `temperature 0`, `seed 42` returned byte-identical output |
+| Constrained decoding | JSON schema honoured; output parsed clean |
+
+A full pass over 83 survivors at two passes each, assuming ~1,500 prompt and ~600
+generated tokens, comes to roughly 25 minutes of prompt processing and 70 of
+generation — **about 1.6 hours**, which is what the decision assumed and is
+acceptable for a batch pipeline (D1).
+
+**Correction 1 — the backend is Vulkan, not CUDA.** Current llama.cpp CUDA builds no
+longer ship Pascal kernels: `llama-cli` aborts with `invalid device function` in
+`ggml_cuda_kernel_can_use_pdl`, a Hopper-era code path. The CUDA 13.x builds would fail
+for a different reason — CUDA 13 dropped Pascal entirely. Vulkan runs the same model at
+24 tok/s with no CUDA dependency, which is also the more portable choice.
+
+**Correction 2 — "no network call of any kind" forbade the only working path.** The
+in-process routes both fail: `llama-completion` exits silently in this build, and a
+grammar in `llama-cli` collides with the chat template, because the template's
+`<|im_start|>` is not in the schema and the sampler dies with an empty grammar stack.
+What works is `llama-server` bound to `127.0.0.1` with `response_format: json_schema`.
+
+That is a socket, so the original wording ruled it out. The wording was wrong, not the
+approach. **The requirement is that nothing leaves the machine**, and a loopback bind
+satisfies it exactly as a subprocess would; the organizers' test in thread #2 is about
+whether a *service* takes rights in the data, and there is no service and no second
+party here. The guardrail is restated as: the endpoint is loopback-bound, no hosted API
+is called, and the packet is asserted free of patient-derived fields before it is
+serialized — unchanged and still fail-closed.
+
+**Correction 3 — the rubric does not fix calibration on its own.** The decision moved
+the confidence *number* into Python on the grounds that a 7B is poorly calibrated. The
+spike shows the problem is not confined to the number: asked to grade evidence that is
+explicitly cell-line work (RPE1 clones, cancer lines), the model returned
+`evidence_grade: "clinical"`. A wrong categorical field feeds the same bad judgement
+into a computation that looks principled.
+
+So `evidence_grade` is **not asked of the model at all**. Channel E already grades its
+literature, and that grade travels with the claim — the field is supplied in the packet
+and echoed back, never generated. The model is asked only for what it can do: does the
+supplied evidence support the mechanism, is there a contradiction in it, and which of
+the supplied keys are load-bearing. It also returned keys bracketed as `[zerbib2024]`,
+so validation normalizes before matching.
+
+**What this opens.** The runtime works on Windows; the pipeline runs in WSL, whose
+Ubuntu 22.04 ships glibc 2.35 while every llama.cpp Linux binary now requires 2.38. The
+implementation therefore talks to an **OpenAI-compatible endpoint at a configurable base
+URL** rather than spawning a binary, so the reasoning step is indifferent to where the
+server runs and a judge can point it at their own. Which runtime this project ships —
+building in WSL, upgrading the distro, or a container — is a packaging decision that
+belongs with the reproducibility requirement and is not settled here.
+
 **What it obliges.**
 
 - The gated dataset is never opened in an assistant session, and prompts carry gene
   symbols, drug identifiers and public database fields only.
 - Session transcripts are a registered custody location (`C7`) and are purged on the same
   deadline as everything else.
-- No hosted-API reasoning step may be added without superseding this decision.
+- No hosted-API reasoning step may be added without superseding this decision. A
+  loopback-bound local server is not a hosted API; a bind to anything other than
+  `127.0.0.1` is, and is forbidden.
 - This project's own rule stays **stricter than the organizers'**: their deletion list
   permits keeping HPO terms, while constraint 7 forbids committing them at all. That gap
   is deliberate and must not be "corrected" toward the looser line.

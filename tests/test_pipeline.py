@@ -33,7 +33,7 @@ def _write_config(tmp_path: Path, **overrides) -> Path:
         "results_dir": str(tmp_path / "results"),
         "causal_gene": None,
         "therapeutic_endpoint": None,
-        "model": "claude-opus-5",
+        "model": "qwen2.5-7b-instruct-q4_k_m",
         "channels": {"kg": True, "proximity": True, "signature": True, "phenotype": True, "prior": True},
     }
     body.update(overrides)
@@ -161,3 +161,28 @@ def test_manifest_records_model_choice(tmp_path: Path, data_root: Path) -> None:
     config = pipeline.load_config(_write_config(tmp_path, model="llama-3.1-8b-instruct-q4_k_m"))
     assert resolve_model(config) == "llama-3.1-8b-instruct-q4_k_m"
     assert resolve_model({}) == DEFAULT_MODEL
+
+
+def test_reasoning_endpoint_must_be_loopback() -> None:
+    """D17: a local model behind a routable socket is a hosted API.
+
+    The guarantee D17 makes is that nothing leaves the machine. A loopback bind keeps
+    that promise; the same model on 0.0.0.0 or a LAN address does not, and nothing else
+    about the call would look different -- same model, same prompt, same response shape.
+    So the refusal lives in code rather than in a comment nobody reads.
+    """
+    import pytest
+
+    from src.l3_integrate.claude_reasoning import DEFAULT_ENDPOINT, resolve_endpoint
+
+    assert resolve_endpoint({}) == DEFAULT_ENDPOINT
+    for allowed in ("http://127.0.0.1:8080", "http://localhost:9999", "http://[::1]:8080"):
+        assert resolve_endpoint({"reasoning_endpoint": allowed}) == allowed
+
+    for refused in (
+        "http://0.0.0.0:8080",          # binds every interface
+        "http://192.168.1.50:8080",     # another machine on the LAN
+        "https://api.example.com/v1",   # a hosted service
+    ):
+        with pytest.raises(ValueError, match="loopback"):
+            resolve_endpoint({"reasoning_endpoint": refused})
