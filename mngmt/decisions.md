@@ -1090,6 +1090,86 @@ belongs with the reproducibility requirement and is not settled here.
 
 ---
 
+## D18 — The report leads with the exclusions; survivors are tiered by evidence type (2026-09-21)
+
+Decided by the maintainer on 2026-09-21, from the first full reasoning run
+(`results/l3/reasoning/`, seed 42, scope `l4_survivors`).
+
+**The measurement that forced it.** Of the 83 candidates that survive L4's triage, **82
+carry no published evidence at all**:
+
+| Supporting channels | Survivors |
+|---|---|
+| proximity only | 78 |
+| phenotype + proximity | 4 |
+| prior + proximity | **1** |
+
+Grades: 82 `ungraded`, 1 `in_vitro`. Exactly one survivor — trametinib — has a verified
+citation. The others surface because their targets sit near the disease module in an
+interactome, and channel B emits z-scores, not references.
+
+This also explains a result that looked like a broken field: the model answered
+`mechanism_supported: false` for all 83. That is not degeneracy, it is correct. There is
+no literature to support a mechanism for 82 of them, and no contradicting record can be
+found in an empty evidence set either.
+
+**What is decided.**
+
+1. **The report leads with the exclusions.** 1,880 of 1,963 candidates are excluded, each
+   row naming the rule, the openFDA field, the SPL section and the sentence that did it.
+   That is the pipeline's strongest, most reproducible result, and it is what the
+   architecture was built to do well.
+2. **Survivors are presented in two explicit tiers**, never as one list of 83:
+   - **Tier 1 — literature-supported.** At least one verified citation from channel E,
+     carrying its grade. Currently one candidate.
+   - **Tier 2 — network-proximity only.** A pipeline result (z-score, module overlap) and
+     no published evidence connecting the drug to this disease.
+3. **Tier 2 candidates are not given a generated rationale.** Where a packet carries no
+   citations and no grade, the absence is recorded as a fact rather than routed through a
+   model to be told what the pipeline already knows. Eighty-two paragraphs explaining that
+   there is no evidence read like analysis and are not; the honest form is a stated
+   absence plus the proximity numbers that did put the drug on the list.
+
+**Why lead with exclusions when Track 2 asked for candidates.** Because the exclusions are
+the part supported by evidence a judge can check, and Scientific Rigor is 35% of the
+rubric. Selumetinib is the case in point: the curated expert prior calls it the most
+paediatric-ready compound on the best mechanistic axis, and its own label records an
+**aneugenic** finding — chromosome missegregation, in a child whose disease is chromosome
+missegregation. Hydroxychloroquine, the prior's other front-runner, is excluded because
+its label says no carcinogenicity or genotoxicity study has ever been done, and for
+lifelong dosing in a cancer-predisposition syndrome an untested drug is not a safe one.
+
+Leading with a thin shortlist would make the weakest evidence the headline. Leading with
+the exclusions puts the strongest first and still presents the shortlist, tiered, in the
+same document.
+
+**What this decision refuses.** Widening channel E's curated prior so that more survivors
+acquire citations. It would work mechanically and it is circular: the prior seeds the
+ranking, so expanding it to cover the drugs that already survived is fitting the evidence
+to the answer. The same contamination warning already applies to the L4 benchmark's
+positive controls (`docs/research/aneuploidy-selective-compounds.md`).
+
+**What it does not decide.** Whether channel C is built. Signature reversion is the missing
+evidence-bearing channel and would address the root cause rather than presenting around
+it, but it is the largest remaining build and its own decision. A, B and C in the options
+considered were presentation over identical results and required no new computation;
+channel C is not, and it needs deciding early or not at all.
+
+**What it obliges.**
+
+- L5 renders the exclusions table first, then Tier 1, then Tier 2, and never a combined
+  ranking of 83 that invites a reader to treat the tiers as comparable.
+- Every Tier 2 row states that no published evidence links the drug to this disease. That
+  sentence is not a caveat in a footnote; it is the row's evidence field.
+- The confidence score is reported only where it discriminates. With 82 candidates pinned
+  to the floor of a 0.08–0.132 band, a column of near-identical numbers implies a
+  precision that is not there.
+- The report says how many survivors have literature behind them, in the headline count
+  rather than in a caveat. "83 candidates" without "one of which has published evidence"
+  is a true sentence that misleads.
+
+---
+
 ## Open
 
 - **Which date the organizers mean by "Hackathon close"** — taken as submission close (D12), which is

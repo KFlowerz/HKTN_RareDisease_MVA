@@ -212,3 +212,44 @@ def test_missing_l3_table_is_reported_not_guessed(tmp_path) -> None:
     """Without L3's table there is nothing to reason about, and that must say so."""
     with pytest.raises(FileNotFoundError, match="no L3 candidate table"):
         reasoning.reason_over_candidates({"results_dir": str(tmp_path), "seed": 42})
+
+
+# --------------------------------------------------------------------------------------
+# Evidence tiers (D18): the kind of claim, not its strength.
+# --------------------------------------------------------------------------------------
+
+def test_a_graded_citation_puts_a_candidate_in_the_literature_tier() -> None:
+    packet = {"citation_keys": ["DOI:10.1/real"], "evidence_grade_supplied": "in_vitro"}
+    assert reasoning.evidence_tier(packet) == "literature"
+
+
+@pytest.mark.parametrize(
+    "packet",
+    [
+        {"citation_keys": [], "evidence_grade_supplied": "ungraded"},
+        {"citation_keys": [], "evidence_grade_supplied": "in_vitro"},
+        # A citation with no grade is not a graded finding: channel E verified the DOI
+        # but recorded no record behind it at any grade.
+        {"citation_keys": ["DOI:10.1/real"], "evidence_grade_supplied": "ungraded"},
+        {},
+    ],
+)
+def test_without_graded_literature_a_candidate_is_network_only(packet: dict) -> None:
+    assert reasoning.evidence_tier(packet) == "network_only"
+
+
+def test_network_only_candidates_state_the_absence_rather_than_asserting_a_judgement() -> None:
+    """D18: absence is the finding, and `mechanism_supported` is not a false answer.
+
+    On the first full run 82 of 83 survivors were network-only. Recording `false` for
+    them would report "the evidence does not support this" when the truth is "there is no
+    evidence" -- a different claim, and the one that matters to a reader.
+    """
+    assert "No published evidence" in reasoning.NO_LITERATURE
+    assert "network proximity" in reasoning.NO_LITERATURE
+
+
+def test_tiering_is_reflected_in_the_caveats() -> None:
+    """The tier distinction is most of the result, so it travels with the output."""
+    assert any("two tiers" in c or "KIND of evidence" in c for c in reasoning.CAVEATS)
+    assert any("not sent to the model" in c for c in reasoning.CAVEATS)
