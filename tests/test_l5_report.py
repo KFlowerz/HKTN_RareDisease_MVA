@@ -19,7 +19,7 @@ from src.l5_report.run import _contradiction_text, _verdicts_by_candidate
 
 @pytest.mark.parametrize("text, description", [
     ("A feature list included HP:1234567 in the draft.", "an HPO term id"),
-    ("Variant at 7:117559590 in the panel.", "a genomic coordinate"),
+    ("Variant at 7:1234567 in the panel.", "a genomic coordinate"),
     ("The change c.1234A>G was called.", "an HGVS coding change"),
     ("Cross-referenced to MONDO:0008234 for the disease.", "a disease identifier"),
     ("Reported karyotype: 47 in two lines.", "an explicit karyotype"),

@@ -8,7 +8,7 @@
 # Platform: linux-64. The pipeline is Linux/WSL-only regardless -- pysam and bcftools
 # publish no Windows builds.
 #
-# environment.yml is now pinned too (2026-09-21), so the two agree rather than splitting
+# environment.yml is pinned too (since 2026-09-21), so the two agree rather than splitting
 # into a loose spec and an exact one. It stays the portable, readable form: use it if this
 # lock will not solve on another machine, and say in the report that the environment
 # differed.
@@ -19,11 +19,13 @@
 #     a licensing prompt to reproduce a CC-BY-4.0 result (see environment.yml).
 #   * the `prefix:` line is removed. It embeds a local home directory and has no bearing
 #     on the build.
-#   * the generation date is recorded below rather than left implicit, because a lock that
-#     predates a dependency is worse than no lock: this one was stale for ten days after
-#     h5py and matplotlib landed, and nothing said so.
+#   * the generation date is stamped above, because a lock that predates a dependency is
+#     worse than no lock: this one was stale for ten days after h5py and matplotlib
+#     landed, and nothing said so. tests/test_reproducibility.py now asserts the lock
+#     covers every declared dependency.
 #
-# Regenerate with: conda env export | python scripts/clean_lock.py
+# Regenerate with:
+#   conda env export > environment.lock.yml && python scripts/clean_lock.py
 name: mva-track2
 channels:
   - conda-forge

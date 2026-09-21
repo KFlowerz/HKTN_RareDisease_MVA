@@ -157,20 +157,40 @@ def test_the_manifest_records_a_config_digest_not_just_a_path() -> None:
     """A path does not identify a run: the file behind it changes."""
     digest = pipeline._config_digest({"config_path": "", "seed": 42, "channels": {}})
     assert digest["file_sha256"] is None       # no file at that path
-    assert len(digest["resolved_sha256"]) == 64
+    assert len(digest["settings_sha256"]) == 64
 
 
-def test_the_resolved_digest_changes_when_a_value_changes() -> None:
+def test_the_settings_digest_changes_when_a_setting_changes() -> None:
     first = pipeline._config_digest({"config_path": "", "seed": 42})
     second = pipeline._config_digest({"config_path": "", "seed": 43})
-    assert first["resolved_sha256"] != second["resolved_sha256"]
+    assert first["settings_sha256"] != second["settings_sha256"]
 
 
-def test_the_config_path_alone_does_not_change_the_resolved_digest() -> None:
-    """Two machines running the same config from different paths agree."""
-    here = pipeline._config_digest({"config_path": "/a/pipeline.yaml", "seed": 42})
-    there = pipeline._config_digest({"config_path": "/b/pipeline.yaml", "seed": 42})
-    assert here["resolved_sha256"] == there["resolved_sha256"]
+def test_two_machines_running_the_same_analysis_agree() -> None:
+    """The digest exists to compare runs, so machine-specific paths must not enter it.
+
+    Every one of these keys is an absolute path that differs per machine. Including them
+    would make two judges running the identical analysis disagree, which defeats the
+    comparison the digest is for.
+    """
+    here = pipeline._config_digest({
+        "config_path": "/home/a/pipeline.yaml", "data_dir": "/home/a/data",
+        "results_dir": "/home/a/results", "reference_dir": "/home/a/.cache/ref",
+        "enrichment_dir": "/home/a/.cache/enr", "seed": 42, "causal_gene": "INVENTEDGENE"})
+    there = pipeline._config_digest({
+        "config_path": "D:/b/pipeline.yaml", "data_dir": "D:/b/data",
+        "results_dir": "D:/b/results", "reference_dir": "D:/b/ref",
+        "enrichment_dir": "D:/b/enr", "seed": 42, "causal_gene": "INVENTEDGENE"})
+    assert here["settings_sha256"] == there["settings_sha256"]
+
+
+def test_a_science_setting_still_changes_the_digest_across_machines() -> None:
+    """The counterpart: excluding paths must not excuse a real difference."""
+    here = pipeline._config_digest({"data_dir": "/home/a/data", "seed": 42,
+                                    "causal_gene": "INVENTEDGENE"})
+    there = pipeline._config_digest({"data_dir": "D:/b/data", "seed": 42,
+                                     "causal_gene": "OTHERGENE"})
+    assert here["settings_sha256"] != there["settings_sha256"]
 
 
 def test_the_manifest_records_the_libraries_that_decide_the_numbers() -> None:

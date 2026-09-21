@@ -221,22 +221,32 @@ def _environment() -> dict:
     }
 
 
-def _config_digest(config: dict) -> dict:
-    """SHA-256 of the config file's bytes, and of the resolved values that drove the run.
+#: Config keys that are locations rather than science. Excluded from the settings digest:
+#: they are absolute and differ on every machine, so including them would make the digest
+#: incomparable between two people running the identical analysis -- which is the one
+#: comparison it exists to support.
+MACHINE_SPECIFIC_KEYS = frozenset({
+    "config_path", "data_dir", "results_dir", "reference_dir", "enrichment_dir",
+})
 
-    The path alone does not identify a run -- the file changes. The file's digest pins what
-    was on disk; the resolved digest pins what was actually used after environment
-    overrides (``$MVA_DATA_ROOT``, ``$MVA_REF_ROOT``) were applied, which is what a reader
-    comparing two artifacts actually wants to know.
+
+def _config_digest(config: dict) -> dict:
+    """SHA-256 of the config file's bytes, and of the settings that drove the run.
+
+    Two digests because they answer different questions. ``file_sha256`` pins the exact
+    bytes on disk, so an edited config is visible even if nothing meaningful changed.
+    ``settings_sha256`` covers the resolved values with the machine-specific paths removed
+    (:data:`MACHINE_SPECIFIC_KEYS`), so two judges running the same analysis on different
+    machines get the *same* digest and a genuine difference stands out.
     """
     path = Path(config.get("config_path") or "")
     file_digest = None
     if path.is_file():
         file_digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    resolved = json.dumps({k: str(v) for k, v in sorted(config.items())
-                           if k != "config_path"}, sort_keys=True)
+    settings = json.dumps({k: str(v) for k, v in sorted(config.items())
+                           if k not in MACHINE_SPECIFIC_KEYS}, sort_keys=True)
     return {"file_sha256": file_digest,
-            "resolved_sha256": hashlib.sha256(resolved.encode("utf-8")).hexdigest()}
+            "settings_sha256": hashlib.sha256(settings.encode("utf-8")).hexdigest()}
 
 
 def _read_manifest(results_dir: Path) -> dict:
