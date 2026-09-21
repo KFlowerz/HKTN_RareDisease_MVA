@@ -449,3 +449,47 @@ says so in its caveats.
 **The benchmark's positive set is this project's own file**, which is why channel E cannot
 be scored on it — see [decision D15](../../mngmt/decisions.md). The headline is channel B's
 recovery, because channel B never saw the set.
+
+---
+
+## Table 10 — transcriptional signatures (L2 channel C), added 2026-09-21
+
+Channel C scores compounds for *reversing* a proxy disease signature. Both releases are
+NCBI GEO supplementary files from the NIH LINCS Program, downloaded whole and matched
+locally — never queried per compound. See [decision D19](../../mngmt/decisions.md) for why
+the channel ships disabled.
+
+| Role | Source | License | CC-BY-4.0 compatible? | Where it lives |
+|---|---|---|---|---|
+| Proxy disease signature: consensus shRNA knockdown per gene, 33,839 × 978 | GEO `GSE106127` (`CGS` matrix + `CGS_meta`), retrieved 2026-09-21 | See below | ❌ Not redistributed | `reference_dir/lincs` |
+| Compound signatures to score: Level 5 MODZ, 118,050 × 12,328 | GEO `GSE70138` (LINCS Phase II, build 2017-03-06) | See below | ❌ Not redistributed | `reference_dir/lincs` |
+| Landmark gene identity (`pr_is_lm`), Entrez ids | GEO `GSE70138` and `GSE106127` `gene_info` | See below | Identifiers only | `reference_dir/lincs` |
+| Drug identity for the LINCS `pert_iname` → ChEMBL crosswalk | Open Targets `drug_molecule` | as Table 5 — ChEMBL-derived | ❌ No — treated as SA | `enrichment_dir` |
+
+**The licence could not be resolved, so it is treated as restricted.** On 2026-09-21
+`lincsproject.org` returned HTTP 404 at both its root and its data-release-policy path,
+and `clue.io/terms` served a script-rendered glossary carrying no licence statement. LINCS
+data is widely described as CC BY 4.0, but this project does not record a licence it could
+not read. The conservative handling costs nothing here: **nothing from these files is
+redistributed**. What channel C would publish is a derived score per drug plus identifiers
+and the caveat string — no expression value, no signature, no matrix row. The same posture
+as Table 6's HPO and Monarch rows.
+
+**Cite `subramanian2017` for the method and the data**, `lamb2006` for the connectivity
+concept, and `subramanian2005` for the running-sum enrichment score underneath it.
+`lincs_gse106127` and `lincs_gse70138` carry the dataset records.
+
+**These are large, and they are cached rather than committed.** The expanded `GSE70138`
+matrix is 5.8 GB. [src/l2_channels/lincs.py](../l2_channels/lincs.py) downloads the GEO
+`.gz`, expands it once, records the compressed file's SHA-256 and then removes it —
+keeping both would double a 6 GB cache for nothing. Checksums of the expanded files are
+memoised in a sidecar, so a 5.8 GB file is not rehashed on every run. As with every other
+cached release these live outside the repository and outside the custody root, and must
+never enter the deletion register in
+[docs/data_custody.md](../../docs/data_custody.md).
+
+**The GCTX axes are transposed relative to their names.** `0/META/ROW/id` names the genes
+and `0/META/COL/id` names the signatures, but the HDF5 matrix is stored column-major, so
+`matrix[i, j]` reads as `[signature i, gene j]`. Reading it the other way yields a matrix
+of the right dtype and the wrong meaning, which nothing downstream would catch;
+`lincs.axes()` asserts the orientation on every open.

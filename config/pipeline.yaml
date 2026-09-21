@@ -97,7 +97,13 @@ model: qwen2.5-7b-instruct-q4_k_m
 # settled. Setup is in docs/runtime.md.
 reasoning_endpoint: http://127.0.0.1:8080
 
-channels: {kg: true, proximity: true, signature: true, phenotype: true, prior: true}
+# `signature` is OFF by decision D19, and the reason is a result rather than a gap: the
+# channel is implemented and runs, but on a BUB1B-knockdown proxy its ranking is not
+# distinguishable from an unrelated gene's knockdown at any candidate depth (p 0.15-0.41
+# over 40 control genes), so it refuses to nominate. Reproduce with
+# `python scripts/channel_c_diagnostics.py`. Turning it on makes L2 fail, which is the
+# intended behaviour: the channel does not write a table it cannot defend.
+channels: {kg: true, proximity: true, signature: false, phenotype: true, prior: true}
 
 # L1 disease module. Both sources are licence-clean for a redistributed CC-BY-4.0 output:
 # STRING is CC BY 4.0 (its attribution travels in module.json) and Reactome data is CC0.
@@ -131,6 +137,33 @@ l2:
     approved_only: true              # scope is repurposing of APPROVED drugs
     permutations: 1000               # null resamples; fewer destabilises the tail
     min_bin_size: 100                # degree-bin floor, so a hub is never resampled as itself
+  # Signature reversion on a PROXY (decision D19). There is no patient RNA, so the query
+  # is the LINCS L1000 consensus knockdown of the causal gene, pooled across every cell
+  # line that has one, and compounds are scored for reversing it. The proxy caveat is
+  # written into every row, not into a footnote.
+  channel_c:
+    query_size: 100            # genes per tail of the query; CLUE's L1000 convention
+    # The conventional "gold signature" floor is distil_cc_q75 >= 0.2. It is REPORTED,
+    # not applied: enforcing it on this gene leaves too few cell lines for a pooled proxy
+    # to mean anything, and cross-cell-line concordance is the quality measure that
+    # applies to a pooled signature. Raise this to 0.2 to see the conventional filter.
+    min_replicate_correlation: 0.0
+    # Project the generic L1000 drug-response axis out of the query before scoring. NOT a
+    # tuning knob: the proxy overlaps that axis at r = +0.52, and measured on this data
+    # the uncorrected ranking does not beat random gene sets (p = 0.95) while the
+    # corrected one does (p = 0.024). False exists to reproduce that comparison.
+    deflate_generic_axis: true
+    approved_only: true        # scope is repurposing of APPROVED drugs
+    open_targets_release: "26.06"   # molecule identities; restricted, never redistributed
+    top_n: 250                 # deepest nomination the null-calibrated ladder may reach
+    # The null is OTHER GENES' knockdowns, not random gene sets. Two random-gene-set nulls
+    # were tried and both passed everything: a structured biological query beats an
+    # arbitrary one for reasons that have nothing to do with the gene. Only varying WHICH
+    # gene isolates the question. See the channel's guardrail and D19.
+    n_control_genes: 40        # min attainable p = 1/41
+    p_max: 0.05                # the head must beat unrelated genes' knockdowns to nominate
+    block_size: 2000           # signature rows read from the 5 GB matrix at a time
+    max_scored_signatures: 200000
   # Phenotype channel (decision D10). The subject's terms are read from data_dir at run
   # time and never written here. Resources are downloaded whole and matched locally.
   channel_d:

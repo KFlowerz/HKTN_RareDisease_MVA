@@ -1170,6 +1170,127 @@ channel C is not, and it needs deciding early or not at all.
 
 ---
 
+## D19 — Channel C is built, measured, and shipped as a negative result (2026-09-21)
+
+Decided by the maintainer on 2026-09-21, after implementing L2 channel C (signature
+reversion) and calibrating it. The channel is complete, tested and reproducible. It
+nominates nothing, and `channels.signature` is **false** in the shipped config.
+
+This is a result, not an unbuilt layer. Reproduce every number below with:
+
+```bash
+python scripts/channel_c_diagnostics.py      # a few minutes, reads only reference data
+```
+
+### What was built
+
+A proxy signature is unavoidable: the dataset is WGS plus phenotype, and **there is no
+patient RNA**. The proxy is the LINCS L1000 consensus shRNA knockdown of `BUB1B`
+(GEO `GSE106127`), pooled across all **9** cell lines that carry one, scored against the
+**46,601** Phase II compound signatures (GEO `GSE70138`) that resolve to an approved
+molecule — **897** molecules over the 978 L1000 landmark genes. Scoring is the L1000
+weighted connectivity score (Subramanian et al., 2017), normalised within cell line and
+sign, aggregated per molecule by max-quantile.
+
+### The four measurements
+
+**1. The proxy is weak but real.** Nine cell lines; cross-cell-line Spearman ρ median
+**0.20** (range 0.02–0.47). **Seven of nine** contributing signatures fall below the
+conventional gold threshold `distil_cc_q75 >= 0.2`. They are kept rather than filtered:
+applying the convention leaves two cell lines, which trades a weak pooled proxy for a
+weaker single-lineage one. The counts travel in `channel.json`, and
+`min_replicate_correlation` is left configurable so the conventional filter can be seen.
+
+**2. The proxy is half a confound.** It correlates **r = +0.52** with the mean L1000
+compound signature — the generic transcriptional stress response every perturbation
+shares. Uncorrected, the channel's best candidate does **not** beat a random gene set of
+the same size (p = 0.95); the uncorrected "top hits" are moxisylyte and choline
+alfoscerate, which are inert. Projecting that axis out of the query (`r_after = 0.000`)
+is therefore **not tuning**: without it the ranking is noise with a plausible shape.
+`deflate_generic_axis` defaults true and exists only to reproduce this comparison.
+
+**3. Two random-gene-set nulls were built and both failed.** Recorded because they are
+the obvious things to try again:
+
+| null | result | why it cannot fail |
+|---|---|---|
+| per-candidate query permutation | passed **60 of 60** candidates | a structured query scores extremely against *every* signature, so it tests whether the query has structure |
+| max-statistic over random queries | passed **every** depth (1…250) | a random query leaves 50.7% of signatures at exactly zero vs 42.6% for the real one, so the whole distribution shifts |
+
+A null that cannot fail is not a null.
+
+**4. The control-gene null — the one that isolates the question.** Hold "structured
+knockdown query" fixed and vary only *which gene*: 40 unrelated genes (SAC panel and the
+target excluded), each with a knockdown in at least as many cell lines, built and deflated
+identically.
+
+| depth | observed | control median | p |
+|---|---|---|---|
+| 1 | −1.2467 | −1.2063 | 0.366 |
+| 10 | −1.1305 | −1.0704 | 0.244 |
+| 50 | −1.0672 | −0.9137 | 0.195 |
+| 250 | −0.9626 | 0.0000 | 0.146 |
+
+**BUB1B is unremarkable at every depth.** Fifteen of the forty unrelated genes produce a
+*stronger* best reversal. And the one pattern that looked like biology — colchicine,
+albendazole, paclitaxel and ixabepilone in the top 10 — is not gene-specific either:
+**15 of 40 control genes also surface a tubulin binder in their top 10**, including POLE2
+(a DNA polymerase subunit) and CRK (an adaptor protein). Tubulin agents have extreme
+signatures; that is all this is. The observed top 10 also contains indiplon, oxandrolone
+and aniracetam, which cannot plausibly reverse a mitotic-checkpoint knockdown.
+
+### What is decided
+
+1. **The channel ships built and disabled.** `channels.signature: false`. Enabling it
+   makes L2 fail, which is the intended behaviour — `generate()` raises rather than
+   writing a table it cannot defend, and L2's runner records that as a failed channel.
+2. **The null is other genes' knockdowns**, never random gene sets. Both superseded nulls
+   are named in `channel.json` and in the module guardrail so they are not reinvented by a
+   session that finds them more convenient.
+3. **`p_max` is not loosened to fill the table.** The gap is not marginal (0.15–0.44
+   against 0.05); no threshold defensible at this scale recovers a candidate list.
+4. **No silent substitution of the curated aneuploidy gene set.** The scaffold offered it
+   as a fallback proxy. It is a different experiment answering a different question, and
+   `build_proxy` raises rather than swapping it in. Adopting it needs its own decision.
+5. **This is reported, not buried.** D18 already leads the report with exclusions because
+   that is the pipeline's strongest result. A channel that was built correctly, calibrated
+   honestly and found to carry no signal belongs in the same section: it is evidence the
+   pipeline can tell a finding from an artefact, which is the whole claim of a
+   multi-channel design on a hyper-rare disease.
+
+### What this costs
+
+D16's open item said channel C was "the strongest argument for convergence precisely
+because channels D and E currently overlap in nothing." That argument is now closed
+negatively: **there is still no discriminating cross-channel convergence**, and the
+submission cannot claim it. The architecture's central bet — independent weak signals
+reconciled by consensus — is demonstrated by construction and by L4's exclusions, not by
+agreement among channels.
+
+### Rejected
+
+- **Signature-strength filtering** (dropping transcriptionally inert signatures, |z| ≥ 2
+  thresholds at 20/50/100). Tested; it made the head *less* coherent, not more — the
+  opposite of what a real signal does under a noise filter.
+- **Escalating to LINCS Phase I** (19.9 GB, ~19,800 compounds). More compounds cannot fix
+  a query that is not gene-specific; the failure is in the proxy, not in coverage.
+- **Ranking by population percentile** (a touchstone-free τ). It recentres the
+  distribution but ranks "least mimicking" compounds, which is not reversal.
+
+### Open
+
+- **A curated aneuploidy-response gene set as an alternative proxy.** The one substantive
+  route left for this channel, and a genuinely different query: derived from aneuploidy
+  biology rather than from one gene's knockdown, so it need not lie along the generic
+  axis. Needs its own decision and its own calibration against the same control-gene null.
+- **`enrichment.ensure_datasets` re-lists the remote directory on every run**, even when
+  every Parquet part is already cached. `ftp.ebi.ac.uk` refused connections throughout
+  2026-09-21, which would have broken channels B, C, D and E on a machine holding all
+  their data. Not changed here — it is shared acquisition behaviour touching four
+  channels — but it is a reproducibility risk for a judge running offline.
+
+---
+
 ## Open
 
 - **Which date the organizers mean by "Hackathon close"** — taken as submission close (D12), which is
@@ -1178,9 +1299,12 @@ channel C is not, and it needs deciding early or not at all.
   which runs past the 2026-11-24 the published timeline shows. On the chosen reading the data is
   deleted with one to two months of judging still to run, not one day.
   See [docs/data_custody.md](../docs/data_custody.md).
-- **Which channels ship.** D16 fixes when a shippable state must exist, not what is in it. Channels
-  A and C are unbuilt, and channel C is the strongest argument for convergence precisely because
-  channels D and E currently overlap in nothing.
+- **Which channels ship.** D16 fixes when a shippable state must exist, not what is in it. Channel
+  A is unbuilt. Channel C is now built and **closed negatively** (D19): it carries no gene-specific
+  signal on a BUB1B-knockdown proxy, so it nominates nothing and ships disabled. The hope recorded
+  here — that channel C would supply the convergence channels D and E do not — did not survive
+  calibration, and the submission cannot claim discriminating cross-channel convergence.
+  A curated aneuploidy gene set remains the one untried proxy; see D19's Open.
 - **APA title casing** in [docs/references.md](../docs/references.md) — Crossref preserves publisher
   casing; a sentence-case pass is owed before submission.
 - **[src/purge.py](../src/purge.py) is still a scaffold** — all five functions raise. `COMPLIANCE.md`

@@ -24,6 +24,10 @@ Abou Tayoun, A. N., Pesaran, T., DiStefano, M. T., Oza, A., Rehm, H. L., Bieseck
 
 Alfieri, C., Chang, L., & Barford, D. (2018). Mechanism for remodelling of the cell cycle checkpoint protein MAD2 by the ATPase TRIP13. Nature, 559(7713), 274–278. https://doi.org/10.1038/s41586-018-0281-1
 
+Broad Institute & NIH LINCS Program. (2017). *LINCS L1000 consensus gene signatures (CGS) of shRNA knockdown* (GEO accession GSE106127) [Data set]. National Center for Biotechnology Information Gene Expression Omnibus. Retrieved September 21, 2026, from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE106127
+
+Broad Institute & NIH LINCS Program. (2017). *LINCS L1000 Phase II Level 5 compound signatures* (GEO accession GSE70138, build 2017-03-06) [Data set]. National Center for Biotechnology Information Gene Expression Omnibus. Retrieved September 21, 2026, from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE70138
+
 Carter, S. L., Eklund, A. C., Kohane, I. S., Harris, L. N., & Szallasi, Z. (2006). A signature of chromosomal instability inferred from gene expression profiles predicts clinical outcome in multiple human cancers. Nature Genetics, 38(9), 1043–1048. https://doi.org/10.1038/ng1861
 
 Chen, S., Francioli, L. C., Goodrich, J. K., Collins, R. L., Kanai, M., Wang, Q., Alföldi, J., Watts, N. A., Vittal, C., Gauthier, L. D., Poterba, T., Wilson, M. W., Tarasova, Y., Phu, W., Grant, R., Yohannes, M. T., Koenig, Z., Farjoun, Y., Banks, E., … Karczewski, K. J. (2024). A genomic mutational constraint map using variation in 76,156 human genomes. Nature, 625(7993), 92–100. https://doi.org/10.1038/s41586-023-06045-0
@@ -77,6 +81,8 @@ Karczewski, K. J., Francioli, L. C., Tiao, G., Cummings, B. B., Alföldi, J., Wa
 Köhler, S., Schulz, M. H., Krawitz, P., Bauer, S., Dölken, S., Ott, C. E., Mundlos, C., Horn, D., Mundlos, S., & Robinson, P. N. (2009). Clinical diagnostics in human genetics with semantic similarity searches in ontologies. The American Journal of Human Genetics, 85(4), 457–464. https://doi.org/10.1016/j.ajhg.2009.09.003
 
 Kolde, R., Laur, S., Adler, P., & Vilo, J. (2012). Robust rank aggregation for gene list integration and meta-analysis. Bioinformatics, 28(4), 573-580. https://doi.org/10.1093/bioinformatics/btr709
+
+Lamb, J., Crawford, E. D., Peck, D., Modell, J. W., Blat, I. C., Wrobel, M. J., Lerner, J., Brunet, J.-P., Subramanian, A., Ross, K. N., Reich, M., Hieronymus, H., Wei, G., Armstrong, S. A., Haggarty, S. J., Clemons, P. A., Wei, R., Carr, S. A., Lander, E. S., & Golub, T. R. (2006). The Connectivity Map: Using gene-expression signatures to connect small molecules, genes, and disease. *Science, 313*(5795), 1929–1935. https://doi.org/10.1126/science.1132939
 
 Landrum, M. J., Lee, J. M., Benson, M., Brown, G. R., Chao, C., Chitipiralla, S., Gu, B., Hart, J., Hoffman, D., Jang, W., Karapetyan, K., Katz, K., Liu, C., Maddipatla, Z., Malheiro, A., McDaniel, K., Ovetsky, M., Riley, G., Zhou, G., … Maglott, D. R. (2018). ClinVar: Improving access to variant interpretations and supporting evidence. Nucleic Acids Research, 46(D1), D1062–D1067. https://doi.org/10.1093/nar/gkx1153
 
@@ -141,6 +147,10 @@ Singer-Berk, M., Gudmundsson, S., Baxter, S., Seaby, E. G., England, E., Wood, J
 SnpEff & SnpSift documentation. (n.d.). Commands & command line options. Retrieved September 11, 2026, from https://pcingola.github.io/SnpEff/snpeff/commandline/
 
 Stingele, S., Stoehr, G., Peplowska, K., Cox, J., Mann, M., & Storchova, Z. (2012). Global analysis of genome, transcriptome and proteome reveals the response to aneuploidy in human cells. Molecular Systems Biology, 8(1). https://doi.org/10.1038/msb.2012.40
+
+Subramanian, A., Tamayo, P., Mootha, V. K., Mukherjee, S., Ebert, B. L., Gillette, M. A., Paulovich, A., Pomeroy, S. L., Golub, T. R., Lander, E. S., & Mesirov, J. P. (2005). Gene set enrichment analysis: A knowledge-based approach for interpreting genome-wide expression profiles. *Proceedings of the National Academy of Sciences, 102*(43), 15545–15550. https://doi.org/10.1073/pnas.0506580102
+
+Subramanian, A., Narayan, R., Corsello, S. M., Peck, D. D., Natoli, T. E., Lu, X., Gould, J., Davis, J. F., Tubelli, A. A., Asiedu, J. K., Lahr, D. L., Hirschman, J. E., Liu, Z., Donahue, M., Julian, B., Khan, M., Wadden, D., Smith, I. C., Lam, D., … Golub, T. R. (2017). A next generation connectivity map: L1000 platform and the first 1,000,000 profiles. *Cell, 171*(6), 1437–1452.e17. https://doi.org/10.1016/j.cell.2017.10.049
 
 Suijkerbuijk, S. J. E., van Osch, M. H. J., Bos, F. L., Hanks, S., Rahman, N., & Kops, G. J. P. L. (2010). Molecular Causes for BUBR1 Dysfunction in the Human Cancer Predisposition Syndrome Mosaic Variegated Aneuploidy. Cancer Research, 70(12), 4891–4900. https://doi.org/10.1158/0008-5472.can-09-4319
 
@@ -230,6 +240,8 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `sheltzer2013` | doi:10.1158/0008-5472.can-13-0749 | Crossref | None on record | 2026-09-08 |
 | `singerberk2023` | doi:10.1016/j.ajhg.2023.08.005 | Crossref bibliographic match, confirmed by Europe PMC (PMID 37633279) | None on record | 2026-09-11 |
 | `stingele2012` | doi:10.1038/msb.2012.40 | Crossref | None on record | 2026-09-08 |
+| `subramanian2005` | doi:10.1073/pnas.0506580102 | Crossref | None on record | 2026-09-21 |
+| `subramanian2017` | doi:10.1016/j.cell.2017.10.049 | Crossref | None on record. 56 authors; rendered per APA 7th as the first 19, … and the last | 2026-09-21 |
 | `suijkerbuijk2010` | doi:10.1158/0008-5472.can-09-4319 | Crossref | None on record | 2026-09-08 |
 | `szklarczyk2022` | doi:10.1093/nar/gkac1000 | Crossref | None on record. Crossref registers the online-first date (2022-11); the article is the 2023 NAR database issue, 51(D1) | 2026-09-16 |
 | `tan2015` | doi:10.1093/bioinformatics/btv112 | Crossref | None on record | 2026-09-16 |
@@ -259,6 +271,8 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `gnomad_policies` | https://gnomad.broadinstitute.org/policies | Primary gnomAD data are CC0; SpliceAI annotations are CC BY-NC 4.0 and are not read (Table 4, src/l4_validate/sources.md) | 2026-09-17 |
 | `hpo_20260901` | http://purl.obolibrary.org/obo/hp/releases/2026-09-01/hp.obo | Phenotype ontology for channel D, used unaltered | 2026-09-17 |
 | `hpo_licence` | http://human-phenotype-ontology.github.io/license.html | HPO licence conditions (Table 6, src/l4_validate/sources.md) | 2026-09-17 |
+| `lincs_gse106127` | https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE106127 | LINCS L1000 knockdown consensus signatures; supplies channel C's proxy. **No licence statement was resolvable**: `lincsproject.org` returned HTTP 404 at its root and its release-policy path, and `clue.io/terms` is a script-rendered glossary carrying none. Treated as non-redistributable (Table 10) | 2026-09-21 |
+| `lincs_gse70138` | https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE70138 | LINCS L1000 Phase II Level 5 compound signatures. Licence as `lincs_gse106127` | 2026-09-21 |
 | `mane_v15` | https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/ | MANE Select transcript per SAC-panel gene | 2026-09-11 |
 | `monarch_kg_20260902` | https://data.monarchinitiative.org/monarch-kg/2026-09-02/tsv/disease_associations/ | Disease–phenotype annotations for channel D, Mondo-keyed | 2026-09-17 |
 | `monarch_terms` | https://github.com/monarch-initiative/monarch-app/blob/main/frontend/src/pages/knowledgeGraph/PageTerms.vue | Intended use, warranty and liability terms (Table 6) | 2026-09-17 |

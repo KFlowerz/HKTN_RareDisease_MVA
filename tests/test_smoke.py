@@ -53,7 +53,12 @@ STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m not in IMPLEMENTED]
 
 #: Channels already built. A channel moves off the stub list only when it produces a real
 #: ranking from real inputs -- the same one-at-a-time rule the layers follow.
+#: Channel C is built and listed here even though ``channels.signature`` is false in the
+#: shipped config: it produces a real ranking from real inputs and then declines to
+#: nominate it, because the ranking does not beat an unrelated gene's knockdown (D19).
+#: "Implemented" is about the code, not about whether the channel is enabled.
 IMPLEMENTED_CHANNELS = {"src.l2_channels.channel_b_proximity",
+                        "src.l2_channels.channel_c_signature",
                         "src.l2_channels.channel_d_phenotype",
                         "src.l2_channels.channel_e_prior"}
 STUB_CHANNEL_MODULES = [m for m in CHANNEL_MODULES if m not in IMPLEMENTED_CHANNELS]
