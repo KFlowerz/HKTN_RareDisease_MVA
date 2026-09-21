@@ -34,3 +34,8 @@ __pycache__/
 # The ClinVar release here is a .vcf.gz, which the patterns above already exclude; this
 # entry keeps the whole cache out regardless of what a later layer adds to it.
 reference/
+
+# Claude Code machine-local settings (permission rules, per-machine state).
+# .claude/settings.json is shareable and stays tracked if it is ever added;
+# this file is not, and must not reach a public repository.
+.claude/settings.local.json
