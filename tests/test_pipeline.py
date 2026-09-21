@@ -119,22 +119,52 @@ def test_unknown_layer_is_rejected(tmp_path: Path, data_root: Path) -> None:
         pipeline.run(config, only="l9_nonexistent")
 
 
-def test_stub_layer_records_not_implemented_and_stops(tmp_path: Path, data_root: Path) -> None:
-    """A scaffold stub is recorded as `not_implemented`, not as a completed layer.
+def test_every_layer_writes_where_the_orchestrator_looks() -> None:
+    """A layer's output directory must match what ``_artifacts`` goes looking for.
 
-    The distinction matters: a layer that ran and produced nothing is a scientific claim;
-    a layer that was never implemented is not.
+    This is a silent failure, which is why it is asserted. L5 writes to ``results/l5``
+    while its module is ``l5_report``; with no entry in ``LAYER_OUTPUT_DIRS`` the
+    orchestrator looked under ``results/l5_report``, found nothing, and reported the layer
+    complete with "0 artifact(s)" — a manifest that records a successful run producing
+    nothing, which is exactly the claim this pipeline is careful never to make by
+    accident.
+    """
+    import re
 
-    Targets L5 explicitly. Every earlier layer is implemented and fails on its missing
-    input instead -- a real VCF, a causal gene, a channel map, an L2 status record, an L3
-    table -- so this asserts the manifest behaviour on the one layer that genuinely is a
-    scaffold. It has moved down the stack as layers were built, which is the intent.
+    for layer in pipeline.LAYER_ORDER:
+        module = __import__(f"src.{layer}.run", fromlist=["run"])
+        source = Path(module.__file__).read_text(encoding="utf-8")
+        # Each layer names its own output root as results_dir / "<dir>".
+        written = set(re.findall(r'results_dir\)?\s*/\s*"([a-z0-9_]+)"', source))
+        expected = pipeline.LAYER_OUTPUT_DIRS.get(layer, layer)
+        if written:
+            assert expected in written, (
+                f"{layer} writes to {sorted(written)} but the orchestrator lists "
+                f"artifacts under results/{expected}; add it to LAYER_OUTPUT_DIRS")
+
+
+def test_no_layer_is_a_scaffold_any_more(tmp_path: Path, data_root: Path) -> None:
+    """Every layer is built, so none may report `not_implemented`.
+
+    This test used to assert the opposite on whichever layer was still a scaffold, and it
+    moved down the stack as layers landed -- L5 was the last. Inverting it rather than
+    deleting it keeps the distinction it existed for: a layer that ran and produced
+    nothing is a scientific claim, a layer that was never implemented is not, and the
+    manifest has to tell them apart. If a future layer is scaffolded, this fails and says
+    so.
+
+    L5 with no upstream artifacts raises a real failure -- it renders what L3 and L4
+    produced and cannot invent them -- which the manifest must record as `failed`.
     """
     config = pipeline.load_config(_write_config(tmp_path))
-    pipeline.run(config, only="l5_report")
+    with pytest.raises((FileNotFoundError, ValueError)):
+        pipeline.run(config, only="l5_report")
 
     manifest = json.loads((config["results_dir"] / pipeline.MANIFEST_NAME).read_text(encoding="utf-8"))
-    assert manifest["layers"]["l5_report"]["status"] == "not_implemented"
+    recorded = manifest["layers"]["l5_report"]
+    assert recorded["status"] == "failed"
+    assert recorded["status"] != "not_implemented"
+    assert "FileNotFoundError" in recorded["detail"] or "ValueError" in recorded["detail"]
     assert manifest["seed"] == 42
     assert manifest["causal_gene"] is None
 

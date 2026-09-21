@@ -17,6 +17,9 @@ dependencies:
   - networkx
   - scikit-learn
   - pyyaml
+  - matplotlib-base  # L5's figures. The -base build omits the GUI toolkits: L5 renders
+                     # PNGs through the Agg backend and never opens a window, and the Qt
+                     # stack is a large dependency for a pipeline that runs headless.
   - h5py           # reads the LINCS L1000 .gctx releases L2 channel C scores against.
                    # A .gctx is HDF5, so it cannot be read from a compressed stream --
                    # see src/l2_channels/lincs.py.

@@ -47,8 +47,13 @@ HELPER_MODULES = [
 #: than on an unimplemented body. Layers move off this list as they are built, one at a
 #: time and deliberately. (The L2 *runner* is built; most channels behind it are not --
 #: see IMPLEMENTED_CHANNELS.)
+#: **Every layer is now implemented.** L5 was the last scaffold; it landed with the
+#: dossier, so ``STUB_LAYER_MODULES`` is empty and the stub test below parametrises over
+#: nothing. That is the intended end state, not a gap in coverage -- the rule the stub
+#: test enforced (an unbuilt layer raises rather than returning empty) is now enforced for
+#: every layer by ``test_implemented_layer_requires_real_config``.
 IMPLEMENTED = {"src.l0_genomics.run", "src.l1_target.run", "src.l2_channels.run",
-               "src.l3_integrate.run", "src.l4_validate.run"}
+               "src.l3_integrate.run", "src.l4_validate.run", "src.l5_report.run"}
 STUB_LAYER_MODULES = [m for m in LAYER_MODULES if m not in IMPLEMENTED]
 
 #: Channels already built. A channel moves off the stub list only when it produces a real
@@ -66,10 +71,29 @@ STUB_CHANNEL_MODULES = [m for m in CHANNEL_MODULES if m not in IMPLEMENTED_CHANN
 
 @pytest.mark.parametrize("module_name", STUB_LAYER_MODULES)
 def test_layer_run_is_a_stub(module_name: str) -> None:
-    """Each unimplemented layer exposes a callable ``run`` that raises."""
+    """Each unimplemented layer exposes a callable ``run`` that raises.
+
+    Parametrises over nothing now that L5 is built. Kept rather than deleted: the next
+    layer added to ``LAYER_MODULES`` is covered by it the moment it appears, which is
+    what made the rule hold as the stack was built one layer at a time.
+    """
     module = importlib.import_module(module_name)
     assert callable(module.run)
     with pytest.raises(NotImplementedError):
+        module.run({})
+
+
+@pytest.mark.parametrize("module_name", sorted(IMPLEMENTED))
+def test_implemented_layer_requires_real_config(module_name: str) -> None:
+    """A built layer fails on its missing input, never on an unimplemented body.
+
+    The counterpart to the stub assertion above, and what replaces it now that no
+    scaffold is left: every layer must refuse an empty config rather than quietly
+    producing an empty result, because an empty result is a scientific claim.
+    """
+    module = importlib.import_module(module_name)
+    assert callable(module.run)
+    with pytest.raises((KeyError, FileNotFoundError, ValueError)):
         module.run({})
 
 

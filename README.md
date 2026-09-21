@@ -45,7 +45,7 @@ disease, so convergence across methods carries the signal rather than any one sc
 | **L2** | [src/l2_channels/](src/l2_channels/) | Five parallel candidate generators — see below. |
 | **L3** | [src/l3_integrate/](src/l3_integrate/) | Harmonize drug identities on the **RxNorm RxCUI** backbone; rank-aggregate (RRA/Borda) preferring cross-channel convergence; a **Claude-in-the-loop** step that synthesizes each rationale, actively searches for contradicting evidence, and emits a calibrated confidence. |
 | **L4** | [src/l4_validate/](src/l4_validate/) | In-silico validation + **pediatric safety triage**, including **hard exclusion of genotoxic / cancer-risk-increasing agents** (MVA is cancer-predisposing). Plus a **blinded internal benchmark** — there is no external ground truth for Track 2. |
-| **L5** | [src/l5_report/](src/l5_report/) | Rubric-aligned report figures, candidate tables, and video assets. |
+| **L5** | [src/l5_report/](src/l5_report/) | Renders the **candidate dossier** — one static page per surviving candidate, a companion exclusions page, the rubric-aligned figures and report-ready tables. Renders only; it computes nothing (D2), and every string passes a publication guard before it reaches a file (D20). |
 
 ### L2 channels
 
@@ -53,7 +53,7 @@ disease, so convergence across methods carries the signal rather than any one sc
 |---|---|---|---|
 | **A** | `channel_a_kg.py` | Knowledge-graph link prediction (Open Targets / PrimeKG / Hetionet + GNN, explainable meta-paths) | Anchored at the **gene** level, not the disease level — MVA is absent or near-empty in most KGs (cold-start defense). |
 | **B** | `channel_b_proximity.py` | Network proximity (Guney/Barabási) between drug-target sets and the disease module | Does **not** require the disease to exist in a KG at all. |
-| **C** | `channel_c_signature.py` | Signature reversion against a **PROXY** signature | There is **no patient RNA-seq**. Uses LINCS L1000 knockdown of the causal gene or a curated aneuploidy gene set; the substitution and its limits are documented in-module. |
+| **C** | `channel_c_signature.py` | Signature reversion against a **PROXY** signature | There is **no patient RNA-seq**, so the query is a LINCS L1000 knockdown of the causal gene. **Built, calibrated, and it nominates nothing** — its ranking is not distinguishable from an unrelated gene's knockdown (p 0.15–0.44 against 40 control genes), so it declines rather than writing a table it cannot defend. Disabled in the shipped config; see [D19](mngmt/decisions.md) and `scripts/channel_c_diagnostics.py`. |
 | **D** | `channel_d_phenotype.py` | Phenotype/HPO-driven (Monarch / Orphanet / Open Targets) | Reaches symptomatic candidates that mechanism-first channels miss. |
 | **E** | `channel_e_prior.py` | Aneuploidy-stress literature prior + agentic literature mining (RareAgent-style) | Captures published aneuploidy-tolerance biology no structured resource encodes. |
 
@@ -64,8 +64,40 @@ runs L0 → L5 in order, writing to `results/` (gitignored).
 
 ## Status
 
-**Scaffold only.** Every layer's `run()` is a documented stub that raises `NotImplementedError`. No
-algorithms are implemented, no APIs are called, and no data is present.
+**All six layers are built.** L0 → L5 run end to end and produce the dossier.
+
+Four of the five L2 channels produce evidence. Channel A is unbuilt. **Channel C is built and
+produces nothing**, deliberately: it is calibrated against other genes' knockdowns, fails that test,
+and refuses to nominate ([D19](mngmt/decisions.md)). The consequence is stated rather than buried —
+this shortlist carries **no discriminating cross-channel convergence**, and the submission does not
+claim any.
+
+What the pipeline produced on this dataset:
+
+| | |
+|---|---|
+| Candidates nominated by the channels | 1,963 |
+| **Refused by the paediatric safety triage** | **1,880** |
+| Surviving, literature-supported (Tier 1) | 1 |
+| Surviving, network proximity only (Tier 2) | 82 |
+
+The exclusions are the headline result, not an appendix ([D18](mngmt/decisions.md)): each refused
+row names the rule, the openFDA field, the SPL section and the sentence that did it.
+
+### Reading the report
+
+```bash
+python -m src.pipeline --only l5_report
+# then open results/l5/index.html
+```
+
+`results/` is gitignored, so the dossier is built rather than committed. It is static HTML with no
+JavaScript and no template engine — a deliberate choice ([D2](mngmt/decisions.md)): an interactive
+drug filter presents as a clinical decision aid whatever disclaimer is attached to it.
+
+**The per-chromosome aneuploidy result is not published**, in any form, including aggregate counts
+([D20](mngmt/decisions.md)). The method and the smallest mosaic fraction it can resolve are; the
+child's result from it is not. In a ~50-patient population that profile is close to an identifier.
 
 ## Quickstart
 

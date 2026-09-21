@@ -68,8 +68,12 @@ MANIFEST_NAME = "_manifest.json"
 
 #: Layers whose output directory is not named after the layer. Without an entry here the
 #: manifest looks in the wrong place and silently records a completed layer as producing
-#: nothing, which reads as a failure that did not happen.
-LAYER_OUTPUT_DIRS = {"l2_channels": "l2", "l3_integrate": "l3", "l4_validate": "l4"}
+#: nothing, which reads as a failure that did not happen. L0 and L1 write to directories
+#: named after themselves; L2-L5 write to short names.
+#: ``tests/test_pipeline.py`` asserts every layer's directory matches what the
+#: orchestrator looks for, because the failure is invisible -- the layer still completes.
+LAYER_OUTPUT_DIRS = {"l2_channels": "l2", "l3_integrate": "l3", "l4_validate": "l4",
+                     "l5_report": "l5"}
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH) -> dict:

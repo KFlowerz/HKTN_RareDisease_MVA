@@ -1291,6 +1291,66 @@ agreement among channels.
 
 ---
 
+## D20 — L5 publishes the aneuploidy method, never this child's result (2026-09-21)
+
+Decided by the maintainer on 2026-09-21, building L5. The dossier renders the
+B-allele-frequency aneuploidy method and its sensitivity envelope, and **withholds every
+per-chromosome result** — including aggregate ones such as how many contigs were flagged.
+
+**Why this needed a decision.** `CLAUDE.md` already requires aggregate or categorical
+forms rather than raw per-sample genomic detail. This goes further than that, and it costs
+something: per-chromosome aneuploidy burden is the project's **Innovation hook** (25% of
+the rubric), it is the most visually compelling figure the pipeline could produce, and not
+showing it is a real concession.
+
+It is withheld anyway. MVA case series publish karyotypes, the worldwide population is
+around fifty patients, and *which* chromosomes are involved, *how many*, and at *what
+mosaic fraction* is close to a fingerprint. A count of flagged chromosomes is not a safe
+aggregate either — in a population that small it narrows the field by itself. The
+boundary `COMPLIANCE.md` sets is what the family already shares publicly through their own
+blog posts, and a per-chromosome profile is past it.
+
+**What is published instead**: the statistic, the window size, the minimum depth, the
+baseline, the mosaic-fraction estimator, and the smallest mosaic fraction the method can
+resolve on this data. That is enough to make and to judge the innovation claim — *allele
+ratios alone resolve mosaic aneuploidy without alignments* — because the claim is about
+what the method can do, not about what it found here.
+
+**The withholding is stated, not silent.** `results/l5/report.json` lists the withheld
+fields by name and the dossier prints the reason. Withholding silently is
+indistinguishable from never having looked, and a judge assessing rigor should be able to
+see that the omission is a decision.
+
+**Enforced in code, not by review.** `src/l5_report/publish_guard.py` fails closed on
+every string L5 writes. Identifier patterns (HPO ids, coordinates, HGVS, disease ids) are
+imported from `src/l3_integrate/claude_reasoning.py` rather than restated, so the two
+boundaries cannot drift; karyotype strings and dbSNP ids are added for the report surface.
+Per-chromosome fields are checked **structurally**, against mapping keys, not as text — an
+earlier text-matching version rejected the report's own list of what it was withholding.
+
+The guard also enforces D4's wording per sentence: any sentence naming the endpoint must
+qualify it as *secondary* prevention. Per sentence rather than per document, because a
+qualifier in the introduction does not travel with a table caption that a reader
+screenshots.
+
+### Also settled here
+
+1. **The dossier is static HTML with no JavaScript** (D2's reasoning, now implemented).
+   No template engine either: a judge rebuilds it from `environment.yml` and nothing else.
+2. **`contradicting_evidence` never renders blank.** Empty renders as "Searched, none
+   found" where the model was consulted, and as "Not searched, and not applicable" where
+   the candidate has no literature to contradict. A blank cell reads as "nobody looked".
+3. **L5 refuses an upstream artifact of the wrong shape** rather than rendering around it.
+   `verdicts.json` read with the wrong nesting produced candidate pages with an empty
+   safety section, which reads as "no findings" instead of "not loaded"; that now raises.
+   The same check caught `recovery.csv` being comma-separated while every other L4 table
+   is tab-separated — it had been silently degrading to a missing benchmark figure.
+4. **Channel C's null result is on the front page**, not omitted. The architecture
+   specifies five channels and four produced evidence; a report describing five would
+   overstate what produced this shortlist (D19).
+
+---
+
 ## Open
 
 - **Which date the organizers mean by "Hackathon close"** — taken as submission close (D12), which is
