@@ -1346,7 +1346,8 @@ screenshots.
    The same check caught `recovery.csv` being comma-separated while every other L4 table
    is tab-separated — it had been silently degrading to a missing benchmark figure.
 4. **Channel C's null result is on the front page**, not omitted. The architecture
-   specifies five channels and four produced evidence; a report describing five would
+   specifies five channels and three produced evidence — proximity, phenotype and the
+   literature prior, with channel A unbuilt; a report describing five would
    overstate what produced this shortlist (D19).
 
 ---

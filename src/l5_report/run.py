@@ -508,8 +508,10 @@ def run(config: dict) -> None:
     signature = (channels_status.get("channels", {}).get("signature", {})
                  if channels_status else {})
     channel_c_note = render.block(
-        "<p>The architecture specifies five channels. <strong>Four produced evidence "
-        "here.</strong> Channel C (signature reversion) is implemented and calibrated, and "
+        "<p>The architecture specifies five channels. <strong>Three produced evidence "
+        "here</strong> — network proximity, phenotype and the literature prior. Channel A "
+        "(knowledge-graph link prediction) is not built. Channel C (signature reversion) "
+        "is implemented and calibrated, and "
         "it nominates nothing: on a knockdown-proxy signature its ranking is not "
         "distinguishable from an unrelated gene's knockdown at any candidate depth "
         "(p 0.15–0.44 against 40 control genes), so it declines rather than writing a "
@@ -620,8 +622,8 @@ def run(config: dict) -> None:
             "Exclusions are presented first and survivors are tiered by evidence kind "
             "(decision D18); the two tiers are never merged into one list.",
             "Channel C is implemented and nominates nothing (decision D19), so this "
-            "shortlist rests on four channels and carries no discriminating "
-            "cross-channel convergence.",
+            "shortlist rests on three channels of the five specified (channel A is not "
+            "built) and carries no discriminating cross-channel convergence.",
         ],
     }
     assert_publishable(manifest, "report.json")

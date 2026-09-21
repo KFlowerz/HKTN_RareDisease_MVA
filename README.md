@@ -66,7 +66,8 @@ runs L0 → L5 in order, writing to `results/` (gitignored).
 
 **All six layers are built.** L0 → L5 run end to end and produce the dossier.
 
-Four of the five L2 channels produce evidence. Channel A is unbuilt. **Channel C is built and
+**Three of the five L2 channels produce evidence** — network proximity, phenotype and the
+literature prior. Channel A is unbuilt. **Channel C is built and
 produces nothing**, deliberately: it is calibrated against other genes' knockdowns, fails that test,
 and refuses to nominate ([D19](mngmt/decisions.md)). The consequence is stated rather than buried —
 this shortlist carries **no discriminating cross-channel convergence**, and the submission does not
