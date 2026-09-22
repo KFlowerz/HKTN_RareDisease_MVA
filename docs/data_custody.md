@@ -55,6 +55,15 @@ Status values: `planned` (registered, not yet created) · `active` (holds bytes)
 | `C6` | Shell history, terminal scrollback, editor workspace state | Only if a record is ever printed | Prevented rather than purged — see below | n/a |
 | `C7` | Assistant session transcripts — Claude Code's local `.jsonl` store, plus any claude.ai web sessions held server-side | Prompts and tool output from development. Measured 2026-09-18: variant identifiers derived from the subject are present in the local store (30.6 MB, 9 files). The web sessions were not measured and are enumerated via the account's **Export data**. | Delete the local store; delete the conversations in the account, which removes them from history immediately and from back-end storage within 30 days | **active** |
 
+| `C8` | The organizers' Track 1 submission store — `SageBio/mva-hackathon-2026-leaderboard`, a private HF dataset | The submitted CSV: the subject's candidate variant coordinates in GRCh38, as the Track 1 answer format requires (decision D21). The local copy lives under `results/` and is covered by `C3`. | **Not purgeable by this project.** The organizers issued the data and hold the validated answer; this copy travels back to its source. Recorded for completeness, not because it can be deleted. | live once submitted |
+
+**`C8` is the one row this project cannot act on**, and it is listed for exactly that reason. A
+register that shows only the copies we can delete would overstate the reach of the deletion
+commitment in [COMPLIANCE.md](../COMPLIANCE.md). The mitigation is upstream of custody: nothing is
+disclosed that the recipient did not already hold, the destination is private (the dataset returns
+HTTP 401 unauthenticated and the public leaderboard shows scores, not variants), and no coordinate
+reaches the repository or the written report.
+
 `C6` is mitigated at the source: L0's guardrail forbids logging patient-derived values at INFO,
 and **no pipeline channel sends patient data to an external API** — which is a narrower claim
 than it first reads, and deliberately so. It is about the channels. It says nothing about

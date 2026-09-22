@@ -1351,6 +1351,97 @@ screenshots.
    overstate what produced this shortlist (D19).
 
 ---
+## D21 — Enter Track 1, and let the child's coordinates leave only by that route (2026-09-21)
+
+Decided by the maintainer on 2026-09-21. The project enters **Track 1 (variant prediction)**
+as well as Track 2, using the causal-gene call L0 already produced and gate G1 already
+recorded (D9).
+
+**Why it is worth entering.** L0 does the Track 1 work as a by-product of fixing the
+premise for the drug search: local annotation on MANE Select, a ClinVar cross-reference and
+gnomAD frequencies over the six-gene SAC panel, and a compound-heterozygous configuration in
+`BUB1B` — one truncating allele that ClinVar holds as pathogenic at two-star review, paired
+with a rare kinase-domain missense. Track 1's answer format is *exactly* that shape: one CSV
+row carrying both variants of a compound-het pair. The evidence exists; only the packaging
+is new.
+
+### The disclosure this makes, stated plainly
+
+**A Track 1 submission is the child's exact variant coordinates.** That is the format, not
+an incidental detail. This project otherwise forbids a coordinate in any committed file, and
+`docs/report.md` deliberately states the finding at category level for that reason.
+
+Four things make this route acceptable, and they are conditions rather than excuses:
+
+1. **Nothing is disclosed that the recipient does not already hold.** The organizers issued
+   the genome and hold the clinically validated answer. The coordinates travel *back* to
+   their source.
+2. **The destination is private.** Submissions are written to
+   `SageBio/mva-hackathon-2026-leaderboard`, which the Space's own configuration marks
+   private and which returns HTTP 401 unauthenticated. The public leaderboard displays
+   scores, not variants.
+3. **The file never enters the repository.** It is written under `results/` — gitignored,
+   already custody location `C3`, and inside the purge scope — and uploaded from there.
+   A `.gitignore` entry alone is not the control; the file also never leaves `results/`.
+4. **The Track 1 report stays at category level.** It describes the method and the evidence
+   classes, as `docs/report.md` does, and carries no coordinate, no HGVS expression and no
+   ClinVar accession. The CSV carries the identifiers; the readable document does not.
+
+**What this costs, recorded rather than waved past:** the submission is a copy of
+identifying data held by a third party, outside this project's deletion control.
+`COMPLIANCE.md` commits to purging what this project holds; it cannot purge what the
+organizers hold, and it never could — they issued the data. Custody row `C8` records the
+copy so the register is honest about where the bytes are, not only about the ones we can
+delete.
+
+### What is claimed, and what is not
+
+The submission is a **ranked prediction**, which is what the format asks for. It is not a
+diagnosis and not a classification of either allele (D9, `COMPLIANCE.md`).
+
+D9's caveats travel with it into the submission's own `notes` field and the report:
+
+- **The pair is unphased.** No parental samples, no recontact. A *cis* arrangement cannot be
+  excluded and no data this project may use can close it. This is the largest uncertainty
+  and it is disclosed rather than buried in a confidence number.
+- **The missense allele is untested.** The literature supports the *pattern*; nothing shows
+  this change impairs BUBR1.
+- **Unseen second hits.** Copy-number, structural, deep-intronic and mosaic variants are not
+  assessable from a called VCF, so the second allele is the best candidate in the called
+  set, not the best candidate that exists.
+
+The EPCR values encode exactly this: the pair is ranked first because it is the best
+supported configuration, at a probability that reflects the unphased pair rather than
+asserting confidence the evidence does not carry.
+
+### The answer key is not read
+
+`groundtruth.py` in the organizers' Space loads the answer from a private dataset "if
+`HF_TOKEN` is set, **else local fallback**" — so a readable copy may exist in the public
+Space repository. **It was not opened, and must not be.** Reading it would contaminate every
+submission this project makes and could not be undone. The file is named here so a later
+session knows it is off limits rather than discovering it and thinking it useful.
+
+### Also settled
+
+- **Six Track 1 submissions are available**, against three for Track 2 (the Space's
+  `config.py`). Only the highest-scoring one is featured, so an early submission costs
+  nothing but a slot and establishes a floor.
+- **Scoring is rank points plus F-max**, with half credit for recovering one variant of a
+  compound-het pair. The submission's two rows and their order were checked against the
+  organizers' own `evaluation.py` (the parser and scorer only — see the answer-key note
+  above), not reasoned about in the abstract, and that check corrected a wrong assumption:
+  the hedge row is **scoring-neutral**, because `score_proband` already awards partial
+  credit from the pair row itself. It is kept for the human reviewer, not for the metric,
+  and the builder's docstring says so. Leading with the truncating allele alone was also
+  measured and rejected: it would gain 0.167 F-max in the fallback and lose 50 rank points
+  in the main case.
+- **Contig naming differs.** The dataset's VCF uses bare contig names (`1`…`22`, `X`, `Y`);
+  the submission template requires the `chr` prefix. The builder converts and a check
+  asserts it, because a silently unprefixed chromosome would score zero while looking
+  correct.
+
+---
 
 ## Open
 
