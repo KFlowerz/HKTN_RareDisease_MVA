@@ -92,6 +92,28 @@ python -m src.pipeline --only l5_report
 # then open results/l5/index.html
 ```
 
+### The two submissions
+
+The pipeline's output is organised by **layer**, not by track, and stays that way: L0 feeds both.
+Its causal-gene call is Track 1's answer and Track 2's premise, so splitting it between two track
+directories would claim a separation the science does not have.
+
+What is per-track is the submission package:
+
+```bash
+python scripts/build_track1_submission.py   # the Track 1 predictions CSV
+python scripts/package_submissions.py       # both packages + upload checklists
+```
+
+| | Report | Package |
+|---|---|---|
+| **Track 1** — variant prediction | [docs/report_track1.md](docs/report_track1.md) | `results/submissions/track1/` |
+| **Track 2** — drug repurposing | [docs/report_track2.md](docs/report_track2.md) | `results/submissions/track2/` |
+
+Each package carries a `SUBMIT.md` listing what to upload and what is still missing. The packages
+live under gitignored `results/` because the Track 1 predictions file contains the subject's variant
+coordinates and **must never enter the repository** ([D21](mngmt/decisions.md)).
+
 `results/` is gitignored, so the dossier is built rather than committed. It is static HTML with no
 JavaScript and no template engine — a deliberate choice ([D2](mngmt/decisions.md)): an interactive
 drug filter presents as a clinical decision aid whatever disclaimer is attached to it.

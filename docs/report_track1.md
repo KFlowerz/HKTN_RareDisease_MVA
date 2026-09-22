@@ -197,7 +197,8 @@ conda env create -f environment.lock.yml     # exact linux-64 solve
 conda activate mva-track2
 snpEff download -noLog GRCh38.115
 PYTHONHASHSEED=42 python -m src.pipeline --only l0_genomics
-python scripts/build_track1_submission.py    # writes under results/ (gitignored)
+python scripts/build_track1_submission.py    # -> results/submissions/track1/ (gitignored)
+python scripts/package_submissions.py        # adds the report and an upload checklist
 ```
 
 Re-running a layer on unchanged inputs reproduces it byte for byte; this is verified in the

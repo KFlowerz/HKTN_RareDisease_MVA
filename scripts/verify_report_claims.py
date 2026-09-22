@@ -1,4 +1,4 @@
-"""Check every quantitative claim in docs/report.md against the artifacts it cites.
+"""Check every quantitative claim in docs/report_track2.md against the artifacts it cites.
 
 The report asserts that each number in it came from a named artifact under ``results/``.
 This checks that, so the claim is enforced rather than promised. It catches the failure
@@ -23,7 +23,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RESULTS = REPO_ROOT / "results"
-REPORT = REPO_ROOT / "docs" / "report.md"
+REPORT = REPO_ROOT / "docs" / "report_track2.md"
 
 
 def load(relative: str):

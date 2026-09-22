@@ -44,7 +44,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RESULTS = REPO_ROOT / "results"
 L0 = RESULTS / "l0_genomics"
-OUT_DIR = RESULTS / "track1"
+#: Beside the rest of the Track 1 package, so the submission has one location rather than
+#: a build directory and a copy of it that can disagree.
+OUT_DIR = RESULTS / "submissions" / "track1"
 
 #: The template's header, in order. Column names are the Space's, not ours.
 HEADER = ["proband_id", "chrom_1", "pos_1", "ref_1", "alt_1",

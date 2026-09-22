@@ -1369,7 +1369,7 @@ is new.
 
 **A Track 1 submission is the child's exact variant coordinates.** That is the format, not
 an incidental detail. This project otherwise forbids a coordinate in any committed file, and
-`docs/report.md` deliberately states the finding at category level for that reason.
+`docs/report_track2.md` deliberately states the finding at category level for that reason.
 
 Four things make this route acceptable, and they are conditions rather than excuses:
 
@@ -1384,7 +1384,7 @@ Four things make this route acceptable, and they are conditions rather than excu
    already custody location `C3`, and inside the purge scope — and uploaded from there.
    A `.gitignore` entry alone is not the control; the file also never leaves `results/`.
 4. **The Track 1 report stays at category level.** It describes the method and the evidence
-   classes, as `docs/report.md` does, and carries no coordinate, no HGVS expression and no
+   classes, as `docs/report_track2.md` does, and carries no coordinate, no HGVS expression and no
    ClinVar accession. The CSV carries the identifiers; the readable document does not.
 
 **What this costs, recorded rather than waved past:** the submission is a copy of
