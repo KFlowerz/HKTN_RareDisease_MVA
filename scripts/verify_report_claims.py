@@ -24,6 +24,10 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RESULTS = REPO_ROOT / "results"
 REPORT = REPO_ROOT / "docs" / "report_track2.md"
+#: The plain-language explainer restates the same figures for a non-technical reader.
+#: A number that drifts there is exactly as wrong as one that drifts in the report, and
+#: it is the document most likely to be forwarded on its own.
+LAY = REPO_ROOT / "docs" / "how_it_works.md"
 
 
 def load(relative: str):
@@ -63,6 +67,18 @@ def build_claims() -> list:
          validation["excluded_by_reason"]["insufficient_evidence"] == 1231),
         ("aneugenic finding", "| 14 |",
          validation["excluded_by_reason"]["aneugenic_finding"] == 14),
+        # The "others" row is a remainder, so it is the one cell no per-reason check
+        # covers -- and it was wrong by one until 2026-09-22, because nothing made the
+        # column add up. This asserts the arithmetic, not a transcribed number.
+        ("others row closes the table", "| others | 22 |",
+         sum(validation["excluded_by_reason"].values())
+         - sum(validation["excluded_by_reason"][reason] for reason in (
+             "insufficient_evidence", "safety_not_established", "clastogenic_finding",
+             "increased_tumours", "mutagenic_finding", "malignancy_risk",
+             "positive_genotoxicity_assay", "cytotoxic_class", "secondary_malignancy",
+             "aneugenic_finding")) == 22),
+        ("reason counts sum to the exclusion total", "**1,880 of 1,963 candidates",
+         sum(validation["excluded_by_reason"].values()) == validation["excluded"]),
         ("label records", "262,883", validation["label_records"] == 262883),
         ("label records matched", "54,930", validation["label_records_matched"] == 54930),
         ("proximity ranked", "1,956", integration["per_channel_ranked"]["proximity"] == 1956),
@@ -96,28 +112,83 @@ def build_claims() -> list:
     ]
 
 
-def main() -> None:
-    if not REPORT.is_file():
-        raise SystemExit(f"{REPORT} not found")
-    report = REPORT.read_text(encoding="utf-8")
+def build_lay_claims() -> list:
+    """Claims the plain-language explainer makes, in the words it uses.
 
-    failures = []
-    for label, needle, artifact_agrees in build_claims():
-        in_text = needle in report
+    Deliberately a smaller set: the explainer quotes headline figures and rounds the
+    sensitivity to whole percentages for a lay reader. What is checked is that each
+    rounded statement still matches the artifact it came from.
+    """
+    validation = load("l4/validation.json")["counts"]
+    integration = load("l3/integration.json")["counts"]
+    dossier = load("l5/report.json")["counts"]
+    sensitivity = load("l0_genomics/aneuploidy_burden.json")["sensitivity"]
+    mva = load("l1_target/module.json")["counts"]
+    call = load("l0_genomics/causal_gene_call.json")
+
+    proximity_share = round(
+        integration["per_channel_ranked"]["proximity"] / validation["candidates"] * 100, 1)
+    silent_genes = [gene for gene, per in call["per_gene"].items()
+                    if not per["configurations"]]
+
+    return [
+        ("nominated", "1,963", validation["candidates"] == 1963),
+        ("excluded", "1,880", validation["excluded"] == 1880),
+        ("genotoxic rule", "1,623",
+         validation["excluded_by_rule"]["genotoxic_or_cancer_risk"] == 1623),
+        ("paediatric rule", "256", validation["excluded_by_rule"]["pediatric_use"] == 256),
+        ("no-label bucket", "**1,231**",
+         validation["excluded_by_reason"]["insufficient_evidence"] == 1231),
+        # Bound to the sentence, not the bare digits: "14" alone would match almost
+        # anything and would pass while saying nothing.
+        ("aneugenic count", "Fourteen drugs were removed",
+         validation["excluded_by_reason"]["aneugenic_finding"] == 14),
+        ("proximity ranked", "1,956",
+         integration["per_channel_ranked"]["proximity"] == 1956),
+        ("proximity share", "99.6%", proximity_share == 99.6),
+        ("no convergence", "| **0** |", integration["by_convergence"]["discriminating"] == 0),
+        ("tier 1", "| **1** |", dossier["tier1_literature"] == 1),
+        ("tier 2", "| **82** |", dossier["tier2_network_only"] == 82),
+        ("module size", "200 proteins", mva["module"] == 200),
+        ("one gene survives", "exactly **one**", call["candidate_genes"] == ["BUB1B"]),
+        ("five genes silent", "The other\nfive produced nothing", len(silent_genes) == 5),
+        ("sensitivity rounds to 10%", "roughly **10%**",
+         round(sensitivity["min_detectable_mosaic_fraction"] * 100) == 10),
+        ("conservative bound rounds to 25%", "**25%**",
+         round(sensitivity["min_detectable_mosaic_fraction_conservative"] * 100) in (24, 25)),
+    ]
+
+
+def _check(document: Path, claims: list, failures: list) -> None:
+    if not document.is_file():
+        raise SystemExit(f"{document} not found")
+    text = document.read_text(encoding="utf-8")
+    print(f"{document.relative_to(REPO_ROOT)}")
+    for label, needle, artifact_agrees in claims:
+        # Prose wraps, so a needle spanning a line break is matched on collapsed space.
+        in_text = needle in text or " ".join(needle.split()) in " ".join(text.split())
         ok = artifact_agrees and in_text
         print(f"  {'OK  ' if ok else 'FAIL'} {label}")
         if not ok:
             failures.append(
-                f"{label}: artifact agrees={artifact_agrees}, text present={in_text} "
-                f"(looked for {needle!r})")
-
+                f"{document.name} / {label}: artifact agrees={artifact_agrees}, "
+                f"text present={in_text} (looked for {needle!r})")
     print()
+
+
+def main() -> None:
+    failures: list = []
+    report_claims, lay_claims = build_claims(), build_lay_claims()
+    _check(REPORT, report_claims, failures)
+    _check(LAY, lay_claims, failures)
+
     if failures:
-        print("The report and the artifacts disagree:")
+        print("The documents and the artifacts disagree:")
         for line in failures:
             print("  -", line)
         raise SystemExit(1)
-    print(f"all {len(build_claims())} quantitative claims verified against results/")
+    print(f"all {len(report_claims) + len(lay_claims)} quantitative claims "
+          "verified against results/")
 
 
 if __name__ == "__main__":

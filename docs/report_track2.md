@@ -141,7 +141,7 @@ Broken down by the finding that fired:
 | `cytotoxic_class` | 23 | Pharmacologic class is cytotoxic |
 | `secondary_malignancy` | 19 | Secondary-malignancy warning |
 | `aneugenic_finding` | 14 | **Aneugenic** — directly contraindicated here |
-| others | 21 | carcinogenic, genotoxic statements, not indicated |
+| others | 22 | carcinogenic (9), genotoxic statement (8), not established (2), not indicated (2), not currently marketed (1) |
 
 *Source: `results/l4/validation.json`, `counts.excluded_by_reason` (seed 42). Rendered as
 `results/l5/figures/exclusions_by_reason.png` and the full table at

@@ -110,6 +110,10 @@ python scripts/package_submissions.py       # both packages + upload checklists
 | **Track 1** — variant prediction | [docs/report_track1.md](docs/report_track1.md) | `results/submissions/track1/` |
 | **Track 2** — drug repurposing | [docs/report_track2.md](docs/report_track2.md) | `results/submissions/track2/` |
 
+**New to the project?** [docs/how_it_works.md](docs/how_it_works.md) explains both tracks in plain
+language, with diagrams and no jargon — what the illness is, how each answer was constructed, and
+what did not work. Its figures are checked against the same artifacts as the reports.
+
 Each package carries a `SUBMIT.md` listing what to upload and what is still missing. The packages
 live under gitignored `results/` because the Track 1 predictions file contains the subject's variant
 coordinates and **must never enter the repository** ([D21](mngmt/decisions.md)).
