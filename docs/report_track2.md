@@ -11,24 +11,24 @@ Every number below names the artifact under `results/` that produced it.
 
 Mosaic variegated aneuploidy has no disease-modifying therapy, roughly fifty patients
 worldwide, and a cancer-predisposition phenotype that makes the usual repurposing
-shortcuts dangerous. We built a six-layer pipeline that starts from one child's
+shortcuts dangerous. I built a six-layer pipeline that starts from one child's
 whole-genome VCF and ends at a static dossier: 1,963 approved drugs nominated by parallel
 evidence channels, **1,880 of them refused** by a paediatric safety triage, and 83
 survivors presented in two tiers by the *kind* of evidence behind them.
 
 The headline result is the refusal. Each of the 1,880 exclusions names the rule that
 fired, the openFDA field it read, the SPL section, and the sentence it rested on. That is
-the part of this work we would defend hardest, and it is the part a clinician could audit
+the part of this work I would defend hardest, and it is the part a clinician could audit
 line by line.
 
-The second result is uncomfortable and we report it anyway. **Of the 83 survivors, 82
+The second result is uncomfortable and I report it anyway. **Of the 83 survivors, 82
 have no published evidence linking them to this disease at all.** They reach the shortlist
 on network proximity — a number this pipeline computed, not a finding anyone has
-published. Exactly one candidate carries a verified citation. We present those as two
+published. Exactly one candidate carries a verified citation. I present those as two
 tiers rather than one ranked list of 83, because merging them would invite a reader to
 treat a computed score and a published result as the same kind of claim.
 
-The third result is a null. We built the signature-reversion channel, calibrated it
+The third result is a null. I built the signature-reversion channel, calibrated it
 against forty unrelated genes' knockdowns, found it carried **no gene-specific signal**,
 and shipped it disabled. It nominates nothing.
 
@@ -40,11 +40,16 @@ clinic, and no candidate should reach a patient except through a clinician and a
 ## 1. The problem, and what makes it hard
 
 MVA is caused by biallelic loss of function in mitotic spindle-assembly-checkpoint genes —
-commonly *BUB1B* (Hanks et al., 2004), also *CEP57*, *TRIP13*, *BUB1*, *BUB3* and
-*CEP192*. Chromosome missegregation produces mosaic aneuploidy across tissues, with growth
-restriction, microcephaly, developmental delay and a substantial cancer predisposition
-(Scott et al., 2006). Management is symptomatic plus surveillance. There is no
-disease-modifying therapy to repurpose *against*, and no trial population to validate in.
+most often *BUB1B* (Hanks et al., 2004), with biallelic reports also for *CEP57* (Snape et
+al., 2011), *TRIP13* (Yost et al., 2017) and *CEP192* (Guo et al., 2024). The pipeline's
+panel adds *BUB1*, whose biallelic disorder has *variable* effects on chromosome
+segregation rather than an established MVA phenotype (Carvalhal et al., 2022), and *BUB3*,
+which has no biallelic MVA report and is carried as a core checkpoint component so a
+variant in it would be seen rather than filtered out unexamined. Chromosome missegregation
+produces mosaic aneuploidy across tissues, with growth restriction, microcephaly,
+developmental delay and a substantial cancer predisposition (Scott et al., 2006).
+Management is symptomatic plus surveillance. There is no disease-modifying therapy to
+repurpose *against*, and no trial population to validate in.
 
 Four properties shaped every design decision:
 
@@ -80,7 +85,7 @@ Six layers, orchestrated by `src/pipeline.py`, config-driven, seeded, writing to
 | Layer | Does |
 |---|---|
 | **L0** genomics | Ingest the VCF, annotate locally, call the causal gene panel, quantify aneuploidy burden from allele ratios |
-| **L1** target | Causal gene → protein → interactome disease module; split into upstream and downstream target sets |
+| **L1** target | Causal gene → protein → interactome disease module, built on STRING associations (Szklarczyk et al., 2022) and Reactome pathways (Milacic et al., 2023); split into upstream and downstream target sets |
 | **L2** channels | Five parallel candidate generators, deliberately independent |
 | **L3** integrate | Harmonise drug identity, rank-aggregate, reason over the head with a local model |
 | **L4** validate | Paediatric safety triage as hard gates, plus a blinded internal benchmark |
@@ -97,8 +102,8 @@ than any one score. Section 6 reports what happened to that bet.
 | **A** knowledge graph | Link prediction anchored at the *gene*, not the disease | **not built** | — |
 | **B** proximity | Network proximity of drug targets to the disease module against a degree-matched null (Guney et al., 2016) | complete | 1,956 |
 | **C** signature | Reversion of a proxy signature | **built, nominates nothing** | 0 |
-| **D** phenotype | HPO-driven, via Monarch and Open Targets indications | complete | 25 |
-| **E** prior | Curated aneuploidy-stress literature prior, verified against Europe PMC | complete | 8 |
+| **D** phenotype | HPO-driven (Gargano et al., 2024), via Monarch (Putman et al., 2024) and Open Targets indications (Ochoa et al., 2023) | complete | 25 |
+| **E** prior | Curated aneuploidy-stress literature prior, verified against Europe PMC (Ferguson et al., 2021) | complete | 8 |
 
 *Source: `results/l3/integration.json`, `counts.per_channel_ranked` (seed 42).*
 
@@ -142,7 +147,7 @@ Broken down by the finding that fired:
 `results/l5/figures/exclusions_by_reason.png` and the full table at
 `results/l5/exclusions.html`.*
 
-### Two things we want a judge to check
+### Two things I want a judge to check
 
 **`insufficient_evidence` is the largest bucket, and it is not a safety claim.** openFDA
 describes drugs marketed in the United States; the channels nominate from a wider pool. A
@@ -152,9 +157,9 @@ triage, so the dossier says so on the exclusions page itself.
 
 **Every exclusion is quotable.** Each row carries the openFDA field, the SPL section and
 the sentence, trimmed but never paraphrased. This is only possible because openFDA is a
-US-Government work in the public domain; a licence-restricted annotation source would have
-made the exclusions unauditable. Of 262,883 label records, 54,930 matched a candidate
-identifier.
+US-Government work in the public domain (U.S. Food and Drug Administration, 2026); a
+licence-restricted annotation source would have made the exclusions unauditable. Of
+262,883 label records, 54,930 matched a candidate identifier.
 
 That auditability is the strongest, most reproducible thing this pipeline does. It is also
 the part most directly useful to a clinician, which is why it leads.
@@ -168,18 +173,23 @@ evidence behind them is not of one kind.
 
 ### Tier 1 — literature-supported: 1 candidate
 
-**Trametinib.** Evidence grade *in vitro*, one verified citation
-(doi:10.1038/s41467-024-52176-x), supported by two channels (prior and proximity),
-computed confidence **0.132**.
+**Trametinib.** Evidence grade *in vitro*, one verified citation — Zerbib et al. (2024),
+who report that human aneuploid cells depend on the RAF/MEK/ERK pathway to survive
+increased DNA damage — supported by two channels (prior and proximity), computed
+confidence **0.132**.
+
+That paper is about *aneuploid cancer cell lines*, not about MVA and not about a child.
+The channel cited it, the grade records it as *in vitro*, and nothing downstream promotes
+it beyond that.
 
 The adversarial pass — which searches specifically for evidence *against* each candidate —
-returned this, and we print it in full on the candidate's page:
+returned this, and I print it in full on the candidate's page:
 
 > The evidence for trametinib's repurposing in mosaic variegated aneuploidy is primarily in
 > vitro, and the in vitro evidence is limited to one record… the evidence grade is weak…
 > Therefore, trametinib should not be shortlisted for this indication.
 
-We left that in. A pipeline that searches for contradicting evidence and then suppresses it
+I left that in. A pipeline that searches for contradicting evidence and then suppresses it
 when it lands is not doing the thing it claims.
 
 ### Tier 2 — network proximity only: 82 candidates
@@ -207,17 +217,19 @@ deliverable and a less honest one.
 ## 5. The null result: channel C
 
 Channel C scores drugs for *reversing* a disease signature. With no patient RNA, the query
-must be a proxy: the LINCS L1000 consensus shRNA knockdown of *BUB1B* (GEO `GSE106127`),
-pooled across all nine cell lines that carry one, scored against 46,601 Phase II compound
-signatures (GEO `GSE70138`) covering 897 approved molecules, by the weighted connectivity
-score (Subramanian et al., 2017).
+must be a proxy: the LINCS L1000 consensus shRNA knockdown of *BUB1B* (GEO `GSE106127`;
+Broad Institute & NIH LINCS Program, 2017a), pooled across all nine cell lines that carry
+one, scored against 46,601 Phase II compound signatures (GEO `GSE70138`; Broad Institute &
+NIH LINCS Program, 2017b) covering 897 approved molecules, by the weighted connectivity
+score (Subramanian et al., 2017) — a weighted running-sum enrichment statistic
+(Subramanian et al., 2005) applied to the connectivity idea of Lamb et al. (2006).
 
-We built it, calibrated it, and it nominates nothing. Four measurements, all reproducible
+I built it, calibrated it, and it nominates nothing. Four measurements, all reproducible
 with `python scripts/channel_c_diagnostics.py`:
 
 **The proxy is weak but real.** Nine cell lines, cross-cell-line Spearman ρ median 0.20
 (range 0.02–0.47). Seven of nine fall below the conventional gold threshold
-`distil_cc_q75 ≥ 0.2`. We keep and count them rather than filtering, because the
+`distil_cc_q75 ≥ 0.2`. I keep and count them rather than filtering, because the
 conventional filter leaves two cell lines — trading a weak pooled proxy for a weaker
 single-lineage one.
 
@@ -226,7 +238,7 @@ signature — the generic stress response every perturbation provokes. Uncorrect
 candidate does not beat a *random gene set* (p = 0.95), and the top hits are inert
 compounds. Projecting that axis out is therefore required, not tuning.
 
-**Two nulls failed before we found one that could.** A per-candidate query-permutation null
+**Two nulls failed before I found one that could.** A per-candidate query-permutation null
 passed **60 of 60** candidates. A max-statistic over random queries passed **every** depth,
 because a random query leaves 50.7% of signatures at exactly zero and the whole
 distribution shifts. Both failed the same way: a structured biological query beats an
@@ -253,12 +265,12 @@ that is all it was.
 `generate()` raises rather than writing a table it cannot defend, and `channels.signature`
 is `false` in the shipped config. The full reasoning is decision D19.
 
-**What this costs us.** Channel C was the strongest remaining argument for convergence.
+**What this costs me.** Channel C was the strongest remaining argument for convergence.
 That argument is now closed negatively — see Section 6.
 
 ---
 
-## 6. Does the central bet hold? No, and we show it
+## 6. Does the central bet hold? No, and I show it
 
 The architecture rests on cross-channel convergence. Here is what the channels actually
 agreed on:
@@ -279,7 +291,7 @@ reader can move it and see what changes.
 
 This is the weakest point in the submission, and it is shown as a figure rather than
 described in a footnote (`results/l5/figures/channel_contribution.png`). The honest
-statement is: **this shortlist carries no discriminating cross-channel convergence, and we
+statement is: **this shortlist carries no discriminating cross-channel convergence, and I
 do not claim any.**
 
 ---
@@ -288,7 +300,7 @@ do not claim any.**
 
 ### The blinded internal benchmark
 
-There is no external ground truth, so we test whether the pipeline recovers a frozen
+There is no external ground truth, so I test whether the pipeline recovers a frozen
 positive set of published aneuploidy-stress compounds.
 
 | Scope | AUROC | 95% bootstrap CI | Positives found |
@@ -300,7 +312,7 @@ positive set of published aneuploidy-stress compounds.
 *Source: `results/l4/benchmark/recovery.{csv,json}`, 2,000 bootstrap samples, seed 42.*
 
 **The interval matters more than the point estimate.** Eight positives reach the ranking, so
-0.81 is a number with a very wide envelope that touches near-chance at its lower bound. We
+0.81 is a number with a very wide envelope that touches near-chance at its lower bound. I
 report the interval on the figure rather than a bar chart of the mean, because a bar chart
 would imply a precision that does not exist.
 
@@ -317,10 +329,10 @@ set is itself biased toward well-studied compounds.
 
 Every claim in this project is one of two admissible kinds: a **pipeline data result**
 (artifact path + seed + config, regenerable) or a **cited source** in APA 7th with a
-resolvable DOI. Every DOI was resolved against Crossref and checked for retraction and
-correction notices; the verification log is in `docs/references.md` with the date each
-check ran. An LLM-produced citation is treated as a hypothesis about the literature until
-resolved — and dropped if it does not resolve.
+resolvable DOI. Every DOI was resolved against Crossref (Hendricks et al., 2020) and
+checked for retraction and correction notices; the verification log is in
+`docs/references.md` with the date each check ran. An LLM-produced citation is treated as
+a hypothesis about the literature until resolved — and dropped if it does not resolve.
 
 ### Reproducibility
 
@@ -340,7 +352,7 @@ bootstrap interval — and on L5, where all four figures match by checksum.
 resolved settings with machine-specific paths excluded, the versions of the libraries that
 decide the numbers, and whether hash randomization was actually fixed.
 
-**Two things sit outside that envelope by nature, and we say so rather than claiming them
+**Two things sit outside that envelope by nature, and I say so rather than claiming them
 away.** Channel E queries Europe PMC live, so its literature reflects the index on the day
 it ran — cached with query date and response hash. And the local model step is
 deterministic in its *settings*; llama.cpp does not guarantee identical output across
@@ -356,7 +368,7 @@ MVA's phenotype *is* mosaic aneuploidy, so quantifying it is the natural innovat
 The dataset ships **no BAM** — raw reads plus a called VCF, verified at revision
 `59e322d2…` on 2026-09-02. Depth-based methods have no input.
 
-We estimate burden from **per-chromosome B-allele frequency in the VCF itself**: the mean
+I estimate burden from **per-chromosome B-allele frequency in the VCF itself**: the mean
 |BAF − 0.5| at heterozygous biallelic SNVs, in 10 Mb windows, at minimum depth 10, against
 a baseline of the sample's own autosomal windows (median + scaled MAD). An allele ratio at
 a single locus is self-normalising, so it needs none of the GC-bias and mappability
@@ -368,9 +380,17 @@ mean for the true BAF shift before converting — without that step, small fract
 systematically overstated.
 
 **Resolving power on this sample:** smallest detectable mosaic fraction **≈ 0.098**, with a
-conservative bound of **≈ 0.245**, at z = 5.
+conservative bound of **≈ 0.245**, at z = 5 — measured from the sample's own median depth
+(44×) and window-to-window scatter, not configured.
 
-### What we deliberately do not show
+*Source: `results/l0_genomics/aneuploidy_burden.json`, `sensitivity` (seed 42).* Both
+figures are quoted, because the artifact records the estimate as **model-dependent**: the
+optimistic figure assumes the baseline excess and a mosaic shift add in shift space, and a
+spike-in simulation at this depth put the crossing nearer 0.25. The innovation claim below
+is stated at ~10% because that is the optimistic bound, and it travels with this caveat
+wherever it is repeated.
+
+### What I deliberately do not show
 
 **The per-chromosome result is withheld — in every form, including aggregate counts.**
 
@@ -379,8 +399,8 @@ Which chromosomes are involved, how many, and at what mosaic fraction is close t
 fingerprint. A count of affected chromosomes is not a safe aggregate either: in a
 population that small it narrows the field by itself.
 
-This costs us the single most compelling figure the project could produce, in the criterion
-where it would have counted most. We publish the **method and its resolving power** — which
+This costs me the single most compelling figure the project could produce, in the criterion
+where it would have counted most. I publish the **method and its resolving power** — which
 is what the innovation claim is about, since the claim is *"allele ratios alone resolve
 mosaic aneuploidy without alignments, down to ~10%"* — and not this child's result from it.
 
@@ -415,7 +435,7 @@ counted.
 
 ## 9. Scalability
 
-**Partially demonstrated, and we are not going to overstate it.**
+**Partially demonstrated, and I am not going to overstate it.**
 
 The Scalability claim is that the pipeline is disease-agnostic — that running it on a
 different monogenic disease requires changing only the config. Nothing in L1–L4 hardcodes
@@ -423,7 +443,7 @@ MVA: the causal gene, the endpoint, the module parameters, every channel thresho
 data release live in `config/pipeline.yaml`, and L1 refuses to run without a gene rather
 than defaulting to one.
 
-We ran a second disease — **cystic fibrosis, gene *CFTR*** — through **L1 and L2 channel B**,
+I ran a second disease — **cystic fibrosis, gene *CFTR*** — through **L1 and L2 channel B**,
 changing only `l1.gene` in the config. Both layers ran unmodified.
 
 | | MVA (`BUB1B`) | CF (`CFTR`) |
@@ -441,7 +461,7 @@ partition twice; instead the second gene seeds a different complex, expands to a
 module, and divides 54/146 rather than 84/116. The module layer is responding to the gene,
 not reciting an answer.
 
-**We did not run L3–L5 for the second disease, so the end-to-end claim is unproven.** Two
+**I did not run L3–L5 for the second disease, so the end-to-end claim is unproven.** Two
 layers of six are demonstrated disease-agnostic; the rest are *written* to be. Completing
 it is run time, not redesign — the remaining layers read the same artifacts in the same
 shapes, and nothing in them is keyed on a gene name.
@@ -465,7 +485,8 @@ was written and none was relaxed:
 - **No recontact** with the subject, family or MVA Society, and nothing published beyond
   what the family already shares publicly through their own blog posts.
 - **Licence segregation.** Non-redistributable sources (ChEMBL-derived drug-target content,
-  and LINCS, whose licence we could not resolve at its canonical URL) are held in a separate
+  CC BY-SA — Zdrazil et al., 2024 — and LINCS, whose licence I could not resolve at its
+  canonical URL) are held in a separate
   cache and never enter a redistributed output. Only identifiers, names and derived scores
   cross that boundary, through a whitelist a test enforces.
 
@@ -507,7 +528,7 @@ Stated plainly, because a shortlist for a child should arrive with its weaknesse
 
 ---
 
-## 12. What we would do next
+## 12. What I would do next
 
 **Complete the second-disease run** through L3–L5 — it is run time, not redesign, and it
 converts Section 9 from two layers demonstrated to the whole pipeline.
@@ -542,7 +563,7 @@ PYTHONHASHSEED=42 python -m src.pipeline
 
 `scripts/channel_c_diagnostics.py` reproduces every number in Section 5.
 `mngmt/decisions.md` records each decision, what forced it, and what it obliged
-downstream — including the ones that went against us.
+downstream — including the ones that went against me.
 
 ---
 
@@ -552,7 +573,25 @@ Full reference list with the Crossref verification log, including retraction and
 checks and the date each ran: [`docs/references.md`](references.md). Machine-readable
 source: [`docs/references.bib`](references.bib).
 
-Key sources for the claims above:
+Every entry below is cited in the text above, and every citation in the text above appears
+below.
+
+Broad Institute & NIH LINCS Program. (2017a). *LINCS L1000 consensus gene signatures (CGS)
+of shRNA knockdown* (GEO accession GSE106127) [Data set]. National Center for Biotechnology
+Information Gene Expression Omnibus. Retrieved September 21, 2026, from
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE106127
+
+Broad Institute & NIH LINCS Program. (2017b). *LINCS L1000 Phase II Level 5 compound
+signatures* (GEO accession GSE70138, build 2017-03-06) [Data set]. National Center for
+Biotechnology Information Gene Expression Omnibus. Retrieved September 21, 2026, from
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE70138
+
+Carvalhal, S., Bader, I., Rooimans, M. A., Oostra, A. B., Balk, J. A., Feichtinger, R. G.,
+Beichler, C., Speicher, M. R., van Hagen, J. M., Waisfisz, Q., van Haelst, M., Bruijn, M.,
+Tavares, A., Mayr, J. A., Wolthuis, R. M. F., Oliveira, R. A., & de Lange, J. (2022).
+Biallelic BUB1 mutations cause microcephaly, developmental delay, and variable effects on
+cohesion and chromosome segregation. *Science Advances, 8*(3), Article eabk0114.
+https://doi.org/10.1126/sciadv.abk0114
 
 Conlin, L. K., Thiel, B. D., Bonnemann, C. G., Medne, L., Ernst, L. M., Zackai, E. H.,
 Deardorff, M. A., Krantz, I. D., Hakonarson, H., & Spinner, N. B. (2010). Mechanisms of
@@ -560,14 +599,37 @@ mosaicism, chimerism and uniparental disomy identified by single nucleotide poly
 array analysis. *Human Molecular Genetics, 19*(7), 1263–1275.
 https://doi.org/10.1093/hmg/ddq003
 
+Ferguson, C., Araújo, D., Faulk, L., Gou, Y., Hamelers, A., Huang, Z., Ide-Smith, M.,
+Levchenko, M., Marinos, N., Nambiar, R., Nassar, M., Parkin, M., Pi, X., Rahman, F.,
+Rogers, F., Roochun, Y., Saha, S., Selim, M., Shafique, Z., … McEntyre, J. (2021). Europe
+PMC in 2020. *Nucleic Acids Research, 49*(D1), D1507–D1514.
+https://doi.org/10.1093/nar/gkaa994
+
+Gargano, M. A., Matentzoglu, N., Coleman, B., Addo-Lartey, E. B., Anagnostopoulos, A. V.,
+Anderton, J., Avillach, P., Bagley, A. M., Bakštein, E., Balhoff, J. P., Baynam, G.,
+Bello, S. M., Berk, M., Bertram, H., Bishop, S., Blau, H., Bodenstein, D. F., Botas, P.,
+Boztug, K., … Robinson, P. N. (2024). The Human Phenotype Ontology in 2024: Phenotypes
+around the world. *Nucleic Acids Research, 52*(D1), D1333–D1346.
+https://doi.org/10.1093/nar/gkad1005
+
 Guney, E., Menche, J., Vidal, M., & Barábasi, A.-L. (2016). Network-based in silico drug
 efficacy screening. *Nature Communications, 7*(1), Article 10331.
 https://doi.org/10.1038/ncomms10331
+
+Guo, J., He, W.-B., Dai, L., Tian, F., Luo, Z., Shen, F., Tu, M., Zheng, Y., Zhao, L.,
+Tan, C., Guo, Y., Meng, L.-L., Liu, W., Deng, M., Wu, X., Peng, Y., Zhang, S., Lu, G.-X.,
+Lin, G., … Yang, Y. (2024). Mosaic variegated aneuploidy syndrome with tetraploid, and
+predisposition to male infertility triggered by mutant CEP192. *Human Genetics and Genomics
+Advances, 5*(1), Article 100256. https://doi.org/10.1016/j.xhgg.2023.100256
 
 Hanks, S., Coleman, K., Reid, S., Plaja, A., Firth, H., FitzPatrick, D., Kidd, A., Méhes,
 K., Nash, R., Robin, N., Shannon, N., Tolmie, J., Swansbury, J., Irrthum, A., Douglas, J.,
 & Rahman, N. (2004). Constitutional aneuploidy and cancer predisposition caused by biallelic
 mutations in BUB1B. *Nature Genetics, 36*(11), 1159–1161. https://doi.org/10.1038/ng1449
+
+Hendricks, G., Tkaczyk, D., Lin, J., & Feeney, P. (2020). Crossref: The sustainable source
+of community-owned scholarly metadata. *Quantitative Science Studies, 1*(1), 414–427.
+https://doi.org/10.1162/qss_a_00022
 
 Lamb, J., Crawford, E. D., Peck, D., Modell, J. W., Blat, I. C., Wrobel, M. J., Lerner, J.,
 Brunet, J.-P., Subramanian, A., Ross, K. N., Reich, M., Hieronymus, H., Wei, G., Armstrong,
@@ -580,15 +642,75 @@ Birmann, B. M., Talkowski, M. E., Bakhoum, S. F., McCarroll, S. A., & Price, A. 
 Insights into clonal haematopoiesis from 8,342 mosaic chromosomal alterations. *Nature,
 559*(7714), 350–355. https://doi.org/10.1038/s41586-018-0321-x
 
+Milacic, M., Beavers, D., Conley, P., Gong, C., Gillespie, M., Griss, J., Haw, R., Jassal,
+B., Matthews, L., May, B., Petryszak, R., Ragueneau, E., Rothfels, K., Sevilla, C.,
+Shamovsky, V., Stephan, R., Tiwari, K., Varusai, T., Weiser, J., … D’Eustachio, P. (2023).
+The Reactome Pathway Knowledgebase 2024. *Nucleic Acids Research, 52*(D1), D672–D678.
+https://doi.org/10.1093/nar/gkad1025
+
+Ochoa, D., Hercules, A., Carmona, M., Suveges, D., Baker, J., Malangone, C., Lopez, I.,
+Miranda, A., Cruz-Castillo, C., Fumis, L., Bernal-Llinares, M., Tsukanov, K., Cornu, H.,
+Tsirigos, K., Razuvayevskaya, O., Buniello, A., Schwartzentruber, J., Karim, M., Ariano, B.,
+… McDonagh, E. M. (2023). The next-generation Open Targets Platform: Reimagined, redesigned,
+rebuilt. *Nucleic Acids Research, 51*(D1), D1353–D1359. https://doi.org/10.1093/nar/gkac1046
+
+Putman, T. E., Schaper, K., Matentzoglu, N., Rubinetti, V. P., Alquaddoomi, F. S., Cox, C.,
+Caufield, J. H., Elsarboukh, G., Gehrke, S., Hegde, H., Reese, J. T., Braun, I., Bruskiewich,
+R. M., Cappelletti, L., Carbon, S., Caron, A. R., Chan, L. E., Chute, C. G., Cortes, K. G.,
+… Munoz-Torres, M. C. (2024). The Monarch Initiative in 2024: An analytic platform integrating
+phenotypes, genes and diseases across species. *Nucleic Acids Research, 52*(D1), D938–D949.
+https://doi.org/10.1093/nar/gkad1082
+
 Scott, R. H., Stiller, C. A., Walker, L., & Rahman, N. (2006). Syndromes and constitutional
 chromosomal abnormalities associated with Wilms tumour. *Journal of Medical Genetics,
 43*(9), 705–715. https://doi.org/10.1136/jmg.2006.041723
+
+Snape, K., Hanks, S., Ruark, E., Barros-Núñez, P., Elliott, A., Murray, A., Lane, A. H.,
+Shannon, N., Callier, P., Chitayat, D., Clayton-Smith, J., FitzPatrick, D. R., Gisselsson,
+D., Jacquemont, S., Asakura-Hay, K., Micale, M. A., Tolmie, J., Turnpenny, P. D., Wright, M.,
+… Rahman, N. (2011). Mutations in CEP57 cause mosaic variegated aneuploidy syndrome. *Nature
+Genetics, 43*(6), 527–529. https://doi.org/10.1038/ng.822
+
+Subramanian, A., Tamayo, P., Mootha, V. K., Mukherjee, S., Ebert, B. L., Gillette, M. A.,
+Paulovich, A., Pomeroy, S. L., Golub, T. R., Lander, E. S., & Mesirov, J. P. (2005). Gene set
+enrichment analysis: A knowledge-based approach for interpreting genome-wide expression
+profiles. *Proceedings of the National Academy of Sciences, 102*(43), 15545–15550.
+https://doi.org/10.1073/pnas.0506580102
 
 Subramanian, A., Narayan, R., Corsello, S. M., Peck, D. D., Natoli, T. E., Lu, X., Gould,
 J., Davis, J. F., Tubelli, A. A., Asiedu, J. K., Lahr, D. L., Hirschman, J. E., Liu, Z.,
 Donahue, M., Julian, B., Khan, M., Wadden, D., Smith, I. C., Lam, D., … Golub, T. R. (2017).
 A next generation connectivity map: L1000 platform and the first 1,000,000 profiles. *Cell,
 171*(6), 1437–1452.e17. https://doi.org/10.1016/j.cell.2017.10.049
+
+Szklarczyk, D., Kirsch, R., Koutrouli, M., Nastou, K., Mehryary, F., Hachilif, R., Gable,
+A. L., Fang, T., Doncheva, N. T., Pyysalo, S., Bork, P., Jensen, L. J., & von Mering, C.
+(2022). The STRING database in 2023: Protein–protein association networks and functional
+enrichment analyses for any sequenced genome of interest. *Nucleic Acids Research, 51*(D1),
+D638–D646. https://doi.org/10.1093/nar/gkac1000
+
+U.S. Food and Drug Administration. (2026). *openFDA NDC Directory and Drugs@FDA bulk
+downloads* [Data set]. Retrieved September 18, 2026, from https://open.fda.gov/apis/downloads/
+
+Yost, S., de Wolf, B., Hanks, S., Zachariou, A., Marcozzi, C., Clarke, M., de Voer, R. M.,
+Etemad, B., Uijttewaal, E., Ramsay, E., Wylie, H., Elliott, A., Picton, S., Smith, A.,
+Smithson, S., Seal, S., Ruark, E., Houge, G., Pines, J., … Rahman, N. (2017). Biallelic
+TRIP13 mutations predispose to Wilms tumor and chromosome missegregation. *Nature Genetics,
+49*(7), 1148–1151. https://doi.org/10.1038/ng.3883
+
+Zdrazil, B., Felix, E., Hunter, F., Manners, E. J., Blackshaw, J., Corbett, S., de Veij, M.,
+Ioannidis, H., Lopez, D. M., Mosquera, J. F., Magarinos, M. P., Bosc, N., Arcila, R.,
+Kizilören, T., Gaulton, A., Bento, A. P., Adasme, M. F., Monecke, P., Landrum, G. A., &
+Leach, A. R. (2024). The ChEMBL Database in 2023: A drug discovery platform spanning multiple
+bioactivity data types and time periods. *Nucleic Acids Research, 52*(D1), D1180–D1192.
+https://doi.org/10.1093/nar/gkad1004
+
+Zerbib, J., Ippolito, M. R., Eliezer, Y., De Feudis, G., Reuveni, E., Savir Kadmon, A.,
+Martin, S., Viganò, S., Leor, G., Berstler, J., Muenzner, J., Mülleder, M., Campagnolo,
+E. M., Shulman, E. D., Chang, T., Rubolino, C., Laue, K., Cohen-Sharir, Y., Scorzoni, S.,
+… Santaguida, S. (2024). Human aneuploid cells depend on the RAF/MEK/ERK pathway for
+overcoming increased DNA damage. *Nature Communications, 15*(1).
+https://doi.org/10.1038/s41467-024-52176-x
 
 ---
 

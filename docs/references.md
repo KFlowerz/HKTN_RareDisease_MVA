@@ -24,11 +24,13 @@ Abou Tayoun, A. N., Pesaran, T., DiStefano, M. T., Oza, A., Rehm, H. L., Bieseck
 
 Alfieri, C., Chang, L., & Barford, D. (2018). Mechanism for remodelling of the cell cycle checkpoint protein MAD2 by the ATPase TRIP13. Nature, 559(7713), 274–278. https://doi.org/10.1038/s41586-018-0281-1
 
-Broad Institute & NIH LINCS Program. (2017). *LINCS L1000 consensus gene signatures (CGS) of shRNA knockdown* (GEO accession GSE106127) [Data set]. National Center for Biotechnology Information Gene Expression Omnibus. Retrieved September 21, 2026, from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE106127
+Broad Institute & NIH LINCS Program. (2017a). *LINCS L1000 consensus gene signatures (CGS) of shRNA knockdown* (GEO accession GSE106127) [Data set]. National Center for Biotechnology Information Gene Expression Omnibus. Retrieved September 21, 2026, from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE106127
 
-Broad Institute & NIH LINCS Program. (2017). *LINCS L1000 Phase II Level 5 compound signatures* (GEO accession GSE70138, build 2017-03-06) [Data set]. National Center for Biotechnology Information Gene Expression Omnibus. Retrieved September 21, 2026, from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE70138
+Broad Institute & NIH LINCS Program. (2017b). *LINCS L1000 Phase II Level 5 compound signatures* (GEO accession GSE70138, build 2017-03-06) [Data set]. National Center for Biotechnology Information Gene Expression Omnibus. Retrieved September 21, 2026, from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE70138
 
 Carter, S. L., Eklund, A. C., Kohane, I. S., Harris, L. N., & Szallasi, Z. (2006). A signature of chromosomal instability inferred from gene expression profiles predicts clinical outcome in multiple human cancers. Nature Genetics, 38(9), 1043–1048. https://doi.org/10.1038/ng1861
+
+Carvalhal, S., Bader, I., Rooimans, M. A., Oostra, A. B., Balk, J. A., Feichtinger, R. G., Beichler, C., Speicher, M. R., van Hagen, J. M., Waisfisz, Q., van Haelst, M., Bruijn, M., Tavares, A., Mayr, J. A., Wolthuis, R. M. F., Oliveira, R. A., & de Lange, J. (2022). Biallelic BUB1 mutations cause microcephaly, developmental delay, and variable effects on cohesion and chromosome segregation. Science Advances, 8(3), Article eabk0114. https://doi.org/10.1126/sciadv.abk0114
 
 Chen, S., Francioli, L. C., Goodrich, J. K., Collins, R. L., Kanai, M., Wang, Q., Alföldi, J., Watts, N. A., Vittal, C., Gauthier, L. D., Poterba, T., Wilson, M. W., Tarasova, Y., Phu, W., Grant, R., Yohannes, M. T., Koenig, Z., Farjoun, Y., Banks, E., … Karczewski, K. J. (2024). A genomic mutational constraint map using variation in 76,156 human genomes. Nature, 625(7993), 92–100. https://doi.org/10.1038/s41586-023-06045-0
 
@@ -65,6 +67,8 @@ Genome Aggregation Database. (2026b). Policies. Retrieved September 17, 2026, fr
 Girish, V., Lakhani, A. A., Thompson, S. L., Scaduto, C. M., Brown, L. M., Hagenson, R. A., Sausville, E. L., Mendelson, B. E., Kandikuppa, P. K., Lukow, D. A., Yuan, M. L., Stevens, E. C., Lee, S. N., Schukken, K. M., Akalu, S. M., Vasudevan, A., Zou, C., Salovska, B., Li, W., et al. (2023). Oncogene-like addiction to aneuploidy in human cancers. Science, 381(6660). https://doi.org/10.1126/science.adg4521
 
 Guney, E., Menche, J., Vidal, M., & Barábasi, A.-L. (2016). Network-based in silico drug efficacy screening. Nature Communications, 7(1), Article 10331. https://doi.org/10.1038/ncomms10331
+
+Guo, J., He, W.-B., Dai, L., Tian, F., Luo, Z., Shen, F., Tu, M., Zheng, Y., Zhao, L., Tan, C., Guo, Y., Meng, L.-L., Liu, W., Deng, M., Wu, X., Peng, Y., Zhang, S., Lu, G.-X., Lin, G., … Yang, Y. (2024). Mosaic variegated aneuploidy syndrome with tetraploid, and predisposition to male infertility triggered by mutant CEP192. Human Genetics and Genomics Advances, 5(1), Article 100256. https://doi.org/10.1016/j.xhgg.2023.100256
 
 Hanks, S., Coleman, K., Reid, S., Plaja, A., Firth, H., FitzPatrick, D., Kidd, A., Méhes, K., Nash, R., Robin, N., Shannon, N., Tolmie, J., Swansbury, J., Irrthum, A., Douglas, J., & Rahman, N. (2004). Constitutional aneuploidy and cancer predisposition caused by biallelic mutations in BUB1B. Nature Genetics, 36(11), 1159–1161. https://doi.org/10.1038/ng1449
 
@@ -144,6 +148,8 @@ Sheltzer, J. M. (2013). A Transcriptional and Metabolic Signature of Primary Ane
 
 Singer-Berk, M., Gudmundsson, S., Baxter, S., Seaby, E. G., England, E., Wood, J. C., Son, R. G., Watts, N. A., Karczewski, K. J., Harrison, S. M., MacArthur, D. G., Rehm, H. L., & O’Donnell-Luria, A. (2023). Advanced variant classification framework reduces the false positive rate of predicted loss-of-function variants in population sequencing data. The American Journal of Human Genetics, 110(9), 1496–1508. https://doi.org/10.1016/j.ajhg.2023.08.005
 
+Snape, K., Hanks, S., Ruark, E., Barros-Núñez, P., Elliott, A., Murray, A., Lane, A. H., Shannon, N., Callier, P., Chitayat, D., Clayton-Smith, J., FitzPatrick, D. R., Gisselsson, D., Jacquemont, S., Asakura-Hay, K., Micale, M. A., Tolmie, J., Turnpenny, P. D., Wright, M., … Rahman, N. (2011). Mutations in CEP57 cause mosaic variegated aneuploidy syndrome. Nature Genetics, 43(6), 527–529. https://doi.org/10.1038/ng.822
+
 SnpEff & SnpSift documentation. (n.d.). Commands & command line options. Retrieved September 11, 2026, from https://pcingola.github.io/SnpEff/snpeff/commandline/
 
 Stingele, S., Stoehr, G., Peplowska, K., Cox, J., Mann, M., & Storchova, Z. (2012). Global analysis of genome, transcriptome and proteome reveals the response to aneuploidy in human cells. Molecular Systems Biology, 8(1). https://doi.org/10.1038/msb.2012.40
@@ -172,11 +178,11 @@ U.S. Food and Drug Administration. (2026). openFDA NDC Directory and Drugs@FDA b
 
 Wright, C. F., FitzPatrick, D. R., Ware, J. S., Rehm, H. L., & Firth, H. V. (2023). Importance of adopting standardized MANE transcripts in clinical reporting. Genetics in Medicine, 25(2), Article 100331. https://doi.org/10.1016/j.gim.2022.10.013
 
-Yost, S., de Wolf, B., Hanks, S., Zachariou, A., Marcozzi, C., Clarke, M., de Voer, R. M., Etemad, B., Uijttewaal, E., Ramsay, E., Wylie, H., Elliott, A., Picton, S., Smith, A., Smithson, S., Seal, S., Ruark, E., Houge, G., Pines, J., et al. (2017). Biallelic TRIP13 mutations predispose to Wilms tumor and chromosome missegregation. Nature Genetics, 49(7), 1148–1151. https://doi.org/10.1038/ng.3883
+Yost, S., de Wolf, B., Hanks, S., Zachariou, A., Marcozzi, C., Clarke, M., de Voer, R. M., Etemad, B., Uijttewaal, E., Ramsay, E., Wylie, H., Elliott, A., Picton, S., Smith, A., Smithson, S., Seal, S., Ruark, E., Houge, G., Pines, J., … Rahman, N. (2017). Biallelic TRIP13 mutations predispose to Wilms tumor and chromosome missegregation. Nature Genetics, 49(7), 1148–1151. https://doi.org/10.1038/ng.3883
 
 Zdrazil, B., Felix, E., Hunter, F., Manners, E. J., Blackshaw, J., Corbett, S., de Veij, M., Ioannidis, H., Lopez, D. M., Mosquera, J. F., Magarinos, M. P., Bosc, N., Arcila, R., Kizilören, T., Gaulton, A., Bento, A. P., Adasme, M. F., Monecke, P., Landrum, G. A., & Leach, A. R. (2024). The ChEMBL Database in 2023: A drug discovery platform spanning multiple bioactivity data types and time periods. Nucleic Acids Research, 52(D1), D1180–D1192. https://doi.org/10.1093/nar/gkad1004
 
-Zerbib, J., Ippolito, M. R., Eliezer, Y., De Feudis, G., Reuveni, E., Savir Kadmon, A., Martin, S., Viganò, S., Leor, G., Berstler, J., Muenzner, J., Mülleder, M., Campagnolo, E. M., Shulman, E. D., Chang, T., Rubolino, C., Laue, K., Cohen-Sharir, Y., Scorzoni, S., et al. (2024). Human aneuploid cells depend on the RAF/MEK/ERK pathway for overcoming increased DNA damage. Nature Communications, 15(1). https://doi.org/10.1038/s41467-024-52176-x
+Zerbib, J., Ippolito, M. R., Eliezer, Y., De Feudis, G., Reuveni, E., Savir Kadmon, A., Martin, S., Viganò, S., Leor, G., Berstler, J., Muenzner, J., Mülleder, M., Campagnolo, E. M., Shulman, E. D., Chang, T., Rubolino, C., Laue, K., Cohen-Sharir, Y., Scorzoni, S., … Santaguida, S. (2024). Human aneuploid cells depend on the RAF/MEK/ERK pathway for overcoming increased DNA damage. Nature Communications, 15(1). https://doi.org/10.1038/s41467-024-52176-x
 
 ---
 
@@ -203,6 +209,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `aboutayoun2018` | doi:10.1002/humu.23626 | Crossref | None on record. Crossref's author list ends with an empty entry; the ClinGen SVI group author is omitted until its exact name is confirmed | 2026-09-11 |
 | `alfieri2018` | doi:10.1038/s41586-018-0281-1 | Crossref | None on record | 2026-09-08 |
 | `carter2006` | doi:10.1038/ng1861 | Crossref | None on record | 2026-09-08 |
+| `carvalhal2022` | doi:10.1126/sciadv.abk0114 | Crossref | None on record; empty relation object, no `update-to` entries. Article number eabk0114; Crossref registers no page range. Cited only for the identity of BUB1 as a biallelic checkpoint-gene disorder — the title's own "variable effects" is why the panel description does not call it an established MVA gene | 2026-09-22 |
 | `chen2024` | doi:10.1038/s41586-023-06045-0 | Crossref | **Author Correction** doi:10.1038/s41586-024-07050-7 (PMID 38225470); text paywalled, not read. Cited only as the description of the gnomAD data set, for no specific result. Crossref registers the online-first date (2023-12); the article is the 2024 print issue | 2026-09-17 |
 | `cingolani2012` | doi:10.4161/fly.19695 | Crossref | None on record | 2026-09-11 |
 | `cohensharir2021` | doi:10.1038/s41586-020-03114-6 | Crossref | None on record | 2026-09-08 |
@@ -214,6 +221,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `gargano2024` | doi:10.1093/nar/gkad1005 | Crossref | None on record | 2026-09-17 |
 | `girish2023` | doi:10.1126/science.adg4521 | Crossref | None on record | 2026-09-08 |
 | `guney2016` | doi:10.1038/ncomms10331 | Crossref | None on record | 2026-09-16 |
+| `guo2024` | doi:10.1016/j.xhgg.2023.100256 | Crossref | None on record; empty relation object, no `update-to` entries. Article number 100256; Crossref registers the online-first date (2023-11), the article is the 2024 issue. The article is CC BY-NC-ND: cited for the identity of CEP192 as an MVA gene, with no text quoted or redistributed | 2026-09-22 |
 | `hendricks2020` | doi:10.1162/qss_a_00022 | Crossref | None on record | 2026-09-17 |
 | `hanks2004` | doi:10.1038/ng1449 | Crossref | None on record | 2026-09-08 |
 | `karczewski2020` | doi:10.1038/s41586-020-2308-7 | Crossref | **Author Correction** doi:10.1038/s41586-020-03174-8 (missing consortium member) and **Addendum** doi:10.1038/s41586-021-03758-y (extends the LoF-tolerance analysis of disease genes). Neither changes the LOFTEE results cited here (text read via Europe PMC, PMC8064911 / PMC8410591) | 2026-09-11 |
@@ -239,6 +247,7 @@ last); the earlier "19 authors, et al." renderings are part of the same pass.
 | `scott2006` | doi:10.1136/jmg.2006.041723 | Crossref | None on record | 2026-09-08 |
 | `sheltzer2013` | doi:10.1158/0008-5472.can-13-0749 | Crossref | None on record | 2026-09-08 |
 | `singerberk2023` | doi:10.1016/j.ajhg.2023.08.005 | Crossref bibliographic match, confirmed by Europe PMC (PMID 37633279) | None on record | 2026-09-11 |
+| `snape2011` | doi:10.1038/ng.822 | Crossref | None on record; empty relation object. Cited only for the identity of CEP57 as an MVA gene; the full text was not read. 21 authors, rendered per APA 7th as the first 19, … and the last | 2026-09-22 |
 | `stingele2012` | doi:10.1038/msb.2012.40 | Crossref | None on record | 2026-09-08 |
 | `subramanian2005` | doi:10.1073/pnas.0506580102 | Crossref | None on record | 2026-09-21 |
 | `subramanian2017` | doi:10.1016/j.cell.2017.10.049 | Crossref | None on record. 56 authors; rendered per APA 7th as the first 19, … and the last | 2026-09-21 |
