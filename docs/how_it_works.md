@@ -206,13 +206,13 @@ Each of the five searches proposes drugs for a completely different reason:
 
 How much each one actually contributed — as a share of the 1,963 drugs considered:
 
-```
-Proximity (B)    ████████████████████████████████████████  1,956   99.6%
-Phenotype (D)    ▏                                             25    1.3%
-Prior (E)        ▏                                              8    0.4%
-Signature (C)    ·                                              0       —
-Knowledge graph  ·                                       not built      —
-```
+| Search | Drugs it ranked | Share of the pool | |
+|---|---:|---:|---|
+| **B** Network proximity | 1,956 | 99.6% | ████████████████████████████████████████ |
+| **D** Phenotype | 25 | 1.3% | ▏ |
+| **E** Literature prior | 8 | 0.4% | ▏ |
+| **C** Signature reversion | 0 | — | *switched off — see Section 7* |
+| **A** Knowledge graph | — | — | *never built* |
 
 *Source: `results/l3/integration.json`, `counts.per_channel_ranked` (seed 42). Bars are
 proportional and start at zero.*
@@ -227,19 +227,19 @@ Every candidate then hit a wall of safety rules. These are **hard gates, not sco
 drug that fails any one of them is *removed*, not merely pushed down the list. A ranked list
 gets read as a recommendation no matter what the caption says.
 
-```
-Nominated     ████████████████████████████████████████████  1,963
-Excluded      ██████████████████████████████████████████    1,880
-Survived      ██                                                83
-```
+| | Drugs | |
+|---|---:|---|
+| Nominated by the five searches | 1,963 | ████████████████████████████████████████████ |
+| Removed by the safety gate | 1,880 | ██████████████████████████████████████████ |
+| **Survived** | **83** | ██ |
 
 The rules that did the removing:
 
-```
-Damages DNA / raises cancer risk  ████████████████████████████████████████████  1,623
-Child safety not established      ███████                                          256
-No longer on the market           ▏                                                  1
-```
+| Rule that removed it | Drugs | |
+|---|---:|---|
+| Damages DNA or raises cancer risk | 1,623 | ████████████████████████████████████████████ |
+| Child safety not established | 256 | ███████ |
+| No longer on the market | 1 | ▏ |
 
 *Source: `results/l4/validation.json`, `counts.excluded_by_rule` (seed 42).*
 
@@ -255,18 +255,18 @@ child, but it would be badly wrong to read those 1,231 as a list of hazardous me
 
 Setting that bucket aside, here is what the program actually *found* in the labels:
 
-```
-Child safety not established          ████████████████████████████████████████   225
-Damages chromosomes in lab tests      ██████████████████████                     125
-Caused more tumours in animal studies ████████████████                            91
-Damages DNA in lab tests              ██████████                                  54
-Label warns of cancer risk            █████████                                   51
-Failed a named safety assay           ████                                        25
-Belongs to a cell-killing drug class  ████                                        23
-Label warns of second cancers         ███                                         19
-Causes wrong chromosome numbers       ██                                          14
-Everything else                       ████                                        22
-```
+| What was found in the label | Drugs | |
+|---|---:|---|
+| Child safety not established | 225 | ████████████████████████████████████████ |
+| Damages chromosomes in lab tests | 125 | ██████████████████████ |
+| Caused more tumours in animal studies | 91 | ████████████████ |
+| Damages DNA in lab tests | 54 | ██████████ |
+| Label warns of cancer risk | 51 | █████████ |
+| Failed a named safety assay | 25 | ████ |
+| Belongs to a cell-killing drug class | 23 | ████ |
+| Label warns of second cancers | 19 | ███ |
+| **Causes wrong chromosome numbers** | **14** | ██ |
+| Everything else | 22 | ████ |
 
 *Source: `results/l4/validation.json`, `counts.excluded_by_reason` (seed 42). The 1,231
 "no information found" exclusions are deliberately not plotted here — on the same scale they
