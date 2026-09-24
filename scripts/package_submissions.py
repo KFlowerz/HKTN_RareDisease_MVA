@@ -75,6 +75,28 @@ def _copy(source: Path, destination: Path) -> bool:
     return True
 
 
+#: Files the **report itself** links to by relative path. Copied beside it because a
+#: packaged report whose reference list is a dead link undercuts the one claim this
+#: project defends hardest -- that every citation was resolved and retraction-checked.
+#: None is patient data; all three are committed.
+#:
+#: The boundary is deliberate and stops here. These three link onward into the repository
+#: -- to the config, the decision log, CLAUDE.md -- and following that chain would end in
+#: packaging most of the repo. The submission carries the GitHub URL for exactly that, and
+#: each SUBMIT.md says so rather than leaving the reader to find a dead link.
+SUPPORTING = ("references.md", "references.bib", "glossary.md")
+
+
+def _copy_supporting(out: Path) -> bool:
+    """Copy what the reports link to, so those links resolve inside the package."""
+    return all(_copy(DOCS / name, out / name) for name in SUPPORTING)
+
+
+def _supporting_names() -> str:
+    """The supporting filenames, for the checklist -- generated, so it cannot drift."""
+    return ", ".join(f"`{name}`" for name in SUPPORTING)
+
+
 def _tick(ready: bool) -> str:
     return "[x]" if ready else "[ ]"
 
@@ -90,6 +112,7 @@ def package_track1(name: str) -> Path:
     csv_destination = out / f"{name}.csv"
     csv_ready = csv_destination.exists()
     report_ready = _copy(DOCS / "report_track1.md", out / "report.md")
+    supporting_ready = _copy_supporting(out)
 
     (out / "SUBMIT.md").write_text(f"""# Track 1 — Variant Prediction: what to upload
 
@@ -102,6 +125,7 @@ these files, then re-run `python scripts/package_submissions.py`.
 |---|---|---|---|
 | Predictions CSV | `{csv_destination.name}` | `python scripts/build_track1_submission.py --name {name}` | {_tick(csv_ready)} |
 | Report (`.md` or PDF) | `report.md` | `docs/report_track1.md` | {_tick(report_ready)} |
+| Supporting files the report links to | {_supporting_names()} | `docs/` | {_tick(supporting_ready)} |
 | GitHub URL | — | must start with `https://github.com/` | [ ] |
 | Team / display name | — | your choice; keep it identical across teammates | [ ] |
 
@@ -112,6 +136,13 @@ these files, then re-run `python scripts/package_submissions.py`.
 - [ ] **Rename the CSV** to include your username and a short approach name, as the Space
       asks — for example `jane-doe_mane-clinvar-gnomad.csv`. Pass `--name` to this script.
 - [ ] **Six submissions are available**, and only the highest-scoring one is featured.
+
+## A known property of the copies
+
+`report.md`'s own links all resolve inside this directory. The **supporting** files link
+onward to things that are not packaged — `config/pipeline.yaml`, `mngmt/decisions.md`,
+`CLAUDE.md` — because packaging those would mean packaging most of the repository. Follow
+them at the GitHub URL above; that is what it is for.
 
 ## Do not
 
@@ -131,6 +162,7 @@ def package_track2() -> Path:
     out.mkdir(parents=True, exist_ok=True)
 
     report_ready = _copy(DOCS / "report_track2.md", out / "report.md")
+    supporting_ready = _copy_supporting(out)
     dossier_ready = _copy(RESULTS / "l5", out / "dossier")
     index = out / "dossier" / "index.html"
 
@@ -145,6 +177,7 @@ these files, then re-run `python scripts/package_submissions.py`.
 |---|---|---|---|
 | Written report (`.md` or PDF) | `report.md` | `docs/report_track2.md` | {_tick(report_ready)} |
 | Candidate dossier | `dossier/index.html` | `results/l5/` (regenerate, do not edit) | {_tick(dossier_ready)} |
+| Supporting files the report links to | {_supporting_names()} | `docs/` | {_tick(supporting_ready)} |
 | GitHub URL | — | must start with `https://github.com/` | [ ] |
 | 3-minute video | — | **not produced** | [ ] |
 | Methods description form | — | the Space's `.xlsx` template | [ ] |
@@ -162,6 +195,10 @@ these files, then re-run `python scripts/package_submissions.py`.
 
 ## Notes
 
+- `report.md`'s own links all resolve inside this directory. The **supporting** files link
+  onward to things that are not packaged — `config/pipeline.yaml`, `mngmt/decisions.md`,
+  `CLAUDE.md` — because packaging those would mean packaging most of the repository. Follow
+  them at the GitHub URL above.
 - The dossier is a copy of `results/l5/`. Regenerate the source with
   `PYTHONHASHSEED=42 python -m src.pipeline --only l5_report`, then re-run this script.
 - The dossier contains no patient identifiers — `src/l5_report/publish_guard.py` fails
