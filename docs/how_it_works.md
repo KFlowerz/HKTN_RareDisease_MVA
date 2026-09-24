@@ -77,38 +77,85 @@ Track 2 is built on, which is why one arrow crosses from the first box into the 
 
 ```mermaid
 flowchart TD
-    VCF[/"INPUT — the patient's data<br/>one whole-genome VCF, plus a coded<br/>description of their symptoms"/]
-    REF[("REFERENCE DATA — public, not the patient's<br/>ClinVar · gnomAD · MANE · STRING · Reactome<br/>openFDA drug labels · HPO · Monarch · LINCS<br/>each downloaded whole and searched on this machine")]
+    VCF[/"PATIENT DATA<br/>whole-genome VCF<br/>+ coded symptom list"/]
+
+    subgraph REFS["PUBLIC REFERENCE DATA — downloaded whole, searched on this machine"]
+        SNPEFF[("snpEff<br/>GRCh38.115")]
+        CLINVAR[("ClinVar")]
+        GNOMAD[("gnomAD<br/>v4.1.1")]
+        MANE[("MANE<br/>v1.5")]
+        STRINGDB[("STRING<br/>v12.0")]
+        REACTOME[("Reactome")]
+        OPENTARGETS[("Open Targets<br/>26.06")]
+        HPO[("HPO")]
+        MONARCH[("Monarch")]
+        LINCS[("LINCS<br/>L1000")]
+        EPMC[("Europe PMC")]
+        OPENFDA[("openFDA<br/>drug labels")]
+    end
 
     subgraph TRACK1["TRACK 1 — which genetic change causes the illness?"]
-        L0["STAGE 0 · Read the genome<br/>—<br/>IN: the VCF; ClinVar, gnomAD and MANE releases<br/>ACTION: annotate every variant locally, then test each of the<br/>six checkpoint genes for two damaged copies<br/>OUT: causal_gene_call.json, variant_calls.json"]
-        OUT1[/"TRACK 1 OUTPUT<br/>the causal gene and its variant pair<br/>written to results/submissions/track1/"/]
-        L0 --> OUT1
+        P0("STAGE 0 · Read the genome<br/>ACTION: annotate every variant locally, then test<br/>each of the six checkpoint genes for two damaged copies")
+        D0[/"causal_gene_call.json<br/>variant_calls.json"/]
+        OUT1[/"TRACK 1 OUTPUT<br/>the causal gene and its variant pair<br/>→ results/submissions/track1/"/]
+        P0 --> D0
+        D0 --> OUT1
     end
 
     subgraph TRACK2["TRACK 2 — which approved medicines are worth investigating?"]
-        L1["STAGE 1 · Map the neighbourhood<br/>—<br/>IN: the causal gene; STRING and Reactome<br/>ACTION: expand one gene into the 200 proteins that work<br/>most closely with it<br/>OUT: module.json"]
-        L2["STAGE 2 · Five independent searches<br/>—<br/>IN: module.json; drug-target data, symptom data, literature<br/>ACTION: each search proposes drugs for a different reason<br/>OUT: one channel.json per search"]
-        L3["STAGE 3 · Merge and reason<br/>—<br/>IN: the five channel files<br/>ACTION: resolve drug names to one identity, combine the<br/>rankings, then argue against each candidate<br/>OUT: integration.json, candidates.tsv"]
-        L4["STAGE 4 · Safety gate<br/>—<br/>IN: candidates.tsv; official US drug labels<br/>ACTION: REMOVE — never down-rank — anything unsafe for a<br/>child with raised cancer risk, recording the sentence that did it<br/>OUT: survivors.tsv, excluded.tsv, validation.json"]
-        L5["STAGE 5 · Write it up<br/>—<br/>IN: the Stage 3 and Stage 4 files<br/>ACTION: render the readable dossier; compute nothing new<br/>OUT: index.html, exclusions.html, report.json"]
-        OUT2[/"TRACK 2 OUTPUT<br/>83 candidates in two tiers,<br/>and 1,880 refusals each with its reason"/]
-        L1 --> L2
-        L2 --> L3
-        L3 --> L4
-        L4 --> L5
-        L5 --> OUT2
+        P1("STAGE 1 · Map the neighbourhood<br/>ACTION: expand one gene into the 200 proteins<br/>that work most closely with it")
+        D1[/"module.json"/]
+        P2("STAGE 2 · Five independent searches<br/>ACTION: each search proposes drugs<br/>for a different reason")
+        D2[/"channel.json<br/>one per search"/]
+        P3("STAGE 3 · Merge and reason<br/>ACTION: resolve drug names to one identity, combine<br/>the rankings, then argue against each candidate")
+        D3[/"integration.json<br/>candidates.tsv"/]
+        P4("STAGE 4 · Safety gate<br/>ACTION: REMOVE — never down-rank — anything unsafe<br/>for a child with raised cancer risk, recording<br/>the label sentence that did it")
+        D4[/"survivors.tsv<br/>excluded.tsv<br/>validation.json"/]
+        P5("STAGE 5 · Write it up<br/>ACTION: render the readable dossier<br/>compute nothing new")
+        OUT2[/"TRACK 2 OUTPUT<br/>83 candidates in two tiers,<br/>1,880 refusals each with its reason"/]
+        P1 --> D1
+        D1 --> P2
+        P2 --> D2
+        D2 --> P3
+        P3 --> D3
+        D3 --> P4
+        P4 --> D4
+        D4 --> P5
+        P5 --> OUT2
     end
 
-    VCF --> L0
-    REF -.-> L0
-    L0 -->|"the causal gene becomes<br/>Track 2's starting assumption"| L1
+    VCF --> P0
+    SNPEFF -.-> P0
+    CLINVAR -.-> P0
+    GNOMAD -.-> P0
+    MANE -.-> P0
+
+    D0 -->|"the causal gene becomes<br/>Track 2's starting assumption"| P1
+    STRINGDB -.-> P1
+    REACTOME -.-> P1
+
+    STRINGDB -.-> P2
+    OPENTARGETS -.-> P2
+    HPO -.-> P2
+    MONARCH -.-> P2
+    LINCS -.-> P2
+    EPMC -.-> P2
+
+    OPENTARGETS -.-> P3
+    OPENFDA -.-> P4
 ```
 
-**Reading the shapes:** slanted boxes are data going in or coming out, the cylinder is public
-reference data, and plain rectangles are the actions taken. The dotted arrow marks the one
-input that is *not* the patient's — every reference database is fetched in full and searched
-here, so no part of the patient's genome is ever sent anywhere.
+**Reading the shapes.** Slanted boxes are **data** — what goes in, and every file that comes
+out. Rounded boxes are **actions**. Cylinders are **stored reference data**. Solid arrows
+carry the patient's data and everything derived from it; dotted arrows bring in public
+reference data. No dotted arrow ever runs backwards, which is the privacy property drawn as
+a picture: every reference database is fetched in full and searched here, so no part of the
+patient's genome is ever sent anywhere.
+
+Two things the picture makes plain. **Every stage writes a named file**, so any number in
+this document can be traced to the file it came from. And **LINCS is wired in but its search
+produces nothing** — Stage 2's signature search was built, tested and switched off, which
+Section 7 explains.
 
 The design idea behind Stage 2 is worth explaining, because Section 7 reports that it did
 not work. Rather than trusting one clever method, I ran **five weak methods that look for
