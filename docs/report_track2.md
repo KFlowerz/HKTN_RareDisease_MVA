@@ -4,6 +4,7 @@
 
 Seed 42 · causal gene `BUB1B` · endpoint *secondary* prevention · pipeline L0–L5
 Every number below names the artifact under `results/` that produced it.
+Every term, abbreviation and acronym is defined in [`glossary.md`](glossary.md).
 
 ---
 

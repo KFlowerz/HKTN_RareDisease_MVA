@@ -7,7 +7,8 @@ importantly — what it failed to find. There is no jargon here that I do not ex
 number that does not come from a file the code produced.
 
 If you want the technical versions instead, they are [`report_track1.md`](report_track1.md)
-and [`report_track2.md`](report_track2.md).
+and [`report_track2.md`](report_track2.md). Any term, abbreviation or acronym used anywhere in
+this project is defined in [`glossary.md`](glossary.md).
 
 > **The short version.** A child has an ultra-rare genetic illness with no treatment. I
 > built a program that reads that patient's genome and does two things: it works out which

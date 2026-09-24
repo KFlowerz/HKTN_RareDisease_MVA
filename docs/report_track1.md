@@ -4,6 +4,7 @@
 
 Seed 42 · GRCh38 · snpEff GRCh38.115 · ClinVar release 2026-09-13 · gnomAD v4.1.1
 Every number below names the artifact under `results/` that produced it.
+Every term, abbreviation and acronym is defined in [`glossary.md`](glossary.md).
 
 > **A note on what this document does not contain.** No variant coordinate, HGVS expression
 > or ClinVar accession appears here. The submission CSV carries the identifiers, as the

@@ -113,6 +113,8 @@ python scripts/package_submissions.py       # both packages + upload checklists
 **New to the project?** [docs/how_it_works.md](docs/how_it_works.md) explains both tracks in plain
 language, with diagrams and no jargon — what the illness is, how each answer was constructed, and
 what did not work. Its figures are checked against the same artifacts as the reports.
+[docs/glossary.md](docs/glossary.md) defines every term, abbreviation and acronym the project uses,
+saying what each one means *here* rather than in general.
 
 Each package carries a `SUBMIT.md` listing what to upload and what is still missing. The packages
 live under gitignored `results/` because the Track 1 predictions file contains the subject's variant
