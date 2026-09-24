@@ -1,15 +1,16 @@
-# Identifying the causal variant pair in a proband with mosaic variegated aneuploidy
+# Identifying the causal variant pair in a child with mosaic variegated aneuploidy
 
 **Rare Disease, Real Kid: MVA Hackathon 2026 — Track 1 (Variant Prediction)**
 
 Seed 42 · GRCh38 · snpEff GRCh38.115 · ClinVar release 2026-09-13 · gnomAD v4.1.1
+Every number below names the artifact under `results/` that produced it.
 
 > **A note on what this document does not contain.** No variant coordinate, HGVS expression
 > or ClinVar accession appears here. The submission CSV carries the identifiers, as the
 > format requires; this report describes the method and the evidence at category level. In a
-> disease with roughly fifty patients worldwide, a specific variant can identify a child, and
-> the readable document is the one most likely to be forwarded. The reasoning is recorded as
-> decision D21 in the repository.
+> disease with roughly fifty patients worldwide, a specific variant can identify the person
+> it came from, and the readable document is the one most likely to be forwarded. The
+> reasoning is recorded as decision D21 in the repository.
 
 ---
 
@@ -28,15 +29,51 @@ evidence, not by the pipeline setting its own premise.
 and no recontact permitted, a *cis* arrangement cannot be excluded. That is the largest
 uncertainty in this call and no data available to me closes it.
 
+**This is a computational prediction, not a diagnosis**, and not a classification of either
+allele. Section 8 states what that costs.
+
 ---
 
-## 1. Method
+## 1. The problem, and what makes it hard
+
+MVA is caused by biallelic loss of function in the genes that build the mitotic
+spindle-assembly checkpoint — most often *BUB1B* (Hanks et al., 2004). Chromosome
+missegregation produces mosaic aneuploidy across tissues, with growth restriction,
+microcephaly, developmental delay and a substantial cancer predisposition (Scott et al.,
+2006). Roughly fifty patients are known worldwide.
+
+**The patient is a child.** That is stated once, here, because it bears on the work: it is
+why Track 2's safety triage is paediatric, and part of why the privacy constraints in
+Section 7 are as strict as they are. Everywhere else this report says *patient*.
+
+Four properties of this case shaped every decision that follows:
+
+**No parental samples, and no recontact.** Phase — which parental copy each variant sits on
+— is the single piece of evidence that would settle a recessive call, and it is the one
+piece that cannot be obtained. No analysis recovers it from a single sample's called
+variants.
+
+**No alignments.** The dataset ships raw reads and a called VCF, with no BAM, verified at
+revision `59e322d2…` on 2026-09-02. Anything a called VCF cannot express — copy number,
+structural rearrangement, deep-intronic change, low-level mosaicism — is invisible to this
+analysis as run.
+
+**The disease is recessive.** A single damaged copy is not an answer. The unit of evidence
+is a *configuration* — two alleles considered together — not a variant.
+
+**The population is about fifty people.** A specific variant, or a specific pattern of
+affected chromosomes, is close to an identifier. That constrains what this report can say,
+and Section 6 records one result withheld on exactly those grounds.
+
+---
+
+## 2. Method
 
 ### Annotation runs locally, by design
 
 Variants are annotated with a **local snpEff** (`GRCh38.115`, pinned; Cingolani et al.,
 2012) rather than a REST service. This is a privacy constraint, not a performance one: a
-per-variant lookup against a remote annotation API would put this child's coordinates on a
+per-variant lookup against a remote annotation API would put the patient's coordinates on a
 third-party server. The same rule governs every reference resource in the pipeline — each is
 downloaded as a **whole public release** and matched locally, never queried per variant.
 
@@ -73,7 +110,7 @@ panel does not pretend they are:
 | ***BUB3*** | **No biallelic MVA report.** Carried as a core checkpoint component on the same mechanism, so that a variant in it would be seen rather than filtered out unexamined |
 
 This is a real limitation and I state it rather than presenting the result as genome-wide:
-**a causal variant in a gene outside this panel would not be found.** For a proband whose
+**a causal variant in a gene outside this panel would not be found.** For a patient whose
 presentation is characteristic, the panel is the higher-precision choice; for one whose is
 not, it is the wrong one.
 
@@ -99,7 +136,7 @@ For each panel gene the pipeline enumerates biallelic configurations and attache
 
 ---
 
-## 2. The finding
+## 3. The finding
 
 Of the six panel genes, **exactly one carries any PASS loss-of-function allele**: *BUB1B*.
 The other five yield no biallelic configuration at all.
@@ -130,36 +167,73 @@ the truncating half independently classified pathogenic for this exact syndrome.
 
 ---
 
-## 3. What I am not claiming
+## 4. The submission
 
-Four caveats travel with this call into the submission's own `notes` field. They are the
-reason the primary row's EPCR is 0.70 rather than 0.95.
+Two rows, ranked by my own estimated probability of causal relationship.
 
-**1. Phase is unknown — the largest uncertainty.** No parental samples, no recontact
-permitted. If both variants sit on the same copy, the other copy is intact and the
-configuration is not causal. Nothing available to me can settle it. A confident EPCR here
-would be a statement about my data that my data does not support.
+| Rank | Row | EPCR | Why |
+|---|---|---|---|
+| 1 | The compound-heterozygous **pair** | 0.70 | The best-supported configuration. Not higher, because the pair is unphased and the missense allele is untested |
+| 2 | The **truncating allele alone** | 0.45 | Hedge against the second hit being something a called VCF cannot surface |
 
-**2. The missense allele is untested.** The literature supports the *pattern*; no functional
-study shows that *this* change impairs BUBR1. Rarity is necessary, not sufficient — under
-the ACMG/AMP framework low frequency is supporting evidence, never on its own a
-classification (Richards et al., 2015) — and absence from ClinVar is absence of a
-submission, not evidence of benignity.
+**The second row is scoring-neutral and I know it.** I checked the submission against the
+organizers' published `evaluation.py` — the parser and scorer only, never the answer key —
+and found that partial credit is already awarded from the pair row, because the scorer tests
+for intersection with the true set. The row is kept because its note states a real failure
+mode for the human reviewer, not because it helps the metric.
 
-**3. Unseen second hits.** Copy-number, structural, deep-intronic and low-level mosaic
-variants are **not assessable from a called VCF**. The missense allele is the best second
-candidate *in the called set*, which is a narrower claim than the best that exists. The
-submission's second row hedges exactly this case.
+I also measured the alternative ordering. Leading with the truncating allele alone would
+raise F-max from 0.500 to 0.667 *if* the second allele is wrong, and cost 50 rank points if
+the pair is right. Rank points run 0–100 and F-max 0–1; that trade is bad and I did not take
+it.
 
-**4. No detectable constitutional aneuploidy.** The pipeline estimates per-chromosome
-aneuploidy burden from B-allele frequency (see below) and every chromosome came back at
-baseline or below the detection limit. This does **not** exclude low-level mosaicism beneath
-the method's floor, but it is honestly *not* supporting evidence, and I decline to present
-it as such.
+Chromosome names are `chr`-prefixed to match the template — the dataset's VCF uses bare
+contig names, and the builder converts and asserts it, because an unprefixed chromosome
+scores zero while looking entirely correct in the file.
+
+**The limitations in Section 8 are not confined to this report.** Three of the four travel
+with the call into the submission's own `notes` field, so a reader who never opens this
+document still gets them.
 
 ---
 
-## 4. Aneuploidy burden without alignments
+## 5. Scientific rigor
+
+### Evidence discipline
+
+Every claim in this project is one of two admissible kinds: a **pipeline data result**
+(artifact path + seed + config, regenerable) or a **cited source** in APA 7th with a
+resolvable DOI. Every DOI was resolved against Crossref and checked for retraction and
+correction notices; the verification log is in `docs/references.md` with the date each check
+ran. An LLM-produced citation is treated as a hypothesis about the literature until
+resolved — and dropped if it does not resolve.
+
+The pipeline reports what its sources say and classifies nothing itself. ClinVar's verdicts
+are ClinVar's; gnomAD's frequencies are gnomAD's; snpEff's consequences are snpEff's. Where
+those disagree with each other, the disagreement is recorded rather than resolved silently.
+
+### Reproducibility
+
+Re-running a layer on unchanged inputs reproduces it **byte for byte**; this is verified in
+the repository for the downstream layers, and every dependency, data release and seed is
+pinned.
+
+| Pinned | How |
+|---|---|
+| Libraries | `environment.lock.yml` (exact linux-64 solve) and `environment.yml` (portable, fully pinned) |
+| ClinVar | a **dated** weekly release, not the rolling `clinvar.vcf.gz`, with an archive fallback |
+| snpEff database, MANE, gnomAD | version or release date in `config/pipeline.yaml` |
+| Every cached download | SHA-256 recorded beside the result |
+
+`results/_manifest.json` records the seed, the SHA-256 of the config file, a digest of the
+resolved settings with machine-specific paths excluded, and the versions of the libraries
+that decide the numbers. ClinVar is pinned to a **dated** weekly release because the rolling
+file is replaced weekly: two runs a fortnight apart would cross-reference the patient's
+alleles against different archives, and no output would say so.
+
+---
+
+## 6. Innovation: aneuploidy burden without alignments
 
 MVA's phenotype *is* mosaic aneuploidy, so quantifying it should corroborate a call. **The
 dataset ships no BAM** — raw reads plus a called VCF — so depth-based methods have no input.
@@ -186,89 +260,124 @@ add in shift space, and a spike-in simulation at this depth put the crossing nea
 Quoting only the lower number would report the most favourable model as if it were the
 measurement.
 
+### What I deliberately do not show
+
 **The per-chromosome result is withheld** — in every form, including aggregate counts. MVA
 case series publish karyotypes; in a population of roughly fifty, which chromosomes are
-involved and at what fraction is close to a fingerprint. I publish the method and what it
-can resolve, because that is what the innovation claim is about. The withholding is named
-rather than silent (repository decision D20).
+involved and at what fraction is close to a fingerprint. A count of affected chromosomes is
+not a safe aggregate either: in a population that small it narrows the field by itself.
+
+I publish the **method and its resolving power**, because that is what the innovation claim
+is about — the claim is *"allele ratios alone resolve mosaic aneuploidy without alignments,
+down to ~10%"* — and not this patient's result from it. The withholding is **named, not
+silent**: omitting it quietly would be indistinguishable from never having built it
+(repository decision D20).
 
 ---
 
-## 5. The submission
+## 7. Governance, ethics and disclosure
 
-Two rows, ranked by my own estimated probability of causal relationship.
+This work involves a real child's genome. Several constraints were fixed before any code was
+written and none was relaxed:
 
-| Rank | Row | EPCR | Why |
-|---|---|---|---|
-| 1 | The compound-heterozygous **pair** | 0.70 | The best-supported configuration. Not higher, because the pair is unphased and the missense allele is untested |
-| 2 | The **truncating allele alone** | 0.45 | Hedge against the second hit being something a called VCF cannot surface |
+- **Patient data never enters the repository.** All data lives under gitignored directories,
+  and reference caches sit outside the working tree entirely — the cache module *refuses* a
+  path inside the repository.
+- **No per-variant remote query, anywhere in the pipeline.** Every reference resource is
+  downloaded as a whole public release and matched locally, so no coordinate of this
+  patient's ever reaches a third-party server.
+- **Clinical phenotype is treated as patient data.** HPO terms are parsed from the data
+  directory at run time and never written into config, source, tests or any committed file —
+  a specific combination of features is identifying in a population this size.
+- **No recontact** with the patient, the family or MVA Society, and nothing published beyond
+  what the family already shares publicly through their own blog posts.
+- **The submission CSV is never committed.** It is written under `results/`, which is
+  gitignored and inside the project's deletion scope, and uploaded from there.
+- **Deletion of all held data is committed**, with a register of every custody location —
+  including one row for the copy this submission itself creates, which the organizers hold
+  and this project cannot purge.
 
-**The second row is scoring-neutral and I know it.** I checked the submission against the
-organizers' published `evaluation.py` — the parser and scorer only, never the answer key —
-and found that partial credit is already awarded from the pair row, because the scorer tests
-for intersection with the true set. The row is kept because its note states a real failure
-mode for the human reviewer, not because it helps the metric.
+**Generative AI disclosure.** The pipeline's own reasoning step (used in Track 2, not in this
+call) runs a **local open-weights model** — `qwen2.5-7b-instruct-q4_k_m` — served over
+loopback, with a guard that refuses any non-loopback endpoint. Nothing patient-derived leaves
+the machine. Development assistance used a commercially available assistant under a consumer
+subscription with model training on inputs and outputs disabled. Both are recorded in
+decision D17 and in `COMPLIANCE.md`.
 
-I also measured the alternative ordering. Leading with the truncating allele alone would
-raise F-max from 0.500 to 0.667 *if* the second allele is wrong, and cost 50 rank points if
-the pair is right. Rank points run 0–100 and F-max 0–1; that trade is bad and I did not take
-it.
-
-Chromosome names are `chr`-prefixed to match the template — the dataset's VCF uses bare
-contig names, and the builder converts and asserts it, because an unprefixed chromosome
-scores zero while looking entirely correct in the file.
+**No AI system made the causal-gene call.** L0 assembled the evidence; a person reviewed it
+and decided, and the decision is recorded with its date, its evidence and its dissenting
+points (repository decision D9).
 
 ---
 
-## 6. Reproducibility
+## 8. Limitations
+
+Stated plainly, because a variant call for a patient should arrive with its weaknesses
+attached. They are the reason the primary row's EPCR is 0.70 rather than 0.95, and three of
+the four travel with the call into the submission's own `notes` field.
+
+1. **Phase is unknown — the largest uncertainty.** No parental samples, no recontact
+   permitted. If both variants sit on the same copy, the other copy is intact and the
+   configuration is not causal. Nothing available to me can settle it. A confident EPCR here
+   would be a statement about my data that my data does not support.
+2. **The missense allele is untested.** The literature supports the *pattern*; no functional
+   study shows that *this* change impairs BUBR1. Rarity is necessary, not sufficient — under
+   the ACMG/AMP framework low frequency is supporting evidence, never on its own a
+   classification (Richards et al., 2015) — and absence from ClinVar is absence of a
+   submission, not evidence of benignity.
+3. **Unseen second hits.** Copy-number, structural, deep-intronic and low-level mosaic
+   variants are **not assessable from a called VCF**. The missense allele is the best second
+   candidate *in the called set*, which is a narrower claim than the best that exists. The
+   submission's second row hedges exactly this case.
+4. **No detectable constitutional aneuploidy.** The pipeline estimates per-chromosome
+   aneuploidy burden from B-allele frequency (Section 6) and every chromosome came back at
+   baseline or below the detection limit. This does **not** exclude low-level mosaicism
+   beneath the method's floor, but it is honestly *not* supporting evidence, and I decline to
+   present it as such. This is the one caveat that does not reach the `notes` field, because
+   it is an absence rather than a property of the call.
+5. **A six-gene panel, not a genome-wide sweep** (Section 2). A causal variant outside the
+   panel would not be found.
+6. **The causal gene is a research premise, not a diagnosis.** `BUB1B` was fixed by a person
+   at a recorded gate from ClinVar and gnomAD evidence; the allele pair is unphased and those
+   uncertainties travel into every downstream output, including all of Track 2.
+
+---
+
+## 9. What I would do next
+
+**Align the supplied reads and attempt read-backed phasing.** The dataset ships raw reads;
+the pipeline does not use them. If the two variants fall within the span of a single fragment
+or read pair, phase can be read directly off the alignments — which would close, or overturn,
+the largest uncertainty in this call. If they do not, the attempt returns nothing, and that
+is still worth knowing rather than assuming. This is run time plus alignment, not new method.
+
+**Call copy-number and structural variants from those same alignments.** Limitation 3 exists
+because a called VCF cannot express them. It is the only route to the second allele if the
+missense is not it.
+
+**Functional characterisation of the missense allele** is what would settle limitation 2, and
+it is **out of scope for this project** — it is wet-lab work, and this is a computational
+nomination. Naming it is not proposing it.
+
+---
+
+## Reproducing this
 
 ```bash
 conda env create -f environment.lock.yml     # exact linux-64 solve
 conda activate mva-track2
 snpEff download -noLog GRCh38.115
+mkdir -p data results
+# download the gated dataset into ./data — see DATA.md
+
 PYTHONHASHSEED=42 python -m src.pipeline --only l0_genomics
 python scripts/build_track1_submission.py    # -> results/submissions/track1/ (gitignored)
 python scripts/package_submissions.py        # adds the report and an upload checklist
 ```
 
-Re-running a layer on unchanged inputs reproduces it byte for byte; this is verified in the
-repository for the downstream layers, and every dependency, data release and seed is pinned.
-`results/_manifest.json` records the seed, the SHA-256 of the config, and the versions of the
-libraries that decide the numbers. ClinVar is pinned to a **dated** weekly release rather than
-the rolling `clinvar.vcf.gz`, whose contents change weekly.
-
-**The submission CSV is never committed.** It is written under `results/`, which is gitignored
-and inside the project's deletion scope, and uploaded from there.
-
----
-
-## 7. Generative AI disclosure
-
-The pipeline's own reasoning step (used in Track 2, not in this call) runs a **local
-open-weights model** — `qwen2.5-7b-instruct-q4_k_m` — served over loopback, with a guard that
-refuses any non-loopback endpoint. Nothing patient-derived leaves the machine.
-
-**Development assistance: Anthropic, Claude, consumer subscription (Pro), with model training
-on inputs and outputs disabled in account settings.**
-
-No AI system made the causal-gene call. L0 assembled the evidence; a person reviewed it and
-decided, and the decision is recorded with its date, its evidence and its dissenting points
-(repository decision D9).
-
----
-
-## 8. Ethics and data handling
-
-- Patient data never enters the repository. All data lives under gitignored directories, and
-  reference caches sit outside the working tree entirely — the cache module *refuses* a path
-  inside the repository.
-- No per-variant remote query, anywhere in the pipeline.
-- Clinical phenotype is treated as patient data: HPO terms are parsed at run time and never
-  written into config, source, tests or any committed file.
-- No recontact with the subject, family or MVA Society.
-- Deletion of all held data is committed with a register of every custody location, including
-  one row for the copy this submission itself creates — which the organizers hold and this
-  project cannot purge.
+`scripts/transcript_policy_check.py` verifies the panel's MANE Select transcripts against the
+recorded release. `mngmt/decisions.md` records each decision, what forced it, and what it
+obliged downstream — including the ones that went against me.
 
 ---
 
@@ -277,6 +386,7 @@ decided, and the decision is recorded with its date, its evidence and its dissen
 Every entry below is cited in the text above, and every citation in the text above appears
 below. DOIs were resolved against Crossref and checked for retraction and correction
 notices; the log with the date each check ran is in [`docs/references.md`](references.md).
+Machine-readable source: [`docs/references.bib`](references.bib).
 
 Abou Tayoun, A. N., Pesaran, T., DiStefano, M. T., Oza, A., Rehm, H. L., Biesecker, L. G., &
 Harrison, S. M. (2018). Recommendations for interpreting the loss of function PVS1 ACMG/AMP
@@ -345,6 +455,10 @@ the interpretation of sequence variants: A joint consensus recommendation of the
 College of Medical Genetics and Genomics and the Association for Molecular Pathology.
 *Genetics in Medicine, 17*(5), 405–424. https://doi.org/10.1038/gim.2015.30
 
+Scott, R. H., Stiller, C. A., Walker, L., & Rahman, N. (2006). Syndromes and constitutional
+chromosomal abnormalities associated with Wilms tumour. *Journal of Medical Genetics, 43*(9),
+705–715. https://doi.org/10.1136/jmg.2006.041723
+
 Snape, K., Hanks, S., Ruark, E., Barros-Núñez, P., Elliott, A., Murray, A., Lane, A. H.,
 Shannon, N., Callier, P., Chitayat, D., Clayton-Smith, J., FitzPatrick, D. R., Gisselsson, D.,
 Jacquemont, S., Asakura-Hay, K., Micale, M. A., Tolmie, J., Turnpenny, P. D., Wright, M., …
@@ -372,9 +486,6 @@ Etemad, B., Uijttewaal, E., Ramsay, E., Wylie, H., Elliott, A., Picton, S., Smit
 Smithson, S., Seal, S., Ruark, E., Houge, G., Pines, J., … Rahman, N. (2017). Biallelic TRIP13
 mutations predispose to Wilms tumor and chromosome missegregation. *Nature Genetics, 49*(7),
 1148–1151. https://doi.org/10.1038/ng.3883
-
-Full reference list with the Crossref verification log, including retraction and correction
-checks: [`docs/references.md`](references.md).
 
 ---
 

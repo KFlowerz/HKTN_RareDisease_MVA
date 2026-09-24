@@ -10,7 +10,7 @@ If you want the technical versions instead, they are [`report_track1.md`](report
 and [`report_track2.md`](report_track2.md).
 
 > **The short version.** A child has an ultra-rare genetic illness with no treatment. I
-> built a program that reads that child's genome and does two things: it works out which
+> built a program that reads that patient's genome and does two things: it works out which
 > gene is most likely responsible, and it searches every approved medicine in the world for
 > ones that might be worth *investigating*. The first part produced a clear answer. The
 > second part produced a shortlist of 83 — and its most useful output is the 1,880 medicines
@@ -57,7 +57,7 @@ The hackathon asked two separate things, and I entered both.
 
 | | The question | My answer |
 |---|---|---|
-| **Track 1** | From this child's genome, which genetic change causes the illness? | A specific pair of changes in one gene, *BUB1B* |
+| **Track 1** | From this patient's genome, which genetic change causes the illness? | A specific pair of changes in one gene, *BUB1B* |
 | **Track 2** | Which existing, approved medicines are worth investigating? | 83 candidates, in two clearly separated tiers |
 
 The two are connected: Track 1's answer is the starting assumption for Track 2. You cannot
@@ -72,7 +72,7 @@ reads that file. Nothing is hidden in someone's head or in a notebook.
 
 ```mermaid
 flowchart TD
-    VCF["The child's genome:<br/>a list of genetic differences"] --> L0
+    VCF["The patient's genome:<br/>a list of genetic differences"] --> L0
 
     L0["STAGE 0 — Read the genome<br/>Which of the 6 checkpoint genes<br/>carry damaging changes?"]
     L0 --> T1["TRACK 1 ANSWER<br/>the causal gene and its variant pair"]
@@ -110,7 +110,7 @@ A human genome differs from the reference in millions of places. Almost all of t
 differences are harmless. The job is to find the one that matters.
 
 I did not search the whole genome. I looked only at the **six genes known to build the
-safety catch**, because the child's presentation pointed squarely at this mechanism. This is
+safety catch**, because the patient's presentation pointed squarely at this mechanism. This is
 a deliberate trade: it makes the search much more precise, and it means that if the cause
 lies in a seventh gene, **I would not find it**. That limitation is stated in the submission
 rather than hidden.
@@ -173,7 +173,7 @@ That is why the submission states its confidence as **0.70 and not 0.95**. The n
 statement about the strength of the evidence, and the evidence has a real hole in it.
 
 For the same reason, this is called a **research premise, not a diagnosis**. No one has
-diagnosed this child from this work, and nothing here should be read as having done so.
+diagnosed this patient from this work, and nothing here should be read as having done so.
 
 ---
 
@@ -250,7 +250,7 @@ The rules that did the removing:
 
 The safety checks read official US drug labels. If a drug has no US label, the program
 cannot establish that it is safe for a child, so it **removes it anyway**. This is called
-failing closed: when in doubt, exclude. It is the right behaviour when the subject is a
+failing closed: when in doubt, exclude. It is the right behaviour when the patient is a
 child, but it would be badly wrong to read those 1,231 as a list of hazardous medicines.
 
 Setting that bucket aside, here is what the program actually *found* in the labels:
@@ -273,7 +273,7 @@ Setting that bucket aside, here is what the program actually *found* in the labe
 would flatten everything else into invisibility.*
 
 That row second from the bottom deserves a note. **"Causes wrong chromosome numbers"** is
-precisely what this child's illness already does. Fourteen drugs were removed for doing, as
+precisely what this patient's illness already does. Fourteen drugs were removed for doing, as
 a side effect, the exact thing the disease does.
 
 **Every single exclusion is quotable.** Each one records the drug label it read, the section,
@@ -339,7 +339,7 @@ burying it in a footnote.
 
 Search **C** was meant to find drugs that push cells in the opposite direction to the
 disease. Doing that properly needs a readout of what the disease does to cells — and no such
-readout exists for this child, because the dataset contains no material of that kind. So I
+readout exists for this patient, because the dataset contains no material of that kind. So I
 substituted a stand-in: laboratory data showing what happens when *BUB1B* is switched off in
 ordinary cells.
 
@@ -370,7 +370,7 @@ as if it were a measurement.
 **The per-chromosome result itself is not published anywhere — including as a simple count.**
 Medical papers about MVA routinely list which chromosomes are affected in each patient. In a
 population of about fifty people, that list is close to a fingerprint. So I publish the
-method and how sensitive it is, and not this child's result from it.
+method and how sensitive it is, and not this patient's result from it.
 
 This cost the project its single most striking possible figure, in the judging category
 where it would have counted most. It is named as a withheld result rather than quietly
@@ -414,22 +414,22 @@ might look next*, not as findings.
 
 ---
 
-## 10. The child's privacy
+## 10. The patient's privacy
 
 The data is one real child's genome. A few rules were fixed before any code was written and
 none was relaxed:
 
 - **The genome never enters the shared code repository.** It lives only in folders that are
   excluded from sharing, and the code refuses to write it anywhere else.
-- **No part of the child's data is ever sent to an outside service.** Every reference
+- **No part of the patient's data is ever sent to an outside service.** Every reference
   database is downloaded whole and searched on this machine. Looking up a single variant on
-  a website would put that child's private information on someone else's server — so the
+  a website would put that patient's private information on someone else's server — so the
   program never does it, anywhere.
-- **The medical description of the child is treated as private data too.** In a group of
+- **The medical description of the patient is treated as private data too.** In a group of
   fifty people, a specific combination of features identifies a person. It is read fresh
   each run and never written into any shared file.
 - **The published dossier is checked automatically** for anything that could identify the
-  child, and refuses to publish if it finds any.
+  patient, and refuses to publish if it finds any.
 - **No contact with the family**, and nothing published beyond what they already share
   themselves.
 - **The reasoning step runs on this machine.** The program's AI component is a model running
@@ -440,7 +440,7 @@ none was relaxed:
 ## Where the numbers come from
 
 Every figure above is produced by the code in this repository and stored under `results/`,
-which is not shared because it derives from the child's data. The commands that rebuild it
+which is not shared because it derives from the patient's data. The commands that rebuild it
 are in the technical reports. Every number quoted here is checked automatically by
 `scripts/verify_report_claims.py`.
 

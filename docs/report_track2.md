@@ -11,7 +11,7 @@ Every number below names the artifact under `results/` that produced it.
 
 Mosaic variegated aneuploidy has no disease-modifying therapy, roughly fifty patients
 worldwide, and a cancer-predisposition phenotype that makes the usual repurposing
-shortcuts dangerous. I built a six-layer pipeline that starts from one child's
+shortcuts dangerous. I built a six-layer pipeline that starts from one patient's
 whole-genome VCF and ends at a static dossier: 1,963 approved drugs nominated by parallel
 evidence channels, **1,880 of them refused** by a paediatric safety triage, and 83
 survivors presented in two tiers by the *kind* of evidence behind them.
@@ -178,7 +178,7 @@ who report that human aneuploid cells depend on the RAF/MEK/ERK pathway to survi
 increased DNA damage — supported by two channels (prior and proximity), computed
 confidence **0.132**.
 
-That paper is about *aneuploid cancer cell lines*, not about MVA and not about a child.
+That paper is about *aneuploid cancer cell lines*, not about MVA and not about this patient.
 The channel cited it, the grade records it as *in vitro*, and nothing downstream promotes
 it beyond that.
 
@@ -322,7 +322,7 @@ channel B's recovery, because channel B never saw the set. Nothing here has been
 re-tune a channel — a benchmark optimised against is a description, not a test.
 
 **What it does and does not show.** It shows the ranking finds what the literature already
-contains. It does not show the ranking finds what would help this child, and the positive
+contains. It does not show the ranking finds what would help this patient, and the positive
 set is itself biased toward well-studied compounds.
 
 ### Evidence discipline
@@ -402,7 +402,7 @@ population that small it narrows the field by itself.
 This costs me the single most compelling figure the project could produce, in the criterion
 where it would have counted most. I publish the **method and its resolving power** — which
 is what the innovation claim is about, since the claim is *"allele ratios alone resolve
-mosaic aneuploidy without alignments, down to ~10%"* — and not this child's result from it.
+mosaic aneuploidy without alignments, down to ~10%"* — and not this patient's result from it.
 
 The withholding is **named, not silent**: `results/l5/report.json` lists the withheld fields
 and the dossier prints the reason. Omitting it quietly would be indistinguishable from
@@ -477,12 +477,12 @@ was written and none was relaxed:
   `results/`. Reference caches sit outside the working tree entirely, and the cache module
   *refuses* a path inside the repository.
 - **No per-variant remote queries.** Every reference resource is downloaded as a whole
-  public release and matched locally, so no coordinate of this child's ever reaches a
+  public release and matched locally, so no coordinate of this patient's ever reaches a
   third-party server. That is why annotation runs on a local snpEff rather than a REST API.
 - **Clinical phenotype is patient data.** HPO terms are parsed from the data directory at
   run time and never written into config, source, tests or any committed file — a specific
   combination of features is identifying in a population this size. Tests use invented terms.
-- **No recontact** with the subject, family or MVA Society, and nothing published beyond
+- **No recontact** with the patient, the family or MVA Society, and nothing published beyond
   what the family already shares publicly through their own blog posts.
 - **Licence segregation.** Non-redistributable sources (ChEMBL-derived drug-target content,
   CC BY-SA — Zdrazil et al., 2024 — and LINCS, whose licence I could not resolve at its
@@ -504,7 +504,7 @@ implemented** — an outstanding obligation that outlives this submission.
 
 ## 11. Limitations
 
-Stated plainly, because a shortlist for a child should arrive with its weaknesses attached.
+Stated plainly, because a shortlist for a patient should arrive with its weaknesses attached.
 
 1. **n = 1.** This is hypothesis generation for one patient. Nothing here is validated, and
    the pipeline cannot be validated on this disease because no therapy exists to validate
