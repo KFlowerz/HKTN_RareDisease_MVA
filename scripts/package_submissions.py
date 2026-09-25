@@ -179,7 +179,7 @@ these files, then re-run `python scripts/package_submissions.py`.
 | Candidate dossier | `dossier/index.html` | `results/l5/` (regenerate, do not edit) | {_tick(dossier_ready)} |
 | Supporting files the report links to | {_supporting_names()} | `docs/` | {_tick(supporting_ready)} |
 | GitHub URL | — | must start with `https://github.com/` | [ ] |
-| 3-minute video | — | **not produced** | [ ] |
+| 3-minute video | — | script, shot list and privacy rules in `docs/video_script.md` — **not yet recorded** | [ ] |
 | Methods description form | — | the Space's `.xlsx` template | [ ] |
 
 ## Before you upload

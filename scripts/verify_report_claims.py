@@ -28,6 +28,11 @@ REPORT = REPO_ROOT / "docs" / "report_track2.md"
 #: A number that drifts there is exactly as wrong as one that drifts in the report, and
 #: it is the document most likely to be forwarded on its own.
 LAY = REPO_ROOT / "docs" / "how_it_works.md"
+#: The video script states the same figures again, and they get spoken aloud into a
+#: recording. That is the hardest place to correct a number after the fact, so it is
+#: checked here too -- against the table in the script that pairs each spoken figure
+#: with the artifact it came from.
+VIDEO = REPO_ROOT / "docs" / "video_script.md"
 
 
 def load(relative: str):
@@ -159,6 +164,43 @@ def build_lay_claims() -> list:
     ]
 
 
+def build_video_claims() -> list:
+    """Figures the video script commits to saying out loud.
+
+    Matched against the script's own "Numbers spoken" table, which pairs each spoken
+    form with its artifact — so the check fails if a re-run moves a number that a
+    recording would then state incorrectly.
+    """
+    validation = load("l4/validation.json")["counts"]
+    integration = load("l3/integration.json")["counts"]
+    dossier = load("l5/report.json")["counts"]
+    sensitivity = load("l0_genomics/aneuploidy_burden.json")["sensitivity"]
+    mva = load("l1_target/module.json")["counts"]
+    cftr = load("scalability_cftr/l1_target/module.json")["counts"]
+
+    return [
+        ("nominated", "| 1,963 |", validation["candidates"] == 1963),
+        ("excluded", "| 1,880 |", validation["excluded"] == 1880),
+        ("survivors", "| 83 |", validation["survivors"] == 83),
+        ("no-label bucket", "| 1,231 |",
+         validation["excluded_by_reason"]["insufficient_evidence"] == 1231),
+        ("tiers", "| 1 / 82 |",
+         (dossier["tier1_literature"], dossier["tier2_network_only"]) == (1, 82)),
+        ("no convergence", "| 0 |", integration["by_convergence"]["discriminating"] == 0),
+        ("spoken: eighteen hundred and eighty", "Eighteen hundred\n> and eighty",
+         validation["excluded"] == 1880),
+        ("spoken: eighty-three", "**Eighty-three** survived", validation["survivors"] == 83),
+        ("spoken: twelve hundred and thirty-one", "Twelve hundred and thirty-one",
+         validation["excluded_by_reason"]["insufficient_evidence"] == 1231),
+        ("spoken: ten percent", "**ten percent**",
+         round(sensitivity["min_detectable_mosaic_fraction"] * 100) == 10),
+        ("spoken: CFTR split", "fifty-four/one-forty-six",
+         (cftr["upstream"], cftr["downstream"]) == (54, 146)),
+        ("spoken: MVA split", "eighty-four/one-sixteen",
+         (mva["upstream"], mva["downstream"]) == (84, 116)),
+    ]
+
+
 def _check(document: Path, claims: list, failures: list) -> None:
     if not document.is_file():
         raise SystemExit(f"{document} not found")
@@ -178,17 +220,20 @@ def _check(document: Path, claims: list, failures: list) -> None:
 
 def main() -> None:
     failures: list = []
-    report_claims, lay_claims = build_claims(), build_lay_claims()
+    report_claims = build_claims()
+    lay_claims = build_lay_claims()
+    video_claims = build_video_claims()
     _check(REPORT, report_claims, failures)
     _check(LAY, lay_claims, failures)
+    _check(VIDEO, video_claims, failures)
 
     if failures:
         print("The documents and the artifacts disagree:")
         for line in failures:
             print("  -", line)
         raise SystemExit(1)
-    print(f"all {len(report_claims) + len(lay_claims)} quantitative claims "
-          "verified against results/")
+    total = len(report_claims) + len(lay_claims) + len(video_claims)
+    print(f"all {total} quantitative claims verified against results/")
 
 
 if __name__ == "__main__":
