@@ -34,12 +34,17 @@ def _raw(**overrides) -> dict:
 # --------------------------------------------------------------------------- guardrail
 
 
+# Every identifier below is invented. The guard matches on shape, not on meaning, so a
+# made-up term exercises it exactly as a real one would -- and a real HPO term or
+# coordinate has no business in a committed file (CLAUDE.md, "Clinical phenotype is
+# patient data"). The OMIM id is the disease's own public identifier, printed in
+# CLAUDE.md, and carries nothing about this subject.
 @pytest.mark.parametrize("query, what", [
-    ('TITLE_ABS:"HP:0001250"', "an HPO term"),
-    ('TITLE_ABS:"chr15:40000000"', "a coordinate"),
-    ('"15-40161020"', "a bare coordinate"),
-    ('TITLE_ABS:"c.2211_2212insA"', "an HGVS change"),
-    ('"rs121913529"', "a dbSNP id"),
+    ('TITLE_ABS:"HP:9000001"', "an HPO term"),
+    ('TITLE_ABS:"chr9:99990000"', "a coordinate"),
+    ('"9-99999999"', "a bare coordinate"),
+    ('TITLE_ABS:"c.9999_9999insA"', "an HGVS change"),
+    ('"rs99999999"', "a dbSNP id"),
     ('"A>G" AND "BUB1B"', "an allele change"),
     ('"OMIM:257300"', "an OMIM id"),
 ])
@@ -52,8 +57,8 @@ def test_refuses_a_query_carrying_patient_derived_content(query, what):
 def test_the_refusal_message_does_not_repeat_the_offending_text():
     """An error string is the one place patient data would escape the guard."""
     with pytest.raises(ValueError) as caught:
-        literature.refuse_private('TITLE_ABS:"HP:0004322"')
-    assert "HP:0004322" not in str(caught.value)
+        literature.refuse_private('TITLE_ABS:"HP:9000002"')
+    assert "HP:9000002" not in str(caught.value)
 
 
 @pytest.mark.parametrize("query", [
@@ -80,7 +85,7 @@ def test_a_public_doi_is_not_mistaken_for_patient_data(doi):
 def test_a_coordinate_beside_a_doi_is_still_refused():
     """Masking DOIs must not blind the check to a coordinate elsewhere in the query."""
     with pytest.raises(ValueError, match="genomic coordinate"):
-        literature.refuse_private('DOI:"10.1158/0008-5472.CAN-13-1174" OR "chr15:40161020"')
+        literature.refuse_private('DOI:"10.1158/0008-5472.CAN-13-1174" OR "chr9:99999999"')
 
 
 def test_search_checks_the_query_before_any_request(monkeypatch, tmp_path):
@@ -90,7 +95,7 @@ def test_search_checks_the_query_before_any_request(monkeypatch, tmp_path):
 
     monkeypatch.setattr(literature, "_get_json", explode)
     with pytest.raises(ValueError, match="refusing to send"):
-        literature.search({"reference_dir": str(tmp_path)}, 'TITLE_ABS:"HP:0001250"')
+        literature.search({"reference_dir": str(tmp_path)}, 'TITLE_ABS:"HP:9000001"')
 
 
 # ------------------------------------------------------------------------- parsing

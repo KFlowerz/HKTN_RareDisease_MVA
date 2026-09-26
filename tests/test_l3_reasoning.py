@@ -28,8 +28,8 @@ reasoning = importlib.import_module("src.l3_integrate.claude_reasoning")
         ("HP:9000001", "an HPO term id"),
         ("MONDO:0009999", "a disease identifier"),
         ("OMIM:257300", "a disease identifier"),
-        ("7:140753336", "a genomic coordinate"),
-        ("chr7:140753336", "a genomic coordinate"),
+        ("9:99999999", "a genomic coordinate"),
+        ("chr9:99999999", "a genomic coordinate"),
         ("c.1234A>G", "an HGVS coding change"),
     ],
 )
