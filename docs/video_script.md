@@ -5,10 +5,13 @@
 Everything needed to record the submission video: the rules that constrain it, what to put
 on screen, the words to say, and the checks to run before uploading.
 
-The script is **410 words**. Measured against speaking rate: 2:38 at 155 words per minute,
-2:47 at 147, 2:55 at 140 — and **3:09 at 130**, which is over. So read it at a normal
-conversational pace or slightly brisker; a slow, deliberate delivery will not fit, and the
-fix for that is cutting the 2:28 beat, not speeding up.
+The script is **424 words**, including a two-sentence presenter introduction. Measured
+against speaking rate: 2:44 at 155 words per minute, 2:53 at 147, and **3:01 at 140** —
+just over. At 130 it is 3:15.
+
+So read it at a normal conversational pace or slightly brisker. A slow, deliberate delivery
+does not fit. If it runs long, cut the 2:35 generalisation beat entirely rather than
+speeding up; it is the least load-bearing, and losing it costs about 11 seconds.
 
 Read it aloud once with a timer before recording.
 
@@ -62,17 +65,22 @@ project has spent the whole build being careful about them:
 
 One shot per beat. Cuts on the beat boundaries.
 
-| Time | On screen | Notes |
-|---|---|---|
-| 0:00–0:18 | Title card: project name, track, your name | Hold it. Do not animate |
-| 0:18–0:33 | `docs/how_it_works.md` section 3 — the data-flow diagram | Scroll slowly through it once |
-| 0:33–1:12 | `results/l5/exclusions.html`, scrolling | The refusal is the headline; give it the most screen time |
-| 1:12–1:22 | `results/l5/figures/exclusions_by_reason.png` | Let the bar chart sit still |
-| 1:22–1:45 | `results/l5/index.html` — the two tiers | Show tier 1 and tier 2 headings together |
-| 1:45–2:00 | `results/l5/figures/channel_contribution.png` | The failed bet, shown not buried |
-| 2:00–2:28 | `docs/report_track2.md` section 8 | The innovation and the withholding |
-| 2:28–2:45 | `config/pipeline.yaml`, highlighting the gene line | The one-line change for the second disease |
-| 2:45–3:00 | The GitHub repository page | End on something a judge can click |
+The deck at **Slides — "MVA Hackathon 2026 — Tracks 1 and 2"** carries the narration in its
+speaker notes, and each slide says whether it is in this 3-minute cut. Slides carry the
+argument; live artifacts carry the evidence. Alternate between them.
+
+| Time | Beat being spoken | On screen | Notes |
+|---|---|---|---|
+| 0:00–0:10 | Who | Deck — cover | Hold it. Do not animate |
+| 0:10–0:35 | The problem | Deck — "Mosaic variegated aneuploidy" | Land on the "It is harmful" line |
+| 0:35–0:48 | What it is | `docs/how_it_works.md` section 3 — the data-flow diagram | Scroll through it once, slowly |
+| 0:48–1:15 | The headline is a refusal | `results/l5/exclusions.html`, scrolling | Give it the most screen time |
+| 1:15–1:25 | The headline is a refusal | Deck — the 1,231 slide | Let it sit still. This is the point most likely to be misread |
+| 1:25–1:45 | What survived | `results/l5/index.html` — the two tiers | Show both tier headings together |
+| 1:45–2:05 | The bet that failed | `results/l5/figures/channel_contribution.png` | Shown, not buried |
+| 2:05–2:35 | Innovation | Deck — the innovation slide | The method, and what is withheld |
+| 2:35–2:46 | Does it generalise | `config/pipeline.yaml`, highlighting the gene line | The one-line change for the second disease |
+| 2:46–3:00 | Close | The GitHub repository page | End on something a judge can click |
 
 ---
 
@@ -83,7 +91,12 @@ that way; the exact figure is on screen.
 
 ---
 
-**[0:00 — The problem]**
+**[0:00 — Who]**
+
+> I'm Karen Flores, a healthcare solution architect trained first as a physician. That is
+> why safety here is a gate, not a score.
+
+**[0:10 — The problem]**
 
 > Mosaic variegated aneuploidy. About fifty patients worldwide. No therapy that touches the
 > cause. The patient is a child whose disease already raises cancer risk — so a careless
@@ -91,13 +104,13 @@ that way; the exact figure is on screen.
 > one whole-genome VCF to a shortlist you can audit, aimed at **secondary prevention**:
 > reducing a further cancer in someone already at risk.
 
-**[0:18 — What it is]**
+**[0:35 — What it is]**
 
 > Six layers. Five independent search methods, deliberately unlike each other, on the bet
 > that weak signals agreeing beat any single score. Config-driven, seeded, and every number
 > names the file that produced it.
 
-**[0:33 — The headline is a refusal]**
+**[0:48 — The headline is a refusal]**
 
 > The headline is a refusal. Nearly two thousand approved drugs went in. **Eighteen hundred
 > and eighty** were removed by a paediatric safety triage. **Eighty-three** survived.
@@ -109,7 +122,7 @@ that way; the exact figure is on screen.
 > those mean "no safety information found", not "dangerous". The pipeline fails closed.
 > Every exclusion records the label, the section, and the sentence that caused it.
 
-**[1:22 — What survived, and what it rests on]**
+**[1:25 — What survived, and what it rests on]**
 
 > Of the eighty-three, exactly **one** has a published paper behind it. The other
 > **eighty-two** rest on a number this pipeline computed — no published evidence links them
@@ -123,7 +136,7 @@ that way; the exact figure is on screen.
 > search, calibrated against **forty** unrelated genes, carried no gene-specific signal — it
 > ships disabled and nominates nothing.
 
-**[2:00 — Innovation, and what I withhold]**
+**[2:05 — Innovation, and what I withhold]**
 
 > The dataset ships no alignments, so I quantify chromosome disruption from allele ratios in
 > the called variants themselves — down to about **ten percent** of cells, measured from
@@ -133,13 +146,13 @@ that way; the exact figure is on screen.
 > chromosomes are involved is close to a fingerprint. That cost the project its most
 > striking figure, and the withholding is named, not quietly dropped.
 
-**[2:28 — Does it generalise]**
+**[2:35 — Does it generalise]**
 
-> One config line changed to cystic fibrosis. The module layer returned a different split —
-> **fifty-four/one-forty-six** against **eighty-four/one-sixteen** — so it responds to the
-> gene rather than reciting an answer. Two layers of six demonstrated; I claim no more.
+> One config line changed to cystic fibrosis, and the module layer returned a different
+> split — **fifty-four/one-forty-six** against **eighty-four/one-sixteen** — so it responds
+> to the gene, not reciting an answer.
 
-**[2:45 — Close]**
+**[2:46 — Close]**
 
 > Hypothesis generation, for one patient. Nothing tested in a laboratory or a clinic. The
 > causal gene is a research premise, not a diagnosis. Everything I have said names the
