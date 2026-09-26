@@ -48,6 +48,11 @@ RESULTS = REPO_ROOT / "results"
 SUBMISSIONS = RESULTS / "submissions"
 DOCS = REPO_ROOT / "docs"
 
+#: The recorded submission video. Published 2026-09-26; it carries no patient-identifying
+#: content, which is what the rules in docs/video_script.md exist to guarantee, so the link
+#: is safe to hold in a public repository.
+VIDEO_URL = "https://youtu.be/2Z43l6TuHHY"
+
 
 def _assert_inside_results(path: Path) -> None:
     """Refuse to write anywhere but ``results/``.
@@ -184,7 +189,7 @@ these files, then re-run `python scripts/package_submissions.py`.
 | Candidate dossier | `dossier/index.html` | `results/l5/` (regenerate, do not edit) | {_tick(dossier_ready)} |
 | Supporting files the report links to | {_supporting_names()} | `docs/` | {_tick(supporting_ready)} |
 | GitHub URL | — | must start with `https://github.com/` | [ ] |
-| 3-minute video | — | script, shot list and privacy rules in `docs/video_script.md` — **not yet recorded** | [ ] |
+| 3-minute video | — | {VIDEO_URL} — script and privacy rules in `docs/video_script.md` | [x] |
 | Methods description form | — | the Space's `.xlsx` template | [ ] |
 
 ## Before you upload

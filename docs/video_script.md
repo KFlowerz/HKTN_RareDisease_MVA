@@ -2,6 +2,10 @@
 
 **Rare Disease, Real Kid: MVA Hackathon 2026 — Track 2 deliverable**
 
+**Recorded and published:** <https://youtu.be/2Z43l6TuHHY> — *"Rare Disease, Real Kid:
+safety-gated drug repurposing for a child with MVA"*, 2026-09-26. The rest of this
+document is how it was made, and what must stay true of any re-cut.
+
 Everything needed to record the submission video: the rules that constrain it, what to put
 on screen, the words to say, and the checks to run before uploading.
 
