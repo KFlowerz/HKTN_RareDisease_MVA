@@ -5,9 +5,9 @@
 Everything needed to record the submission video: the rules that constrain it, what to put
 on screen, the words to say, and the checks to run before uploading.
 
-The script is **424 words**, including a two-sentence presenter introduction. Measured
-against speaking rate: 2:44 at 155 words per minute, 2:53 at 147, and **3:01 at 140** —
-just over. At 130 it is 3:15.
+The script is **429 words**, including a two-sentence presenter introduction. Measured
+against speaking rate: 2:46 at 155 words per minute, 2:55 at 147, and **3:04 at 140** —
+over. At 130 it is 3:18.
 
 So read it at a normal conversational pace or slightly brisker. A slow, deliberate delivery
 does not fit. If it runs long, cut the 2:35 generalisation beat entirely rather than
@@ -101,8 +101,8 @@ that way; the exact figure is on screen.
 > Mosaic variegated aneuploidy. About fifty patients worldwide. No therapy that touches the
 > cause. The patient is a child whose disease already raises cancer risk — so a careless
 > drug suggestion is not merely useless, it is harmful. I built a pipeline that runs from
-> one whole-genome VCF to a shortlist you can audit, aimed at **secondary prevention**:
-> reducing a further cancer in someone already at risk.
+> one whole-genome variant call format file — a VCF — to a shortlist you can audit, aimed
+> at **secondary prevention**: reducing a further cancer in someone already at risk.
 
 **[0:35 — What it is]**
 
@@ -193,8 +193,9 @@ All at seed 42.
   it entirely for the refusal section.
 - **Burn in captions or ship an `.srt`.** Several numbers carry the argument, and a
   mis-heard "eighteen hundred" undoes the point.
-- **Do not speed up the audio to fit.** If it runs over, cut the section 2:28 generalisation
-  beat down to one sentence — it is the least load-bearing.
+- **Do not speed up the audio to fit.** If it runs over, cut the 2:35 generalisation beat
+  entirely — it is already a single sentence, it is the least load-bearing, and dropping it
+  buys back about 11 seconds.
 - **Under 3:00, not over.** Aim to land at 2:50.
 
 ---
