@@ -135,6 +135,11 @@ these files, then re-run `python scripts/package_submissions.py`.
       dataset README, because a wrong id is rejected outright and costs a slot.
 - [ ] **Rename the CSV** to include your username and a short approach name, as the Space
       asks — for example `jane-doe_mane-clinvar-gnomad.csv`. Pass `--name` to this script.
+- [ ] **Run the pre-upload check** on the file you are actually going to upload:
+      `python scripts/check_track1_submission.py <path>`. It reads the written CSV the way
+      the organizers' parser will, so it catches what the builder cannot — a hand edit, a
+      spreadsheet round-trip, the placeholder id still in place. It prints no coordinate.
+      Exit status `0` means uploadable.
 - [ ] **Six submissions are available**, and only the highest-scoring one is featured.
 
 ## A known property of the copies
