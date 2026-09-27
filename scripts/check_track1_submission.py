@@ -42,9 +42,16 @@ HEADER = ["proband_id", "chrom_1", "pos_1", "ref_1", "alt_1",
           "chrom_2", "pos_2", "ref_2", "alt_2", "epcr", "finding_type", "notes"]
 
 MAX_ROWS = 10
-#: The id the builder falls back to. Submitting it unchanged is the failure that costs a
-#: slot outright, so it is checked by name.
-PLACEHOLDER_ID = "PROBAND01"
+#: The organizers' own template, when it is on disk. It is the authority for the header and
+#: for the example values, and beats anything stated here.
+TEMPLATE = REPO_ROOT / "docs" / "reference" / "track1_submission_template.csv"
+#: The id the template uses in both of its example rows, and the builder's default. There is
+#: exactly one proband in this challenge, so this is most likely the expected value rather
+#: than a stand-in -- but it is the organizers' example, so a submission carrying it is
+#: worth one deliberate look, not an automatic failure.
+TEMPLATE_ID = "PROBAND01"
+#: The values the template demonstrates in its finding_type column.
+FINDING_TYPES = ("primary", "secondary")
 
 CONTIGS = ["chr" + str(n) for n in range(1, 23)] + ["chrX", "chrY", "chrM", "chrMT"]
 BASES = re.compile(r"^[ACGTN]+$")
@@ -109,6 +116,30 @@ def check_bytes(path: Path, report: Report) -> str:
     if text.rstrip("\r\n") != text.rstrip():
         report.warn("the file ends with trailing whitespace beyond a final newline")
     return text
+
+
+def check_template(report: Report) -> None:
+    """If the organizers' template is on disk, it outranks this file's idea of the header."""
+    if not TEMPLATE.is_file():
+        report.note("template not found at %s; checking against this script's own copy of "
+                    "the header" % TEMPLATE.relative_to(REPO_ROOT))
+        return
+    try:
+        rows = list(csv.reader(io.StringIO(TEMPLATE.read_text(encoding="utf-8-sig"))))
+    except (OSError, UnicodeDecodeError) as exc:
+        report.warn("could not read the template (%s)" % exc)
+        return
+    if not rows:
+        report.warn("the template is empty")
+        return
+    header = [cell.strip() for cell in rows[0]]
+    if header != HEADER:
+        report.error(
+            "this script's header no longer matches the organizers' template. The "
+            "template is the authority -- update HEADER in this script AND in "
+            "scripts/build_track1_submission.py. Template says: %s" % ", ".join(header))
+    else:
+        report.note("header matches the organizers' template")
 
 
 def check_header(rows: list, report: Report) -> bool:
@@ -222,8 +253,12 @@ def check_rows(rows: list, report: Report) -> None:
             if not 0 < epcr <= 1:
                 report.error("row %d: epcr is %s, outside (0, 1]" % (n, raw_epcr))
 
-        if not row["finding_type"].strip():
+        finding = row["finding_type"].strip()
+        if not finding:
             report.error("row %d: finding_type is empty" % n)
+        elif finding.lower() not in FINDING_TYPES:
+            report.warn("row %d: finding_type is not one of %s, the values the template "
+                        "demonstrates" % (n, "/".join(FINDING_TYPES)))
         if not row["notes"].strip():
             report.warn("row %d: notes is empty. This project's limitations are supposed "
                         "to travel into this field" % n)
@@ -234,11 +269,16 @@ def check_rows(rows: list, report: Report) -> None:
     elif ids:
         only = sorted(ids)[0]
         report.note("proband_id: %s" % only)
-        if only == PLACEHOLDER_ID:
-            report.error(
-                "proband_id is still the builder's placeholder %s. Check it against the "
-                "dataset README and rebuild with --proband-id; a wrong id is rejected "
-                "outright and costs a submission slot" % PLACEHOLDER_ID)
+        if only == TEMPLATE_ID:
+            report.note(
+                "         ^ this is the value the organizers' own template uses in both "
+                "example rows, and there is one proband in this challenge, so it is most "
+                "likely correct. Confirm it once against the Space's Track 1 tab")
+        else:
+            report.warn(
+                "proband_id is not %s, which is what the organizers' template shows in "
+                "both example rows. If that is deliberate, ignore this; if not, a wrong id "
+                "is rejected outright and costs a submission slot" % TEMPLATE_ID)
 
     if epcrs and epcrs != sorted(epcrs, reverse=True):
         report.error("rows are not in descending epcr order, so the best-supported "
@@ -280,6 +320,7 @@ def main() -> int:
         return 1
 
     report = Report()
+    check_template(report)
     check_name(path, report)
     text = check_bytes(path, report)
 
