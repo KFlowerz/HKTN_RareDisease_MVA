@@ -234,7 +234,7 @@ not rely on one aggregator's relicensing of another's ShareAlike data — see
 in the segregated zone described in Table 2.
 
 **What that means in practice.** The target sets never leave
-[src/l2_channels/enrichment.py](enrichment.py). What reaches
+[src/l2_channels/enrichment.py](../l2_channels/enrichment.py). What reaches
 `results/l2/channel_b_proximity/candidates.tsv` is the whitelist in
 `enrichment.PUBLISHABLE_FIELDS` — ChEMBL id, drug name, drug type, clinical stage, and the
 *count* of targets — plus the scores this pipeline computed. Identifiers and INN-style

@@ -1,6 +1,10 @@
-# MVA Track 2 — Drug Repurposing
+# MVA Hackathon 2026 — Tracks 1 and 2
 
-Scaffold for **Track 2 (Drug Repurposing)** of *Rare Disease, Real Kid: MVA Hackathon 2026*.
+Submission for *Rare Disease, Real Kid: MVA Hackathon 2026*, entering both tracks:
+**Track 1 (Variant Prediction)** and **Track 2 (Drug Repurposing)**. One pipeline serves
+both — L0's causal-gene call is Track 1's answer and Track 2's premise. See
+[the two submissions](#the-two-submissions) for what each one delivers, and
+[docs/how_it_works.md](docs/how_it_works.md) for a plain-language walkthrough.
 
 **Disease.** Mosaic variegated aneuploidy (MVA, OMIM 257300) — autosomal-recessive, biallelic
 loss-of-function in mitotic spindle-assembly-checkpoint (SAC) genes (commonly **BUB1B**, **CEP57**,
@@ -8,9 +12,11 @@ loss-of-function in mitotic spindle-assembly-checkpoint (SAC) genes (commonly **
 growth restriction, microcephaly, developmental delay/seizures, and cancer predisposition. **No
 disease-modifying therapy exists**; management is symptomatic plus cancer surveillance.
 
-**What this repo produces.** Given the causal gene/pathway and phenotype, a **ranked, evidence-backed,
-safety-filtered** shortlist of *approved* drugs worth investigating — each with a mechanistic rationale
-and full provenance.
+**What this repo produces.** For Track 1, a ranked prediction of the causal variant
+configuration, submitted with its uncertainty attached. For Track 2, given that causal
+gene and the phenotype, a **ranked, evidence-backed, safety-filtered** shortlist of
+*approved* drugs worth investigating — each with a mechanistic rationale and full
+provenance.
 
 ---
 
