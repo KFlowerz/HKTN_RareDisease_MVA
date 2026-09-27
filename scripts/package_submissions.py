@@ -54,6 +54,15 @@ DOCS = REPO_ROOT / "docs"
 VIDEO_URL = "https://youtu.be/2Z43l6TuHHY"
 
 
+def _report_name(track: str, user: str = None) -> str:
+    """The Space asks for the username or team name in the report's filename.
+
+    Only the report is renamed. The supporting files keep their names because the report
+    links to them by name, and a rename would break those links inside the package.
+    """
+    return f"{user}_report_track{track}.md" if user else "report.md"
+
+
 def _assert_inside_results(path: Path) -> None:
     """Refuse to write anywhere but ``results/``.
 
@@ -106,7 +115,7 @@ def _tick(ready: bool) -> str:
     return "[x]" if ready else "[ ]"
 
 
-def package_track1(name: str) -> Path:
+def package_track1(name: str, user: str = None) -> Path:
     """Assemble the Track 1 package. Returns its directory."""
     out = SUBMISSIONS / "track1"
     _assert_inside_results(out)
@@ -116,7 +125,8 @@ def package_track1(name: str) -> Path:
     # a build directory plus a copy of it is two things that can disagree.
     csv_destination = out / f"{name}.csv"
     csv_ready = csv_destination.exists()
-    report_ready = _copy(DOCS / "report_track1.md", out / "report.md")
+    report = _report_name("1", user)
+    report_ready = _copy(DOCS / "report_track1.md", out / report)
     supporting_ready = _copy_supporting(out)
 
     (out / "SUBMIT.md").write_text(f"""# Track 1 — Variant Prediction: what to upload
@@ -129,7 +139,7 @@ these files, then re-run `python scripts/package_submissions.py`.
 | | File | Source of truth | Ready |
 |---|---|---|---|
 | Predictions CSV | `{csv_destination.name}` | `python scripts/build_track1_submission.py --name {name}` | {_tick(csv_ready)} |
-| Report (`.md` or PDF) | `report.md` | `docs/report_track1.md` | {_tick(report_ready)} |
+| Report (`.md` or PDF) | `{report}` | `docs/report_track1.md` | {_tick(report_ready)} |
 | Supporting files the report links to | {_supporting_names()} | `docs/` | {_tick(supporting_ready)} |
 | GitHub URL | — | must start with `https://github.com/` | [ ] |
 | Team / display name | — | your choice; keep it identical across teammates | [ ] |
@@ -149,7 +159,7 @@ these files, then re-run `python scripts/package_submissions.py`.
 
 ## A known property of the copies
 
-`report.md`'s own links all resolve inside this directory. The **supporting** files link
+`{report}`'s own links all resolve inside this directory. The **supporting** files link
 onward to things that are not packaged — `config/pipeline.yaml`, `mngmt/decisions.md`,
 `CLAUDE.md` — because packaging those would mean packaging most of the repository. Follow
 them at the GitHub URL above; that is what it is for.
@@ -165,13 +175,14 @@ them at the GitHub URL above; that is what it is for.
     return out
 
 
-def package_track2() -> Path:
+def package_track2(user: str = None) -> Path:
     """Assemble the Track 2 package. Returns its directory."""
     out = SUBMISSIONS / "track2"
     _assert_inside_results(out)
     out.mkdir(parents=True, exist_ok=True)
 
-    report_ready = _copy(DOCS / "report_track2.md", out / "report.md")
+    report = _report_name("2", user)
+    report_ready = _copy(DOCS / "report_track2.md", out / report)
     supporting_ready = _copy_supporting(out)
     dossier_ready = _copy(RESULTS / "l5", out / "dossier")
     index = out / "dossier" / "index.html"
@@ -185,7 +196,7 @@ these files, then re-run `python scripts/package_submissions.py`.
 
 | | File | Source of truth | Ready |
 |---|---|---|---|
-| Written report (`.md` or PDF) | `report.md` | `docs/report_track2.md` | {_tick(report_ready)} |
+| Written report (`.md` or PDF) | `{report}` | `docs/report_track2.md` | {_tick(report_ready)} |
 | Candidate dossier | `dossier/index.html` | `results/l5/` (regenerate, do not edit) | {_tick(dossier_ready)} |
 | Supporting files the report links to | {_supporting_names()} | `docs/` | {_tick(supporting_ready)} |
 | GitHub URL | — | must start with `https://github.com/` | [ ] |
@@ -205,7 +216,7 @@ these files, then re-run `python scripts/package_submissions.py`.
 
 ## Notes
 
-- `report.md`'s own links all resolve inside this directory. The **supporting** files link
+- `{report}`'s own links all resolve inside this directory. The **supporting** files link
   onward to things that are not packaged — `config/pipeline.yaml`, `mngmt/decisions.md`,
   `CLAUDE.md` — because packaging those would mean packaging most of the repository. Follow
   them at the GitHub URL above.
@@ -223,22 +234,26 @@ def main() -> None:
     parser.add_argument("--track", choices=["1", "2"], help="package one track only")
     parser.add_argument("--name", default="track1_submission",
                         help="basename for the Track 1 CSV; include your username")
+    parser.add_argument("--user", default=None,
+                        help="your Hugging Face username or team name. The Space asks for "
+                             "it in the report's filename; without it the report is "
+                             "copied as report.md")
     args = parser.parse_args()
 
     if not RESULTS.is_dir():
         raise SystemExit("results/ not found. Run the pipeline first.")
 
     if args.track in (None, "1"):
-        out = package_track1(args.name)
+        out = package_track1(args.name, args.user)
         files = sorted(p.name for p in out.iterdir())
         print(f"track 1 -> {out.relative_to(REPO_ROOT)}: {', '.join(files)}")
 
     if args.track in (None, "2"):
-        out, index = package_track2()
+        out, index = package_track2(args.user)
         pages = len(list((out / "dossier" / "candidates").glob("*.html"))) \
             if (out / "dossier" / "candidates").is_dir() else 0
-        print(f"track 2 -> {out.relative_to(REPO_ROOT)}: report.md, dossier/ "
-              f"({pages} candidate pages)")
+        print(f"track 2 -> {out.relative_to(REPO_ROOT)}: "
+              f"{_report_name('2', args.user)}, dossier/ ({pages} candidate pages)")
         if not index.exists():
             print("  WARNING: dossier/index.html missing -- run L5 first", file=sys.stderr)
 
