@@ -177,7 +177,8 @@ def read_register(path: Path = CUSTODY_REGISTER) -> list[CustodyLocation]:
         One :class:`CustodyLocation` per register row.
 
     Raises:
-        NotImplementedError: Always -- this is a scaffold.
+        ValueError: On a duplicate id, an unknown status, a missing register
+            heading, or a path whose placeholder does not resolve.
     """
     rows = _register_rows(path.read_text(encoding="utf-8"))
     if not rows:
@@ -269,7 +270,7 @@ def measure(location: CustodyLocation) -> LocationState:
         Existence, file count, and total bytes.
 
     Raises:
-        NotImplementedError: Always -- this is a scaffold.
+        OSError: If the location exists but cannot be traversed.
     """
     if location.path is None:
         return LocationState(exists=False, file_count=0, total_bytes=0)
@@ -322,7 +323,11 @@ def purge(config: dict, *, confirm: bool = False) -> list[LocationVerdict]:
         One verdict per registered location.
 
     Raises:
-        NotImplementedError: Always -- this is a scaffold.
+        ValueError: Via :func:`_assert_deletable`, on a registered path that is a
+            filesystem root, the repository itself, or an in-repo path other than
+            ``results/`` and ``notebooks/``.
+        RuntimeError: If the Hub cache cleanup cannot be run, since ``.incomplete``
+            blobs would otherwise be left behind unreported.
     """
     locations = read_register()
     verdicts: list[LocationVerdict] = []
@@ -461,7 +466,9 @@ def write_attestation(verdicts: list[LocationVerdict], *, revision_sha: str) -> 
         Path to the written JSON attestation.
 
     Raises:
-        NotImplementedError: Always -- this is a scaffold.
+        ValueError: If ``revision_sha`` is not a full 40-character hash, if any
+            location still holds bytes, if a required check failed, or if the
+            serialized payload would carry patient-derived content.
     """
     if not re.fullmatch(r"[0-9a-f]{40}", revision_sha):
         raise ValueError(
@@ -670,7 +677,7 @@ def main(argv: list | None = None) -> int:
         Process exit code.
 
     Raises:
-        NotImplementedError: Always -- this is a scaffold.
+        SystemExit: Never raised here; the exit code is returned.
     """
     parser = argparse.ArgumentParser(description="Purge patient-derived data and attest to it")
     parser.add_argument(

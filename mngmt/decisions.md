@@ -1468,10 +1468,20 @@ session knows it is off limits rather than discovering it and thinking it useful
   response hash), and the local model step is deterministic in its settings — llama.cpp does not
   guarantee identical output across builds and hardware, so that is a setting, not a promise. Both
   are stated in the README rather than claimed away.
-- **APA title casing** in [docs/references.md](../docs/references.md) — Crossref preserves publisher
-  casing; a sentence-case pass is owed before submission.
-- **[src/purge.py](../src/purge.py) is still a scaffold** — all five functions raise. `COMPLIANCE.md`
-  commits this project to evidencing deletion with its attestation, and the register now carries
-  seven locations, so the gap widens as the work proceeds. Nothing mechanically checks a register
-  row's format either, which is why `C7` was added by hand and verified by reading. Due before
-  2026-11-23, and it is the one obligation that outlives the submission.
+- ~~**APA title casing** in [docs/references.md](../docs/references.md)~~ — **done 2026-10-18.**
+  Eight journal-article titles arrived from Crossref in Title Case and were corrected to sentence
+  case in both the rendered list and `references.bib`. It was owed *before* submission and was not
+  done then; it is recorded here as late rather than quietly ticked.
+- ~~**[src/purge.py](../src/purge.py) is still a scaffold**~~ — **implemented 2026-10-18**, with 35
+  tests. Writing it against the register found a bug *in the register*: `C7`'s path was written
+  `~/.claude/projects/…`, and Claude Code runs on Windows while the data lives in WSL, so from WSL
+  the tool reported `C7` absent and passed over a live 57.8 MB store the register itself records as
+  holding subject-derived variant identifiers. The row now takes `$CLAUDE_PROJECTS` and fails loudly
+  when it is unset. `C1`'s stated size was also wrong — 5 files/303 MB recorded, 13/317.5 MB
+  measured, the difference being the Hub's download-metadata cache inside `raw/`.
+
+  The remark above that *"nothing mechanically checks a register row's format"* is no longer true:
+  `read_register` rejects a duplicate id, an unknown status and an unresolved placeholder, and
+  `tests/test_purge.py` asserts the committed register parses to all eight rows. That the register
+  carried a path bug for a month while being read carefully by people is the argument for the check
+  existing at all.

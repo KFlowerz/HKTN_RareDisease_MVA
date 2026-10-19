@@ -94,7 +94,7 @@ Loh, P.-R., Genovese, G., Handsaker, R. E., Finucane, H. K., Reshef, Y. A., Pala
 
 Ly, P., Kim, S. B., Kaisani, A. A., Marian, G., Wright, W. E., & Shay, J. W. (2012). Aneuploid human colonic epithelial cells are sensitive to AICAR-induced growth inhibition through EGFR degradation. Oncogene, 32(26), 3139–3146. https://doi.org/10.1038/onc.2012.339
 
-Ma, H., & Poon, R. (2016). TRIP13 Regulates Both the Activation and Inactivation of the Spindle-Assembly Checkpoint. Cell Reports, 14(5), 1086–1099. https://doi.org/10.1016/j.celrep.2016.01.001
+Ma, H., & Poon, R. (2016). TRIP13 regulates both the activation and inactivation of the spindle-assembly checkpoint. Cell Reports, 14(5), 1086–1099. https://doi.org/10.1016/j.celrep.2016.01.001
 
 MacArthur, D. G., Balasubramanian, S., Frankish, A., Huang, N., Morris, J., Walter, K., Jostins, L., Habegger, L., Pickrell, J. K., Montgomery, S. B., Albers, C. A., Zhang, Z. D., Conrad, D. F., Lunter, G., Zheng, H., Ayub, Q., DePristo, M. A., Banks, E., Hu, M., … Tyler-Smith, C. (2012). A systematic survey of loss-of-function variants in human protein-coding genes. Science, 335(6070), 823–828. https://doi.org/10.1126/science.1215040
 
@@ -134,9 +134,9 @@ Resnik, P. (1999). Semantic similarity in a taxonomy: An information-based measu
 
 Richards, S., Aziz, N., Bale, S., Bick, D., Das, S., Gastier-Foster, J., Grody, W. W., Hegde, M., Lyon, E., Spector, E., Voelkerding, K., & Rehm, H. L. (2015). Standards and guidelines for the interpretation of sequence variants: A joint consensus recommendation of the American College of Medical Genetics and Genomics and the Association for Molecular Pathology. Genetics in Medicine, 17(5), 405–424. https://doi.org/10.1038/gim.2015.30
 
-Rio Frio, T., Lavoie, J., Hamel, N., Geyer, F. C., Kushner, Y. B., Novak, D. J., Wark, L., Capelli, C., Reis-Filho, J. S., Mai, S., Pastinen, T., Tischkowitz, M. D., Marcus, V. A., & Foulkes, W. D. (2010). Homozygous BUB1B mutation and Susceptibility to Gastrointestinal Neoplasia. New England Journal of Medicine, 363(27), 2628–2637. https://doi.org/10.1056/nejmoa1006565
+Rio Frio, T., Lavoie, J., Hamel, N., Geyer, F. C., Kushner, Y. B., Novak, D. J., Wark, L., Capelli, C., Reis-Filho, J. S., Mai, S., Pastinen, T., Tischkowitz, M. D., Marcus, V. A., & Foulkes, W. D. (2010). Homozygous BUB1B mutation and susceptibility to gastrointestinal neoplasia. New England Journal of Medicine, 363(27), 2628–2637. https://doi.org/10.1056/nejmoa1006565
 
-Santaguida, S., Richardson, A., Iyer, D. R., M’Saad, O., Zasadil, L., Knouse, K. A., Wong, Y. L., Rhind, N., Desai, A., & Amon, A. (2017). Chromosome Mis-segregation Generates Cell-Cycle-Arrested Cells with Complex Karyotypes that Are Eliminated by the Immune System. Developmental Cell, 41(6), 638–651. https://doi.org/10.1016/j.devcel.2017.05.022
+Santaguida, S., Richardson, A., Iyer, D. R., M’Saad, O., Zasadil, L., Knouse, K. A., Wong, Y. L., Rhind, N., Desai, A., & Amon, A. (2017). Chromosome mis-segregation generates cell-cycle-arrested cells with complex karyotypes that are eliminated by the immune system. Developmental Cell, 41(6), 638–651. https://doi.org/10.1016/j.devcel.2017.05.022
 
 Santaguida, S., Tighe, A., D’Alise, A. M., Taylor, S. S., & Musacchio, A. (2010). Dissecting the role of MPS1 in chromosome biorientation and the spindle checkpoint through the small molecule inhibitor reversine. Journal of Cell Biology, 190(1), 73–87. https://doi.org/10.1083/jcb.201001036
 
@@ -144,7 +144,7 @@ Santaguida, S., Vasile, E., White, E., & Amon, A. (2015). Aneuploidy-induced cel
 
 Scott, R. H., Stiller, C. A., Walker, L., & Rahman, N. (2006). Syndromes and constitutional chromosomal abnormalities associated with Wilms tumour. Journal of Medical Genetics, 43(9), 705–715. https://doi.org/10.1136/jmg.2006.041723
 
-Sheltzer, J. M. (2013). A Transcriptional and Metabolic Signature of Primary Aneuploidy Is Present in Chromosomally Unstable Cancer Cells and Informs Clinical Prognosis. Cancer Research, 73(21), 6401–6412. https://doi.org/10.1158/0008-5472.can-13-0749
+Sheltzer, J. M. (2013). A transcriptional and metabolic signature of primary aneuploidy is present in chromosomally unstable cancer cells and informs clinical prognosis. Cancer Research, 73(21), 6401–6412. https://doi.org/10.1158/0008-5472.can-13-0749
 
 Singer-Berk, M., Gudmundsson, S., Baxter, S., Seaby, E. G., England, E., Wood, J. C., Son, R. G., Watts, N. A., Karczewski, K. J., Harrison, S. M., MacArthur, D. G., Rehm, H. L., & O’Donnell-Luria, A. (2023). Advanced variant classification framework reduces the false positive rate of predicted loss-of-function variants in population sequencing data. The American Journal of Human Genetics, 110(9), 1496–1508. https://doi.org/10.1016/j.ajhg.2023.08.005
 
@@ -158,21 +158,21 @@ Subramanian, A., Tamayo, P., Mootha, V. K., Mukherjee, S., Ebert, B. L., Gillett
 
 Subramanian, A., Narayan, R., Corsello, S. M., Peck, D. D., Natoli, T. E., Lu, X., Gould, J., Davis, J. F., Tubelli, A. A., Asiedu, J. K., Lahr, D. L., Hirschman, J. E., Liu, Z., Donahue, M., Julian, B., Khan, M., Wadden, D., Smith, I. C., Lam, D., … Golub, T. R. (2017). A next generation connectivity map: L1000 platform and the first 1,000,000 profiles. *Cell, 171*(6), 1437–1452.e17. https://doi.org/10.1016/j.cell.2017.10.049
 
-Suijkerbuijk, S. J. E., van Osch, M. H. J., Bos, F. L., Hanks, S., Rahman, N., & Kops, G. J. P. L. (2010). Molecular Causes for BUBR1 Dysfunction in the Human Cancer Predisposition Syndrome Mosaic Variegated Aneuploidy. Cancer Research, 70(12), 4891–4900. https://doi.org/10.1158/0008-5472.can-09-4319
+Suijkerbuijk, S. J. E., van Osch, M. H. J., Bos, F. L., Hanks, S., Rahman, N., & Kops, G. J. P. L. (2010). Molecular causes for BUBR1 dysfunction in the human cancer predisposition syndrome mosaic variegated aneuploidy. Cancer Research, 70(12), 4891–4900. https://doi.org/10.1158/0008-5472.can-09-4319
 
 Szklarczyk, D., Kirsch, R., Koutrouli, M., Nastou, K., Mehryary, F., Hachilif, R., Gable, A. L., Fang, T., Doncheva, N. T., Pyysalo, S., Bork, P., Jensen, L. J., & von Mering, C. (2022). The STRING database in 2023: Protein–protein association networks and functional enrichment analyses for any sequenced genome of interest. Nucleic Acids Research, 51(D1), D638–D646. https://doi.org/10.1093/nar/gkac1000
 
 Tan, A., Abecasis, G. R., & Kang, H. M. (2015). Unified representation of genetic variants. Bioinformatics, 31(13), 2202–2204. https://doi.org/10.1093/bioinformatics/btv112
 
-Tang, Y.-C., Williams, B. R., Siegel, J. J., & Amon, A. (2011). Identification of Aneuploidy-Selective Antiproliferation Compounds. Cell, 144(4), 499–512. https://doi.org/10.1016/j.cell.2011.01.017
+Tang, Y.-C., Williams, B. R., Siegel, J. J., & Amon, A. (2011). Identification of aneuploidy-selective antiproliferation compounds. Cell, 144(4), 499–512. https://doi.org/10.1016/j.cell.2011.01.017
 
 The UniProt Consortium. (2026). O60566 · BUB1B_HUMAN: Mitotic checkpoint serine/threonine-protein kinase BUB1 beta (UniProtKB/Swiss-Prot release 2026_03) [Data set]. Retrieved September 17, 2026, from https://rest.uniprot.org/uniprotkb/O60566.json
 
 The UniProt Consortium, Bateman, A., Martin, M.-J., Orchard, S., Magrane, M., Adesina, A., Ahmad, S., Bowler-Barnett, E. H., Bye-A-Jee, H., Carpentier, D., Denny, P., Fan, J., Garmiri, P., Gonzales, L. J. da C., Hussein, A., Ignatchenko, A., Insana, G., Ishtiaq, R., Joshi, V., … Zhang, J. (2025). UniProt: The Universal Protein Knowledgebase in 2025. Nucleic Acids Research, 53(D1), D609–D617. https://doi.org/10.1093/nar/gkae1010
 
-Torres, E. M., Sokolsky, T., Tucker, C. M., Chan, L. Y., Boselli, M., Dunham, M. J., & Amon, A. (2007). Effects of Aneuploidy on Cellular Physiology and Cell Division in Haploid Yeast. Science, 317(5840), 916–924. https://doi.org/10.1126/science.1142210
+Torres, E. M., Sokolsky, T., Tucker, C. M., Chan, L. Y., Boselli, M., Dunham, M. J., & Amon, A. (2007). Effects of aneuploidy on cellular physiology and cell division in haploid yeast. Science, 317(5840), 916–924. https://doi.org/10.1126/science.1142210
 
-Williams, B. R., Prabhu, V. R., Hunter, K. E., Glazier, C. M., Whittaker, C. A., Housman, D. E., & Amon, A. (2008). Aneuploidy Affects Proliferation and Spontaneous Immortalization in Mammalian Cells. Science, 322(5902), 703–709. https://doi.org/10.1126/science.1160058
+Williams, B. R., Prabhu, V. R., Hunter, K. E., Glazier, C. M., Whittaker, C. A., Housman, D. E., & Amon, A. (2008). Aneuploidy affects proliferation and spontaneous immortalization in mammalian cells. Science, 322(5902), 703–709. https://doi.org/10.1126/science.1160058
 
 U.S. Food and Drug Administration. (2026). openFDA NDC Directory and Drugs@FDA bulk downloads [Data set]. Retrieved September 18, 2026, from https://open.fda.gov/apis/downloads/
 
@@ -195,14 +195,17 @@ retraction/correction check. Regenerate with:
 python scripts/verify_refs.py <file-of-dois-or-citations>
 ```
 
-**Known deviation to fix before submission.** The entries above are rendered from Crossref's
-registered metadata, which preserves each publisher's title casing. APA 7th requires article titles
-in **sentence case**, so titles rendered in Title Case need correcting. Author lists, journals,
-volumes, pages and DOIs are publisher-registered and correct as shown — the casing is the only
-known gap, and it is a deliberate trade: machine-accurate metadata now, a casing pass later, rather
-than 24 hand-transcribed entries with the transcription errors that invites. Entries added
-2026-09-11 are already in sentence case, and list authors per APA 7th (up to 20, then … and the
-last); the earlier "19 authors, et al." renderings are part of the same pass.
+**The casing pass was applied on 2026-10-18.** The entries above are rendered from Crossref's
+registered metadata, which preserves each publisher's title casing, so eight journal-article titles
+arrived in Title Case where APA 7th requires **sentence case**. Those eight were corrected in both
+this file and `references.bib`, the machine-readable source — correcting only one would have let the
+other reintroduce them. Author lists, journals, volumes, pages and DOIs are publisher-registered and
+remain exactly as Crossref holds them.
+
+Capitals that survive the pass are deliberate: gene symbols and protein names (`BUB1B`, BUBR1,
+TRIP13), the first word after a colon, and resource names that are proper nouns — the Human
+Phenotype Ontology, the Connectivity Map, the Monarch Initiative, UniProt, openFDA, and the LINCS
+dataset titles.
 
 | Key | Identifier | Resolved | Retraction/correction | Checked |
 |---|---|---|---|---|
