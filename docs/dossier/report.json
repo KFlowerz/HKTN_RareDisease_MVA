@@ -1,0 +1,53 @@
+{
+  "causal_gene": "BUB1B",
+  "counts": {
+    "candidate_pages": 83,
+    "candidates": 1963,
+    "excluded": 1880,
+    "survivors": 83,
+    "tier1_literature": 1,
+    "tier2_network_only": 82
+  },
+  "figures": {
+    "benchmark": "benchmark_recovery.png",
+    "channels": "channel_contribution.png",
+    "exclusions": "exclusions_by_reason.png",
+    "tiers": "evidence_tiers.png"
+  },
+  "finished_utc": "2026-09-21T23:41:00.709061+00:00",
+  "layer": "l5_report",
+  "notes": [
+    "This layer renders; it computes nothing. Every field shown exists in an L3 or L4 artifact (decision D2).",
+    "Exclusions are presented first and survivors are tiered by evidence kind (decision D18); the two tiers are never merged into one list.",
+    "Channel C is implemented and nominates nothing (decision D19), so this shortlist rests on three channels of the five specified (channel A is not built) and carries no discriminating cross-channel convergence."
+  ],
+  "pages": {
+    "candidates": "l5/candidates/*.html (83 pages)",
+    "exclusions": "l5/exclusions.html",
+    "index": "l5/index.html"
+  },
+  "rendered_from": {
+    "benchmark": "results/l4/benchmark/recovery.csv",
+    "burden_method": "results/l0_genomics/aneuploidy_burden.json (method only)",
+    "excluded": "results/l4/excluded.tsv",
+    "integration": "results/l3/integration.json",
+    "rationales": "results/l3/reasoning/rationales.json",
+    "survivors": "results/l4/survivors.tsv",
+    "validation": "results/l4/validation.json"
+  },
+  "seed": 42,
+  "therapeutic_endpoint": "secondary prevention (D4)",
+  "withheld": [
+    "contamination_screen",
+    "deconvolved_shift",
+    "excess_over_baseline",
+    "inferred_sex",
+    "longest_contiguous_flagged",
+    "median_abs_dev",
+    "mosaic_fraction_if_gain",
+    "mosaic_fraction_if_loss",
+    "n_flagged_windows",
+    "per_contig"
+  ],
+  "withheld_reason": "Per-chromosome aneuploidy results are withheld. MVA case series publish karyotypes and the worldwide population is around fifty patients, so which chromosomes are involved, how many, and at what mosaic fraction is close to an identifier. The method and what it can resolve are described; this child's result from it is not published."
+}

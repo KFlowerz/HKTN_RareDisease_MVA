@@ -1,0 +1,2 @@
+rank	chembl_id	drug_name	rxcui	pharm_class_epc	n_channels_supporting	supporting_channels	evidence_tier	evidence_grade	confidence
+119	CHEMBL2103875	TRAMETINIB	1425104|1425110|1425116|1425118|2632560|2632564		2	prior|proximity	literature	in_vitro	0.132

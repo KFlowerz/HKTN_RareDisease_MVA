@@ -116,6 +116,13 @@ python scripts/package_submissions.py       # both packages + upload checklists
 | **Track 1** — variant prediction | [docs/report_track1.md](docs/report_track1.md) | `results/submissions/track1/` |
 | **Track 2** — drug repurposing | [docs/report_track2.md](docs/report_track2.md) | `results/submissions/track2/` |
 
+**The Track 2 dossier is committed**, at [docs/dossier/](docs/dossier/) — the 83 candidate pages,
+the exclusions page carrying the 1,880 refusals with the sentence that caused each, and the four
+figures. It is generated output and normally lives under gitignored `results/`, but the report
+refers to it throughout and it cannot be rebuilt once the gated data is destroyed under
+[docs/data_custody.md](docs/data_custody.md), so it is kept here instead of left to be regenerated
+on demand. Start at [docs/dossier/index.html](docs/dossier/index.html).
+
 **New to the project?** [docs/how_it_works.md](docs/how_it_works.md) explains both tracks in plain
 language, with diagrams and no jargon — what the illness is, how each answer was constructed, and
 what did not work. Its figures are checked against the same artifacts as the reports.
