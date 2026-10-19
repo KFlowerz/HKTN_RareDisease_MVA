@@ -48,9 +48,15 @@ Guardrail
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import platform
 import re
+import shutil
+import socket
+import subprocess
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 #: Bumped when the attestation JSON shape changes. Recorded in every attestation.
@@ -64,6 +70,12 @@ CUSTODY_REGISTER = REPO_ROOT / "docs" / "data_custody.md"
 #: The gated dataset, identified for attestation by repo id + revision SHA, never by file.
 DATASET_REPO_ID = "SageBio/mva-hackathon-2026-data"
 DATASET_REPO_TYPE = "dataset"
+
+#: Submission close, and the deletion deadline COMPLIANCE.md derives from it. The two
+#: readings of "Hackathon close" are a month apart; this is the earlier, safer one. See
+#: the open item in docs/data_custody.md.
+HACKATHON_CLOSE_DATE = "2026-10-24"
+DELETION_DEADLINE_UTC = "2026-11-23T23:59:00Z"
 
 #: Register rows move through these states. ``purged`` requires post-deletion verification.
 CUSTODY_STATES = ("planned", "active", "purged")
@@ -312,18 +324,129 @@ def purge(config: dict, *, confirm: bool = False) -> list[LocationVerdict]:
     Raises:
         NotImplementedError: Always -- this is a scaffold.
     """
-    # TODO: for each registered location -- measure(), then delete by its declared method,
-    # then measure() again and stamp the verification time. Order matters: purge the Hub
-    # cache with `hf cache rm` followed by `hf cache prune` BEFORE removing the cache root,
-    # so `.incomplete` partial blobs are accounted for rather than merely unlinked. Run
-    # `fstrim -av` last, once every location is gone, so freed blocks are discarded.
-    #
-    # Refuse, loudly, to touch: any path absent from the register; any path inside the
-    # repository other than `results/` and notebook outputs; and any path that resolves
-    # outside `MVA_DATA_ROOT` unless the register explicitly names it.
-    #
-    # With confirm=False, do everything except the deletion and report what would change.
-    raise NotImplementedError("purge.purge is a scaffold stub")
+    locations = read_register()
+    verdicts: list[LocationVerdict] = []
+
+    for location in locations:
+        if not location.is_purgeable:
+            continue
+        _assert_deletable(location)
+        before = measure(location)
+        if confirm and before.exists:
+            _delete(location)
+        after = measure(location) if confirm else before
+        verdicts.append(LocationVerdict(
+            location=location,
+            before=before,
+            after=after,
+            verified_utc=_now(),
+        ))
+
+    if confirm:
+        _discard_freed_blocks()
+    return verdicts
+
+
+def _assert_deletable(location: CustodyLocation) -> None:
+    """Refuse a path the register has no business pointing at.
+
+    The register is the authority on *what* is purged, but it is a Markdown file that a
+    person edits, so it is not the authority on what is *safe* to delete. A typo that
+    turned ``<repo>/results/`` into ``<repo>/`` would otherwise destroy the project.
+    """
+    path = location.path
+    assert path is not None                              # guarded by is_purgeable
+
+    if path == Path(path.anchor) or len(path.parts) <= 2:
+        raise ValueError(
+            f"{location.id}: refusing to delete {path} -- too close to a filesystem root")
+
+    if path == REPO_ROOT:
+        raise ValueError(
+            f"{location.id}: refusing to delete the repository working tree itself")
+
+    if REPO_ROOT in path.parents:
+        allowed = {REPO_ROOT / "results", REPO_ROOT / "notebooks"}
+        if path not in allowed:
+            raise ValueError(
+                f"{location.id}: {path} is inside the repository but is not one of "
+                f"{sorted(str(p.name) for p in allowed)}. Only pipeline output and "
+                "notebook outputs are purgeable from the working tree")
+
+
+def _delete(location: CustodyLocation) -> None:
+    """Delete one location by the method its register row declares.
+
+    The Hub cache is emptied through ``hf`` first, because ``.incomplete`` partial blobs
+    survive a plain tree removal of ``snapshots/`` and would be left behind by anything
+    that reasons about repos rather than bytes. The tree removal then takes the root.
+    """
+    path = location.path
+    assert path is not None
+
+    if "hf cache" in location.method or _looks_like_hub_cache(path):
+        _run_hf_cache_cleanup(path)
+
+    if not path.exists():
+        return
+    if path == REPO_ROOT / "results":
+        _empty_but_keep(path, keep={".gitkeep"})
+    else:
+        shutil.rmtree(path, ignore_errors=False)
+
+
+def _looks_like_hub_cache(path: Path) -> bool:
+    return (path / "blobs").is_dir() or (path / "hub").is_dir() or path.name == "hf-cache"
+
+
+def _run_hf_cache_cleanup(path: Path) -> None:
+    """``hf cache rm`` then ``hf cache prune``; a missing CLI is reported, not swallowed."""
+    env = dict(os.environ, HF_HOME=str(path))
+    for args in (["hf", "cache", "rm", "--all", "--yes"], ["hf", "cache", "prune", "--yes"]):
+        try:
+            subprocess.run(args, env=env, check=False, capture_output=True, timeout=600)
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise RuntimeError(
+                f"{' '.join(args)} failed ({exc}). The Hub cache keeps .incomplete partial "
+                "blobs that a tree removal leaves behind, so this step is not optional; "
+                "run it by hand and re-run the purge") from exc
+
+
+def _empty_but_keep(path: Path, *, keep: set) -> None:
+    """Empty a directory while preserving named entries -- ``results/.gitkeep``."""
+    for entry in path.iterdir():
+        if entry.name in keep:
+            continue
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry, ignore_errors=False)
+        else:
+            entry.unlink()
+
+
+def _discard_freed_blocks() -> None:
+    """``fstrim -av`` so deleted blocks are discarded rather than merely unlinked.
+
+    Best-effort and reported: it needs privilege, it is a no-op on filesystems that do not
+    support discard, and a destruction record that silently claimed it ran would be worse
+    than one that says it could not.
+    """
+    try:
+        done = subprocess.run(["fstrim", "-av"], check=False, capture_output=True, timeout=900)
+        FSTRIM_RESULT["ran"] = done.returncode == 0
+        FSTRIM_RESULT["detail"] = ("fstrim -av completed" if done.returncode == 0
+                                   else f"fstrim -av exited {done.returncode}")
+    except (OSError, subprocess.SubprocessError) as exc:
+        FSTRIM_RESULT["ran"] = False
+        FSTRIM_RESULT["detail"] = f"fstrim -av could not be run: {exc}"
+
+
+#: Filled by :func:`_discard_freed_blocks` and reported in the attestation. Never asserted
+#: as done when it was not.
+FSTRIM_RESULT: dict = {"ran": False, "detail": "not attempted (dry run)"}
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def write_attestation(verdicts: list[LocationVerdict], *, revision_sha: str) -> Path:
@@ -340,16 +463,201 @@ def write_attestation(verdicts: list[LocationVerdict], *, revision_sha: str) -> 
     Raises:
         NotImplementedError: Always -- this is a scaffold.
     """
-    # TODO: assemble the schema documented in docs/data_custody.md, then -- before writing
-    # -- scan the serialized payload for FORBIDDEN_ATTESTATION_FIELDS and for anything
-    # resembling a genomic filename or a hex digest, and refuse to write on a hit. The
-    # guardrail against leaking patient data into the destruction record is only real if
-    # something enforces it at the boundary.
-    #
-    # Record every REQUIRED_CHECKS result, the repo's git SHA, hostname, platform, and WSL
-    # distro. Refuse to emit if any verdict is not `is_clean` or any required check failed:
-    # a partial purge must not be reported as a completed one.
-    raise NotImplementedError("purge.write_attestation is a scaffold stub")
+    if not re.fullmatch(r"[0-9a-f]{40}", revision_sha):
+        raise ValueError(
+            "revision_sha must be the dataset's full 40-character Hub commit hash: it is "
+            "the only identifier of the destroyed data the attestation carries")
+
+    unclean = [v.location.id for v in verdicts if not v.is_clean]
+    if unclean:
+        raise ValueError(
+            f"refusing to attest: {', '.join(unclean)} still hold bytes. A partial purge "
+            "reported as a completed one is the one thing this record must never be")
+
+    checks = _run_required_checks(verdicts)
+    failed = [c["name"] for c in checks if c["result"] != "pass"]
+    if failed:
+        raise ValueError(f"refusing to attest: check(s) failed -- {', '.join(failed)}")
+
+    payload = {
+        "schema_version": ATTESTATION_SCHEMA_VERSION,
+        "generated_utc": _now(),
+        "hackathon_close_date": HACKATHON_CLOSE_DATE,
+        "deletion_deadline_utc": DELETION_DEADLINE_UTC,
+        "dataset": {
+            "repo_id": DATASET_REPO_ID,
+            "repo_type": DATASET_REPO_TYPE,
+            "revision_sha": revision_sha,
+            "identification_note": (
+                "Identified by Hub revision only. No filenames or per-file digests are "
+                "recorded, by design."),
+        },
+        "environment": _environment(),
+        "locations": [
+            {
+                "id": v.location.id,
+                "path": str(v.location.path),
+                "method": v.location.method,
+                "before": _state_dict(v.before),
+                "after": _state_dict(v.after),
+                "verified_utc": v.verified_utc,
+            }
+            for v in verdicts
+        ],
+        "checks": checks,
+        "attested_by": {
+            "name": os.environ.get("MVA_ATTESTOR_NAME", "<attestor>"),
+            "role": os.environ.get("MVA_ATTESTOR_ROLE", "<role>"),
+            "statement": ("I verified each registered location was emptied on the date "
+                          "recorded above."),
+        },
+    }
+
+    serialized = json.dumps(payload, indent=2, sort_keys=False)
+    _assert_carries_no_patient_data(serialized)
+
+    out = REPO_ROOT / "docs" / f"purge_attestation_{_now()[:10]}.json"
+    out.write_text(serialized + "\n", encoding="utf-8")
+    out.with_suffix(".md").write_text(_render_markdown(payload), encoding="utf-8")
+    return out
+
+
+def _state_dict(state: LocationState) -> dict:
+    return {"exists": state.exists, "file_count": state.file_count,
+            "total_bytes": state.total_bytes}
+
+
+def _environment() -> dict:
+    return {
+        "hostname": socket.gethostname(),
+        "platform": platform.platform(),
+        "wsl_distro": os.environ.get("WSL_DISTRO_NAME"),
+        "pipeline_commit": _git_sha(),
+        "purge_tool_version": ATTESTATION_SCHEMA_VERSION,
+    }
+
+
+def _git_sha() -> str:
+    try:
+        done = subprocess.run(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"],
+                              capture_output=True, text=True, check=False, timeout=30)
+        return done.stdout.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
+def _run_required_checks(verdicts: list[LocationVerdict]) -> list[dict]:
+    """Every check in :data:`REQUIRED_CHECKS`, each reported pass or fail with detail."""
+    results = []
+
+    registered = read_register()
+    terminal = [r for r in registered
+                if r.status in UNPURGEABLE_STATES or not r.is_purgeable
+                or r.id in {v.location.id for v in verdicts}]
+    results.append({
+        "name": "custody_register_complete",
+        "result": "pass" if len(terminal) == len(registered) else "fail",
+        "detail": f"{len(terminal)} of {len(registered)} register rows reached a "
+                  "terminal state",
+    })
+
+    scan = subprocess.run(
+        [os.environ.get("MVA_PYTHON", "python"), "-m", "pytest", "-q", "--no-header",
+         "-p", "no:cacheprovider", "tests/test_smoke.py", "-k", "patient_data"],
+        cwd=str(REPO_ROOT), capture_output=True, text=True, check=False, timeout=900)
+    results.append({
+        "name": "repo_scan_genomic_extensions",
+        "result": "pass" if scan.returncode == 0 else "fail",
+        "matches": 0 if scan.returncode == 0 else 1,
+    })
+
+    cache = [v for v in verdicts if "hf cache" in v.location.method
+             or _looks_like_hub_cache(v.location.path or REPO_ROOT)]
+    results.append({
+        "name": "hf_cache_empty",
+        "result": "pass" if all(v.is_clean for v in cache) else "fail",
+        "repos_remaining": 0 if all(v.is_clean for v in cache) else 1,
+        "bytes_remaining": sum(v.after.total_bytes for v in cache),
+    })
+    results.append({
+        "name": "incomplete_blobs_removed",
+        "result": "pass" if all(v.is_clean for v in cache) else "fail",
+        "matches": sum(v.after.file_count for v in cache),
+    })
+
+    results.append({
+        "name": "freed_blocks_discarded",
+        "result": "pass" if FSTRIM_RESULT["ran"] else "not_run",
+        "detail": FSTRIM_RESULT["detail"],
+    })
+    return results
+
+
+def _assert_carries_no_patient_data(serialized: str) -> None:
+    """The boundary check. A guardrail nothing enforces is a comment."""
+    lowered = serialized.lower()
+    for field in FORBIDDEN_ATTESTATION_FIELDS:
+        if f'"{field}"' in lowered:
+            raise ValueError(
+                f"refusing to write the attestation: it carries a {field!r} field. The "
+                "destroyed data is identified by Hub revision only")
+
+    for pattern, what in (
+        (r"\b[0-9a-f]{64}\b", "a sha256 digest"),
+        (r"\.(vcf|bam|cram|fastq|fq|tbi|bai)(\.gz)?\b", "a genomic filename"),
+        (r"\bchr[0-9xym]+[:\-][0-9]{3,}", "a variant coordinate"),
+        (r"\bhp:[0-9]{7}\b", "an HPO term id"),
+    ):
+        hit = re.search(pattern, lowered)
+        if hit:
+            raise ValueError(
+                f"refusing to write the attestation: it contains {what}. A destruction "
+                "record must not describe what was destroyed")
+
+
+def _render_markdown(payload: dict) -> str:
+    """The companion for the confirmation email body."""
+    lines = [
+        "# Data destruction attestation",
+        "",
+        f"**Generated:** {payload['generated_utc']}  ",
+        f"**Dataset:** `{payload['dataset']['repo_id']}` at revision "
+        f"`{payload['dataset']['revision_sha']}`  ",
+        f"**Deletion deadline:** {payload['deletion_deadline_utc']}",
+        "",
+        payload["dataset"]["identification_note"],
+        "",
+        "## Locations",
+        "",
+        "| ID | Method | Before | After |",
+        "|---|---|---:|---:|",
+    ]
+    for loc in payload["locations"]:
+        before = f"{loc['before']['file_count']} files, {loc['before']['total_bytes']:,} B"
+        after = ("absent" if not loc["after"]["exists"]
+                 else f"{loc['after']['file_count']} files, "
+                      f"{loc['after']['total_bytes']:,} B")
+        lines.append(f"| `{loc['id']}` | {loc['method']} | {before} | {after} |")
+
+    lines += ["", "## Checks", "", "| Check | Result | Detail |", "|---|---|---|"]
+    for check in payload["checks"]:
+        detail = check.get("detail", "")
+        lines.append(f"| {check['name']} | **{check['result']}** | {detail} |")
+
+    lines += [
+        "",
+        "## Attestation",
+        "",
+        f"{payload['attested_by']['statement']}",
+        "",
+        f"— {payload['attested_by']['name']}, {payload['attested_by']['role']}",
+        "",
+        "*No filenames, per-file digests, variant coordinates or phenotype content appear "
+        "in this record, by construction. See `docs/data_custody.md` for the register and "
+        "the honest limits of any destruction record.*",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def main(argv: list | None = None) -> int:
@@ -371,12 +679,64 @@ def main(argv: list | None = None) -> int:
         help="Actually delete. Without this flag the run is a dry run and nothing is removed.",
     )
     parser.add_argument("--register", type=Path, default=CUSTODY_REGISTER)
+    parser.add_argument("--revision-sha", default=os.environ.get("MVA_DATASET_REVISION"),
+                        help="the dataset's full 40-character Hub commit hash; required "
+                             "with --confirm, since it is the only identifier of the "
+                             "destroyed data the attestation carries")
     args = parser.parse_args(argv)
 
-    # TODO: load config, read the register, purge (honouring args.confirm), then attest.
-    # A dry run must still print the full before-state and the planned method per location,
-    # so the operator can audit the plan before authorising destruction.
-    raise NotImplementedError("purge.main is a scaffold stub")
+    try:
+        locations = read_register(args.register)
+    except (OSError, ValueError) as exc:
+        print(f"cannot read the custody register: {exc}")
+        return 2
+
+    print(f"custody register: {args.register}")
+    print(f"mode: {'DELETE (--confirm)' if args.confirm else 'dry run -- nothing is removed'}")
+    print()
+    print(f"  {'id':<4} {'status':<20} {'holds now':<24} method")
+    for location in locations:
+        if not location.is_purgeable:
+            print(f"  {location.id:<4} {location.status:<20} {'not actionable here':<24} "
+                  f"{location.method[:46]}")
+            continue
+        state = measure(location)
+        holds = ("absent" if not state.exists
+                 else f"{state.file_count} files, {state.total_bytes / 1e6:.1f} MB")
+        print(f"  {location.id:<4} {location.status:<20} {holds:<24} {location.method[:46]}")
+        print(f"       -> {location.path}")
+
+    if not args.confirm:
+        print()
+        print("Dry run. Re-run with --confirm and --revision-sha <40-char hash> to delete.")
+        print("This destroys the only copy you can regenerate results from. Do it after")
+        print("judging settles, and before the deadline in docs/data_custody.md.")
+        return 0
+
+    if not args.revision_sha:
+        print("\n--confirm needs --revision-sha (or MVA_DATASET_REVISION): the attestation")
+        print("identifies the destroyed data by Hub revision and by nothing else.")
+        return 2
+
+    verdicts = purge({}, confirm=True)
+    print()
+    for verdict in verdicts:
+        mark = "ok  " if verdict.is_clean else "LEFT"
+        print(f"  {mark} {verdict.location.id}: "
+              f"{verdict.before.file_count} files -> {verdict.after.file_count}")
+
+    try:
+        written = write_attestation(verdicts, revision_sha=args.revision_sha)
+    except ValueError as exc:
+        print(f"\npurge ran but the attestation was refused: {exc}")
+        return 1
+
+    print(f"\nattestation: {written}")
+    print(f"companion:   {written.with_suffix('.md')}")
+    print("\nStill manual, and not claimed by this tool: delete the conversations in the")
+    print("Claude account (C7's account-side half), then commit the attestation and email")
+    print("it to the organizers.")
+    return 0
 
 
 if __name__ == "__main__":  # pragma: no cover

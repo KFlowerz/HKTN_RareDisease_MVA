@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -81,6 +82,16 @@ def test_emphasis_and_ticks_are_stripped_from_the_status(register):
     assert rows["C8"].status == "live once submitted"
 
 
+def test_the_committed_register_needs_claude_projects_set(monkeypatch, tmp_path):
+    """C7 resolves differently from Windows and WSL, and the wrong one reports 'absent'
+    over a live store. The variable is mandatory so that ambiguity fails loudly."""
+    monkeypatch.setenv("MVA_DATA_ROOT", str(tmp_path / "mva"))
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "mva" / "hf-cache"))
+    monkeypatch.delenv("CLAUDE_PROJECTS", raising=False)
+    with pytest.raises(ValueError, match="CLAUDE_PROJECTS"):
+        purge.read_register()
+
+
 def test_an_unset_variable_is_an_error_not_a_silent_skip(tmp_path, monkeypatch):
     """A row that cannot be located would be left behind while the attestation claims
     otherwise, so it must fail loudly rather than resolve to something plausible."""
@@ -118,6 +129,7 @@ def test_the_committed_register_parses(monkeypatch, tmp_path):
     """The real register is the contract. If it stops parsing, the purge tool is blind."""
     monkeypatch.setenv("MVA_DATA_ROOT", str(tmp_path / "mva"))
     monkeypatch.setenv("HF_HOME", str(tmp_path / "mva" / "hf-cache"))
+    monkeypatch.setenv("CLAUDE_PROJECTS", str(tmp_path / "claude" / "projects"))
     rows = purge.read_register()
     assert [row.id for row in rows] == ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8"]
     assert all(row.status in purge.CUSTODY_STATES or row.status in purge.UNPURGEABLE_STATES
@@ -179,3 +191,137 @@ def test_a_symlinked_directory_is_not_descended_into(tmp_path):
 def test_measure_of_an_unpathed_row_is_absent(register):
     c6 = {row.id: row for row in purge.read_register(register)}["C6"]
     assert purge.measure(c6) == purge.LocationState(False, 0, 0)
+
+
+# ------------------------------------------------------------------ refusing to delete
+
+
+def _location(path, identifier="CX", method="rm -rf"):
+    return purge.CustodyLocation(id=identifier, path=path, holds="x", method=method,
+                                 status="active")
+
+
+def test_refuses_a_path_at_a_filesystem_root(tmp_path):
+    root = Path(tmp_path.anchor)
+    with pytest.raises(ValueError, match="filesystem root"):
+        purge._assert_deletable(_location(root))
+
+
+def test_refuses_the_repository_itself(tmp_path):
+    with pytest.raises(ValueError, match="repository working tree"):
+        purge._assert_deletable(_location(purge.REPO_ROOT))
+
+
+def test_refuses_a_repository_path_that_is_not_output(tmp_path):
+    """A typo turning <repo>/results/ into <repo>/src/ must not delete the source."""
+    with pytest.raises(ValueError, match="inside the repository"):
+        purge._assert_deletable(_location(purge.REPO_ROOT / "src"))
+
+
+def test_allows_the_two_repository_output_paths(tmp_path):
+    purge._assert_deletable(_location(purge.REPO_ROOT / "results"))
+    purge._assert_deletable(_location(purge.REPO_ROOT / "notebooks"))
+
+
+def test_allows_a_path_outside_the_repository(tmp_path):
+    purge._assert_deletable(_location(tmp_path / "custody" / "raw"))
+
+
+# ------------------------------------------------------------------ deleting, on fixtures
+
+
+def test_delete_removes_a_tree(tmp_path):
+    target = tmp_path / "custody" / "raw"
+    (target / "sub").mkdir(parents=True)
+    (target / "sub" / "f").write_bytes(b"x" * 10)
+    purge._delete(_location(target))
+    assert not target.exists()
+
+
+def test_results_is_emptied_but_keeps_its_gitkeep(tmp_path, monkeypatch):
+    results = tmp_path / "repo" / "results"
+    (results / "l0").mkdir(parents=True)
+    (results / "l0" / "calls.json").write_text("{}", encoding="utf-8")
+    (results / ".gitkeep").write_text("", encoding="utf-8")
+    monkeypatch.setattr(purge, "REPO_ROOT", tmp_path / "repo")
+
+    purge._delete(_location(results))
+    assert results.exists()
+    assert [p.name for p in results.iterdir()] == [".gitkeep"]
+
+
+def test_a_dry_run_deletes_nothing(tmp_path, monkeypatch, register):
+    target = tmp_path / "custody" / "raw"
+    target.mkdir(parents=True)
+    (target / "f").write_bytes(b"x" * 10)
+    monkeypatch.setattr(purge, "read_register", lambda *a, **k: [_location(target, "C1")])
+
+    verdicts = purge.purge({}, confirm=False)
+    assert target.exists()
+    assert verdicts[0].before.file_count == 1
+    assert verdicts[0].after.file_count == 1          # unchanged: nothing was removed
+
+
+# ------------------------------------------------------------------ the attestation
+
+
+def _clean_verdict(identifier="C1", path=Path("/tmp/x")):
+    return purge.LocationVerdict(
+        location=_location(path, identifier),
+        before=purge.LocationState(True, 3, 300),
+        after=purge.LocationState(False, 0, 0),
+        verified_utc="2026-11-01T00:00:00Z",
+    )
+
+
+SHA = "a" * 40
+
+
+def test_refuses_a_revision_that_is_not_a_full_hash():
+    with pytest.raises(ValueError, match="40-character"):
+        purge.write_attestation([_clean_verdict()], revision_sha="abc123")
+
+
+def test_refuses_to_attest_when_a_location_still_holds_bytes():
+    dirty = purge.LocationVerdict(
+        location=_location(Path("/tmp/x"), "C1"),
+        before=purge.LocationState(True, 3, 300),
+        after=purge.LocationState(True, 1, 100),
+        verified_utc="2026-11-01T00:00:00Z",
+    )
+    with pytest.raises(ValueError, match="still hold bytes"):
+        purge.write_attestation([dirty], revision_sha=SHA)
+
+
+@pytest.mark.parametrize("payload, what", [
+    ('{"sha256": "x"}', "sha256"),
+    ('{"a": "' + "b" * 64 + '"}', "digest"),
+    ('{"a": "sample.vcf.gz"}', "genomic filename"),
+    ('{"a": "chr15:40161020"}', "variant coordinate"),
+    ('{"a": "HP:0001250"}', "HPO term"),
+])
+def test_the_outbound_scan_catches_patient_data(payload, what):
+    with pytest.raises(ValueError, match="refusing to write"):
+        purge._assert_carries_no_patient_data(payload)
+
+
+def test_a_clean_payload_passes_the_outbound_scan():
+    purge._assert_carries_no_patient_data(
+        '{"id": "C1", "file_count": 13, "total_bytes": 317500000}')
+
+
+def test_the_markdown_companion_names_no_content():
+    payload = {
+        "generated_utc": "2026-11-01T00:00:00Z",
+        "hackathon_close_date": "2026-10-24",
+        "deletion_deadline_utc": "2026-11-23T23:59:00Z",
+        "dataset": {"repo_id": "r", "revision_sha": SHA, "identification_note": "n"},
+        "locations": [{"id": "C1", "method": "rm -rf",
+                       "before": {"file_count": 3, "total_bytes": 300},
+                       "after": {"exists": False, "file_count": 0, "total_bytes": 0}}],
+        "checks": [{"name": "custody_register_complete", "result": "pass", "detail": "d"}],
+        "attested_by": {"name": "n", "role": "r", "statement": "s"},
+    }
+    rendered = purge._render_markdown(payload)
+    assert "C1" in rendered and "absent" in rendered
+    purge._assert_carries_no_patient_data(rendered)

@@ -47,13 +47,13 @@ Status values: `planned` (registered, not yet created) · `active` (holds bytes)
 
 | ID | Location | Holds | Purge method | Status |
 |---|---|---|---|---|
-| `C1` | `$MVA_DATA_ROOT/raw` (WSL ext4, outside the repo) | The gated dataset as downloaded — VCF, tabix index, phenotype `.docx`, README (5 files, 303 MB). FASTQ deliberately not fetched. | `rm -rf`, then `fstrim` on the mount | **active** |
+| `C1` | `$MVA_DATA_ROOT/raw` (WSL ext4, outside the repo) | The gated dataset as downloaded — VCF, tabix index, phenotype `.docx`, README (5 dataset files, 303 MB). FASTQ deliberately not fetched. The directory also carries the Hub's own download-metadata cache, so a measurement of the row reports **13 files, 317.5 MB** (verified 2026-10-18); the extra is cache bookkeeping, not dataset content, and is deleted with it. | `rm -rf`, then `fstrim` on the mount | **active** |
 | `C2` | `$MVA_DATA_ROOT/hf-cache` (`HF_HOME`) | Hub `blobs/` (the real bytes), `snapshots/` symlinks, `trees/`, `refs/`, `xet/` chunk cache, `.incomplete` partials. Currently 468 KB / 4 files — `--local-dir` wrote real files without duplicating blobs here. | `hf cache rm` + `hf cache prune`, then `rm -rf` of the root | **active** |
 | `C3` | `<repo>/results/` | Pipeline intermediates derived from C1 — L0 variant calls, per-chromosome BAF and depth vectors, burden; L2 channel D's evidence carries the subject's HPO ids | `rm -rf` contents, keep `.gitkeep` | **active** |
 | `C4` | `<repo>/notebooks/` | Saved cell outputs, **if** any cell ever renders patient-derived rows | Strip outputs; verify no genomic content in tracked `.ipynb` | planned |
 | `C5` | WSL distro VHDX free space | Remnant blocks from deleted files (deletion is not overwriting) | `fstrim -av` inside WSL after C1–C3 | planned |
 | `C6` | Shell history, terminal scrollback, editor workspace state | Only if a record is ever printed | Prevented rather than purged — see below | n/a |
-| `C7` | Assistant session transcripts — Claude Code's local `.jsonl` store, plus any claude.ai web sessions held server-side | Prompts and tool output from development. Measured 2026-09-18: variant identifiers derived from the subject are present in the local store (30.6 MB, 9 files). The web sessions were not measured and are enumerated via the account's **Export data**. | Delete the local store; delete the conversations in the account, which removes them from history immediately and from back-end storage within 30 days | **active** |
+| `C7` | `$CLAUDE_PROJECTS/d--Labs-JupyterNotebooks-Hackathons-HKTN-RareDisease-MVA` — Claude Code's local transcript store, plus any claude.ai web sessions held server-side | Prompts and tool output from development. Measured 2026-09-18: variant identifiers derived from the subject are present in the local store (30.6 MB, 9 files); re-measured 2026-10-18 at **57.8 MB, 18 files** for the whole store, of which 6 files / 54.2 MB are the `.jsonl` transcripts and the rest is session scratch the same deletion removes. The web sessions are **outside this path**, were not measured, and are enumerated via the account's **Export data**. | Delete the local store at the path above (this tool); delete the conversations in the account, which removes them from history immediately and from back-end storage within 30 days (**manual — not performed by this tool**) | **active** |
 
 | `C8` | The organizers' Track 1 submission store — `SageBio/mva-hackathon-2026-leaderboard`, a private HF dataset | The submitted CSV: the subject's candidate variant coordinates in GRCh38, as the Track 1 answer format requires (decision D21). The local copy lives under `results/` and is covered by `C3`. | **Not purgeable by this project.** The organizers issued the data and hold the validated answer; this copy travels back to its source. Recorded for completeness, not because it can be deleted. | live once submitted |
 
@@ -71,6 +71,25 @@ development assistance, which is `C7` and is a separate surface with its own mea
 its own terms (decision D17). `C6` is listed because acknowledging an unpurgeable surface
 honestly is worth more than omitting it, and `C7` exists because the original wording invited
 the reader to conclude something broader than it ever claimed.
+
+### Why `C7` takes a variable rather than `~`
+
+Claude Code runs on **Windows** here; the pipeline and the gated data live in **WSL**. The
+two have different home directories, so `~/.claude/projects/…` resolves to a real store
+from one side and to nothing from the other. Written that way, a purge run from WSL
+reported `C7` absent and passed — while 54 MB of transcripts carrying subject-derived
+variant identifiers sat untouched on the Windows side. That is the failure the register
+exists to prevent, and it survived in the register itself until the tool was written
+against it (2026-10-18).
+
+`$CLAUDE_PROJECTS` must therefore be set explicitly to the store's parent on the machine
+holding it — `C:\Users\<user>\.claude\projects` on Windows, `~/.claude/projects` on Linux
+or macOS. `src/purge.py` refuses to run on an unset variable rather than resolving it to
+something plausible, so the ambiguity now fails loudly instead of silently passing.
+
+**The account-side half of `C7` is not purgeable by this tool.** Deleting the conversations
+in the Claude account is a manual step, and the attestation records it as attested rather
+than measured.
 
 ### Two traps this register exists to catch
 
