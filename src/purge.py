@@ -48,6 +48,8 @@ Guardrail
 from __future__ import annotations
 
 import argparse
+import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -65,6 +67,24 @@ DATASET_REPO_TYPE = "dataset"
 
 #: Register rows move through these states. ``purged`` requires post-deletion verification.
 CUSTODY_STATES = ("planned", "active", "purged")
+
+#: States for rows this tool cannot act on, which the register carries anyway. ``C6`` is
+#: prevented at the source rather than purged; ``C8`` is the organizers' own copy of the
+#: Track 1 submission, which travels back to the party that issued the data. Both are
+#: terminal for ``custody_register_complete``: there is nothing left for a purge to do.
+#: They are separated from :data:`CUSTODY_STATES` rather than folded into it because a
+#: register that showed only the copies we can delete would overstate the deletion
+#: commitment -- see the ``C8`` note in ``docs/data_custody.md``.
+UNPURGEABLE_STATES = ("n/a", "live once submitted")
+
+#: A register cell names a filesystem path when it is backticked, contains a separator, and
+#: begins with a root, a variable or the repository placeholder. This excludes ``C7``'s
+#: ``.jsonl`` (a suffix, no separator) and ``C8``'s ``SageBio/...`` (a Hub repo id, not a
+#: path) without either needing a special case.
+_PATH_CELL = re.compile(r"`((?:\$[A-Z_]+|<repo>|~|/|\.{1,2})[^`]*/[^`]*)`")
+
+#: Placeholders a register path may carry, and where each resolves from.
+_REPO_PLACEHOLDER = "<repo>"
 
 #: Checks that must all pass before an attestation may be emitted.
 REQUIRED_CHECKS = (
@@ -109,10 +129,15 @@ class CustodyLocation:
     """One row of the custody register."""
 
     id: str           # e.g. "C1"
-    path: Path
+    path: Path | None  # None for a row that names no filesystem location (C5–C8)
     holds: str        # prose description; never an enumeration of filenames
     method: str       # e.g. "rm -rf; fstrim"
-    status: str       # one of CUSTODY_STATES
+    status: str       # one of CUSTODY_STATES or UNPURGEABLE_STATES
+
+    @property
+    def is_purgeable(self) -> bool:
+        """True when this tool can act on the row: it has a path and a workable state."""
+        return self.path is not None and self.status in CUSTODY_STATES
 
 
 @dataclass(frozen=True)
@@ -142,11 +167,84 @@ def read_register(path: Path = CUSTODY_REGISTER) -> list[CustodyLocation]:
     Raises:
         NotImplementedError: Always -- this is a scaffold.
     """
-    # TODO: parse the Markdown table under "## Custody register", expanding
-    # `$MVA_DATA_ROOT`, `$HF_HOME`, and `<repo>` against the live environment. Fail on an
-    # unknown status value, on a duplicate id, and on an unexpanded placeholder -- a
-    # register row that does not resolve to a real path is a row that will not be purged.
-    raise NotImplementedError("purge.read_register is a scaffold stub")
+    rows = _register_rows(path.read_text(encoding="utf-8"))
+    if not rows:
+        raise ValueError(f"{path}: no rows found under '## Custody register'")
+
+    locations: list[CustodyLocation] = []
+    seen: set[str] = set()
+    for cells in rows:
+        identifier = _plain(cells[0])
+        if identifier in seen:
+            raise ValueError(
+                f"{path}: duplicate register id {identifier!r}. Ids key the attestation, "
+                "so a duplicate silently drops a location from it")
+        seen.add(identifier)
+
+        status = _plain(cells[4]).lower()
+        if status not in CUSTODY_STATES and status not in UNPURGEABLE_STATES:
+            raise ValueError(
+                f"{path}: {identifier} has status {status!r}, which is neither a custody "
+                f"state {CUSTODY_STATES} nor an unpurgeable one {UNPURGEABLE_STATES}")
+
+        locations.append(CustodyLocation(
+            id=identifier,
+            path=_resolve_path(cells[1], identifier),
+            holds=_plain(cells[2]),
+            method=_plain(cells[3]),
+            status=status,
+        ))
+    return locations
+
+
+def _register_rows(text: str) -> list[list[str]]:
+    """The data rows of the Markdown table under '## Custody register'."""
+    section = text.split("## Custody register", 1)
+    if len(section) != 2:
+        raise ValueError("no '## Custody register' heading")
+    body = section[1].split("\n## ", 1)[0]
+
+    rows = []
+    for line in body.splitlines():
+        line = line.strip()
+        if not line.startswith("|") or set(line) <= set("|- "):
+            continue                                  # separator row, or not a table row
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) != 5 or cells[0].strip("` ").upper() in ("ID", ""):
+            continue                                  # header, or a differently-shaped table
+        rows.append(cells)
+    return rows
+
+
+def _plain(cell: str) -> str:
+    """A table cell without its Markdown emphasis or code ticks."""
+    return cell.replace("**", "").replace("`", "").strip()
+
+
+def _resolve_path(cell: str, identifier: str) -> Path | None:
+    """The filesystem path a register cell names, with placeholders expanded.
+
+    Returns ``None`` when the row names no path at all -- a shell-history surface, or
+    someone else's store. Raises when it names one that does not resolve, because a row
+    that cannot be located is a row that will not be purged, and the attestation would
+    claim otherwise.
+    """
+    match = _PATH_CELL.search(cell)
+    if match is None:
+        return None
+
+    raw = match.group(1)
+    if raw.startswith(_REPO_PLACEHOLDER):
+        return (REPO_ROOT / raw[len(_REPO_PLACEHOLDER):].lstrip("/")).resolve()
+
+    expanded = os.path.expandvars(os.path.expanduser(raw))
+    if "$" in expanded:
+        missing = re.findall(r"\$([A-Z_]+)", expanded)
+        raise ValueError(
+            f"{identifier}: {raw!r} still contains {', '.join(missing)} after expansion. "
+            "Set it in the environment before purging; an unresolved row is a location "
+            "that will be left behind while the attestation says otherwise")
+    return Path(expanded).resolve()
 
 
 def measure(location: CustodyLocation) -> LocationState:
@@ -161,12 +259,44 @@ def measure(location: CustodyLocation) -> LocationState:
     Raises:
         NotImplementedError: Always -- this is a scaffold.
     """
-    # TODO: walk the tree accumulating a count and a byte total. Do not collect names,
-    # extensions, or digests -- not even transiently into a log. Count symlinks and their
-    # targets separately: the Hub cache stores real bytes in `blobs/` and only symlinks in
-    # `snapshots/`, so a naive walk that follows links double-counts, and one that ignores
-    # blobs/ reports an empty location that still holds 85 GB.
-    raise NotImplementedError("purge.measure is a scaffold stub")
+    if location.path is None:
+        return LocationState(exists=False, file_count=0, total_bytes=0)
+    return measure_path(location.path)
+
+
+def measure_path(path: Path) -> LocationState:
+    """Count files and bytes under ``path`` without recording anything about them.
+
+    Symlinks are counted as themselves and never followed. That single rule handles the
+    Hub cache correctly in both directions: ``blobs/`` holds the real bytes and is counted
+    once, while ``snapshots/`` holds only links to those same blobs and so contributes its
+    own negligible size rather than a second copy of the payload. Following links would
+    double the total; skipping the link farm entirely would report an empty cache that
+    still holds every byte it ever downloaded.
+    """
+    if not path.exists() and not path.is_symlink():
+        return LocationState(exists=False, file_count=0, total_bytes=0)
+
+    if path.is_file() or path.is_symlink():
+        return LocationState(exists=True, file_count=1, total_bytes=path.lstat().st_size)
+
+    count = 0
+    total = 0
+    for root, dirs, files in os.walk(path, followlinks=False):
+        # A symlinked directory is an entry in its own right, not a tree to descend into.
+        for name in list(dirs):
+            entry = Path(root) / name
+            if entry.is_symlink():
+                dirs.remove(name)
+                count += 1
+                total += entry.lstat().st_size
+        for name in files:
+            try:
+                total += (Path(root) / name).lstat().st_size
+            except OSError:
+                pass        # raced or unreadable: still present, so still counted
+            count += 1
+    return LocationState(exists=True, file_count=count, total_bytes=total)
 
 
 def purge(config: dict, *, confirm: bool = False) -> list[LocationVerdict]:
