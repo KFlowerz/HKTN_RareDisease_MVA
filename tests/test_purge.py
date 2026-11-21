@@ -381,6 +381,44 @@ def test_preflight_refuses_inside_a_live_assistant_session(monkeypatch):
     assert problem and "transcript store" in problem
 
 
+def test_preflight_refuses_while_a_session_elsewhere_is_still_writing(monkeypatch, tmp_path):
+    """The variable check only sees a purge launched from inside a session. One open in
+    another window sets nothing in this shell, so recent writes are the signal."""
+    store = tmp_path / "projects" / "d--Labs-JupyterNotebooks-Hackathons-HKTN-RareDisease-MVA"
+    store.mkdir(parents=True)
+    (store / "live.jsonl").write_text("{}", encoding="utf-8")   # written just now
+
+    monkeypatch.setenv("MVA_ATTESTOR_NAME", "A")
+    monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")
+    monkeypatch.setenv("MVA_DATA_ROOT", str(tmp_path / "mva"))
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "mva" / "hf-cache"))
+    monkeypatch.setenv("CLAUDE_PROJECTS", str(tmp_path / "projects"))
+    for marker in ("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT"):
+        monkeypatch.delenv(marker, raising=False)
+
+    problem = purge._preflight(SHA)
+    assert problem and "still has it open" in problem
+
+
+def test_preflight_allows_a_store_that_has_gone_quiet(monkeypatch, tmp_path):
+    store = tmp_path / "projects" / "d--Labs-JupyterNotebooks-Hackathons-HKTN-RareDisease-MVA"
+    store.mkdir(parents=True)
+    old = store / "finished.jsonl"
+    old.write_text("{}", encoding="utf-8")
+    stale = old.stat().st_mtime - (purge.LIVE_SESSION_SECONDS + 60)
+    os.utime(old, (stale, stale))
+
+    monkeypatch.setenv("MVA_ATTESTOR_NAME", "A")
+    monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")
+    monkeypatch.setenv("MVA_DATA_ROOT", str(tmp_path / "mva"))
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "mva" / "hf-cache"))
+    monkeypatch.setenv("CLAUDE_PROJECTS", str(tmp_path / "projects"))
+    for marker in ("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT"):
+        monkeypatch.delenv(marker, raising=False)
+
+    assert purge._preflight(SHA) is None
+
+
 def test_preflight_passes_in_this_environment(monkeypatch):
     monkeypatch.setenv("MVA_ATTESTOR_NAME", "A")
     monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")

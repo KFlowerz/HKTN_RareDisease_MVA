@@ -462,6 +462,34 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+#: How quiet C7 must be before a purge will touch it. An assistant session appends to its
+#: transcript continuously, so anything newer than this means one is still running.
+LIVE_SESSION_SECONDS = 120
+
+
+def _seconds_since_last_write() -> float | None:
+    """Age of the newest file in any registered transcript store, or ``None`` if absent."""
+    root = os.environ.get("CLAUDE_PROJECTS")
+    if not root:
+        return None
+    resolved_root = Path(root).resolve()
+    newest = None
+    for location in read_register():
+        path = location.path
+        if path is None or resolved_root not in path.parents:
+            continue
+        for walk_root, _dirs, files in os.walk(path):
+            for name in files:
+                try:
+                    mtime = (Path(walk_root) / name).lstat().st_mtime
+                except OSError:
+                    continue
+                newest = mtime if newest is None else max(newest, mtime)
+    if newest is None:
+        return None
+    return max(0.0, datetime.now(timezone.utc).timestamp() - newest)
+
+
 def _preflight(revision_sha: str) -> str | None:
     """Everything that could make the attestation unwritable, checked before deletion.
 
@@ -500,6 +528,17 @@ def _preflight(revision_sha: str) -> str | None:
                 "own transcript store. It would be deleted and immediately rewritten, so "
                 "C7 could never verify empty and the attestation would be refused with the "
                 "data already gone. Close the session and run this from a plain terminal")
+
+    # The variable check above only catches a purge launched from inside the session. A
+    # session open in another window is just as fatal and sets nothing in this shell, so
+    # the store is checked for recent writes instead: a live assistant appends constantly.
+    stale = _seconds_since_last_write()
+    if stale is not None and stale < LIVE_SESSION_SECONDS:
+        return (f"a file in C7 was written {stale:.0f} seconds ago, so an assistant session "
+                "still has it open -- probably in another window. Deleting it now means it "
+                "is recreated before the verification runs, C7 never reads empty, and the "
+                "attestation is refused with C1 through C4 already gone. Close every "
+                f"session, wait {LIVE_SESSION_SECONDS} seconds, then run this again")
 
     for name, value in (("MVA_ATTESTOR_NAME", os.environ.get("MVA_ATTESTOR_NAME")),
                         ("MVA_ATTESTOR_ROLE", os.environ.get("MVA_ATTESTOR_ROLE"))):
