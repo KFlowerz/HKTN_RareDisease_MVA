@@ -256,3 +256,31 @@ containerizable, runs on the judge's own re-downloaded gated data).
 - Any biological or pharmacological claim in a docstring or comment carries its citation key and DOI
   (see [Evidence and citations](#evidence-and-citations)). Uncited mechanism claims are a review
   blocker, not a nit.
+
+### Review the diff and run the suite before committing
+
+**Both, in this order: review the code changes, then run the full suite and confirm it passes.**
+Never commit straight after writing code. Stated as a standing rule on 2026-09-17, after several
+commits where the review happened only because it was asked for by name; moved here on 2026-11-21
+so it outlives any one session.
+
+**Why.** This repository nominates drugs for one real child, and the review passes have repeatedly
+found defects the tests did not:
+
+- an ordering bug that discarded completed work on a network failure
+- a key collision that would have attached the wrong protein change
+- an unverified licensing claim written into a ledger
+- a purge that would have deleted the dataset and *then* failed to write the destruction record,
+  because the repository scan invoked a `python` that is not on this machine's `PATH`
+
+Every one of those passes a test suite. Committing straight after writing code skips the step that
+catches them.
+
+**How to apply.** When asked to commit: review first and say what the review found, including
+"nothing"; then run `python -m pytest -q` and report the count; then commit. Fix what the review
+finds before committing rather than filing it as follow-up. A `/code-review` skill is available and
+is the right tool for the review step.
+
+**The same discipline applies to anything irreversible**, not only commits — a destructive action
+gets its dry run read in full before the real one, and the check that cannot run after the fact runs
+before it ([src/purge.py](src/purge.py)'s pre-flight is the worked example).
