@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_utc": "2026-11-21T17:06:19Z",
+  "generated_utc": "2026-11-21T17:21:15Z",
   "hackathon_close_date": "2026-10-24",
   "deletion_deadline_utc": "2026-11-23T23:59:00Z",
   "dataset": {
@@ -13,7 +13,7 @@
     "hostname": "LAPTOP-MK7F9BHJ",
     "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.35",
     "wsl_distro": "Ubuntu-22.04",
-    "pipeline_commit": "4a41212cad3bb2b7f1546a5cdfa35a61693ba907",
+    "pipeline_commit": "a90c84ac46f47b806037d7ea0d618d321c44a021",
     "purge_tool_version": "1.0"
   },
   "locations": [
@@ -31,7 +31,7 @@
         "file_count": 0,
         "total_bytes": 0
       },
-      "verified_utc": "2026-11-21T17:06:11Z",
+      "verified_utc": "2026-11-21T17:21:07Z",
       "note": "Recovered, not freshly measured. C1 was deleted by the interrupted purge of 2026-11-21T16:39Z, which then raised FileNotFoundError on C2's Hub CLI and died before writing any record; the journal that exists to prevent exactly this was added afterwards, in response. The file count is exact as printed by that run. The byte total is the console's displayed rounding (317.5 MB) and is therefore accurate to about +/- 50 KB, not to the byte - the exact figure was never persisted and cannot be recovered now that the location is gone. The register independently recorded 13 files / 317.5 MB for this row on 2026-10-18, which agrees."
     },
     {
@@ -48,7 +48,7 @@
         "file_count": 0,
         "total_bytes": 0
       },
-      "verified_utc": "2026-11-21T17:06:11Z"
+      "verified_utc": "2026-11-21T17:21:07Z"
     },
     {
       "id": "C3",
@@ -64,7 +64,7 @@
         "file_count": 0,
         "total_bytes": 0
       },
-      "verified_utc": "2026-11-21T17:06:11Z"
+      "verified_utc": "2026-11-21T17:21:07Z"
     },
     {
       "id": "C4",
@@ -80,7 +80,7 @@
         "file_count": 0,
         "total_bytes": 0
       },
-      "verified_utc": "2026-11-21T17:06:11Z",
+      "verified_utc": "2026-11-21T17:21:07Z",
       "note": "The one file counted was the directory's empty git placeholder (0 bytes); no notebook output existed. The run of 2026-11-21 removed the directory whole, placeholder included, and the placeholder was restored from git afterwards. Later runs exempt an empty placeholder from measurement."
     },
     {
@@ -90,20 +90,25 @@
       "before": {
         "exists": true,
         "file_count": 1,
-        "total_bytes": 711986
+        "total_bytes": 621046
       },
       "after": {
         "exists": false,
         "file_count": 0,
         "total_bytes": 0
       },
-      "verified_utc": "2026-11-21T17:06:11Z",
+      "verified_utc": "2026-11-21T17:21:07Z",
       "earlier_before": {
         "exists": true,
-        "file_count": 13,
-        "total_bytes": 63625301
+        "file_count": 1,
+        "total_bytes": 711986,
+        "earlier": {
+          "exists": true,
+          "file_count": 13,
+          "total_bytes": 63625301
+        }
       },
-      "note": "Emptied by an earlier run and written to again before this one; earlier_before is what that run found."
+      "note": "An earlier run journalled a different, non-empty before-state here; earlier_before is what that run found."
     }
   ],
   "checks": [

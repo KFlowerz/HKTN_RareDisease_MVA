@@ -24,11 +24,16 @@
   "C7": {
     "exists": true,
     "file_count": 1,
-    "total_bytes": 711986,
+    "total_bytes": 621046,
     "earlier": {
       "exists": true,
-      "file_count": 13,
-      "total_bytes": 63625301
+      "file_count": 1,
+      "total_bytes": 711986,
+      "earlier": {
+        "exists": true,
+        "file_count": 13,
+        "total_bytes": 63625301
+      }
     }
   }
 }
