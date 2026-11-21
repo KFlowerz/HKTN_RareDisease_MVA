@@ -334,10 +334,23 @@ def test_preflight_requires_a_named_attestor(monkeypatch):
     assert "MVA_ATTESTOR_NAME" in (purge._preflight(SHA) or "")
 
 
+def test_preflight_refuses_inside_a_live_assistant_session(monkeypatch):
+    """C7 is the session's own transcript store. Deleted from inside a live session it is
+    immediately rewritten, so it can never verify empty -- and by then C1 is gone."""
+    monkeypatch.setenv("MVA_ATTESTOR_NAME", "A")
+    monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")
+    monkeypatch.delenv("MVA_PYTHON", raising=False)
+    monkeypatch.setenv("CLAUDECODE", "1")
+    problem = purge._preflight(SHA)
+    assert problem and "transcript store" in problem
+
+
 def test_preflight_passes_in_this_environment(monkeypatch):
     monkeypatch.setenv("MVA_ATTESTOR_NAME", "A")
     monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")
     monkeypatch.delenv("MVA_PYTHON", raising=False)
+    for marker in ("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT"):
+        monkeypatch.delenv(marker, raising=False)
     assert purge._preflight(SHA) is None
 
 

@@ -483,6 +483,17 @@ def _preflight(revision_sha: str) -> str | None:
     if not os.access(attestation_dir, os.W_OK):
         return f"{attestation_dir} is not writable, so the attestation could not be saved"
 
+    # C7 is the assistant's own transcript store. Purging it from inside a live session
+    # deletes a file that is still being appended to: the re-measure then finds the
+    # recreated transcript, C7 fails its is_clean check, and write_attestation refuses --
+    # after C1 through C4 are already gone. Close the session and run this from a plain
+    # shell instead.
+    if any(os.environ.get(marker) for marker in ("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT")):
+        return ("this is running inside a Claude Code session, and C7 is that session's "
+                "own transcript store. It would be deleted and immediately rewritten, so "
+                "C7 could never verify empty and the attestation would be refused with the "
+                "data already gone. Close the session and run this from a plain terminal")
+
     for name, value in (("MVA_ATTESTOR_NAME", os.environ.get("MVA_ATTESTOR_NAME")),
                         ("MVA_ATTESTOR_ROLE", os.environ.get("MVA_ATTESTOR_ROLE"))):
         if not value:
