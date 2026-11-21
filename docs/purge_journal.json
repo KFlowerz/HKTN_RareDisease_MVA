@@ -4,5 +4,31 @@
     "file_count": 13,
     "total_bytes": 317500000,
     "note": "Recovered, not freshly measured. C1 was deleted by the interrupted purge of 2026-11-21T16:39Z, which then raised FileNotFoundError on C2's Hub CLI and died before writing any record; the journal that exists to prevent exactly this was added afterwards, in response. The file count is exact as printed by that run. The byte total is the console's displayed rounding (317.5 MB) and is therefore accurate to about +/- 50 KB, not to the byte - the exact figure was never persisted and cannot be recovered now that the location is gone. The register independently recorded 13 files / 317.5 MB for this row on 2026-10-18, which agrees."
+  },
+  "C2": {
+    "exists": true,
+    "file_count": 4,
+    "total_bytes": 453301
+  },
+  "C3": {
+    "exists": true,
+    "file_count": 242,
+    "total_bytes": 13105072
+  },
+  "C4": {
+    "exists": true,
+    "file_count": 1,
+    "total_bytes": 0,
+    "note": "The one file counted was the directory's empty git placeholder (0 bytes); no notebook output existed. The run of 2026-11-21 removed the directory whole, placeholder included, and the placeholder was restored from git afterwards. Later runs exempt an empty placeholder from measurement."
+  },
+  "C7": {
+    "exists": true,
+    "file_count": 1,
+    "total_bytes": 711986,
+    "earlier": {
+      "exists": true,
+      "file_count": 13,
+      "total_bytes": 63625301
+    }
   }
 }

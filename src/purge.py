@@ -282,10 +282,28 @@ def measure(location: CustodyLocation) -> LocationState:
     """
     if location.path is None:
         return LocationState(exists=False, file_count=0, total_bytes=0)
-    return measure_path(location.path)
+    return measure_path(location.path, keep=_kept_entries(location.path))
 
 
-def measure_path(path: Path) -> LocationState:
+#: Placeholders the purge deliberately leaves in the in-repo locations so git keeps the
+#: directories. They are exempt from measurement only while empty: a ``.gitkeep`` that has
+#: acquired bytes is counted like anything else, so it cannot hide data from the attestation.
+KEPT_PLACEHOLDERS = frozenset({".gitkeep"})
+
+
+def _kept_entries(path: Path) -> frozenset:
+    """The top-level names :func:`_delete` preserves at ``path`` -- none outside the repo."""
+    if path in {REPO_ROOT / "results", REPO_ROOT / "notebooks"}:
+        return KEPT_PLACEHOLDERS
+    return frozenset()
+
+
+def _is_kept_placeholder(entry: Path, keep: frozenset) -> bool:
+    return (entry.name in keep and entry.is_file() and not entry.is_symlink()
+            and entry.lstat().st_size == 0)
+
+
+def measure_path(path: Path, *, keep: frozenset = frozenset()) -> LocationState:
     """Count files and bytes under ``path`` without recording anything about them.
 
     Symlinks are counted as themselves and never followed. That single rule handles the
@@ -294,6 +312,9 @@ def measure_path(path: Path) -> LocationState:
     own negligible size rather than a second copy of the payload. Following links would
     double the total; skipping the link farm entirely would report an empty cache that
     still holds every byte it ever downloaded.
+
+    ``keep`` names top-level placeholders the purge leaves behind on purpose (see
+    :data:`KEPT_PLACEHOLDERS`); they are skipped only when empty.
     """
     if not path.exists() and not path.is_symlink():
         return LocationState(exists=False, file_count=0, total_bytes=0)
@@ -312,6 +333,8 @@ def measure_path(path: Path) -> LocationState:
                 count += 1
                 total += entry.lstat().st_size
         for name in files:
+            if root == str(path) and _is_kept_placeholder(Path(root) / name, keep):
+                continue
             try:
                 total += (Path(root) / name).lstat().st_size
             except OSError:
@@ -351,7 +374,9 @@ def purge(config: dict, *, confirm: bool = False) -> list[LocationVerdict]:
         # writing its record. The journal is written before any deletion for exactly this
         # case: without it the attestation would report "before: absent" for something that
         # held 317 MB twenty minutes ago, which is a false destruction record.
-        if not before.exists and location.id in journal:
+        # The same holds for a location that survives but is now empty -- ``results/``
+        # keeps its ``.gitkeep`` -- so an empty measurement never overwrites a journalled one.
+        if before.file_count == 0 and before.total_bytes == 0 and location.id in journal:
             before = _state_from_dict(journal[location.id])
 
         if confirm:
@@ -388,8 +413,25 @@ def _read_journal() -> dict:
 
 
 def _write_journal(journal: dict, location_id: str, state: LocationState) -> None:
-    """Record one location's before-state immediately, before it is touched."""
-    journal[location_id] = _state_dict(state)
+    """Record one location's before-state immediately, before it is touched.
+
+    An entry whose state is unchanged is kept whole, ``note`` included: the note records
+    how a recovered figure was obtained, and re-journalling the same figure must not strip
+    it. A *different*, non-empty earlier entry is kept under ``earlier`` rather than
+    overwritten. That is a location emptied by one run and written to again before the
+    next -- the assistant's own transcript store refills while the session that ran the
+    purge is still open -- and overwriting would erase what the first run destroyed.
+    The two are not summed: a run that died before deleting re-measures the same bytes.
+    """
+    previous = journal.get(location_id, {})
+    if previous and _state_from_dict(previous) == state:
+        entry = dict(previous)
+    else:
+        entry = _state_dict(state)
+        earlier = _state_from_dict(previous) if previous else None
+        if earlier is not None and (earlier.file_count or earlier.total_bytes):
+            entry["earlier"] = previous
+    journal[location_id] = entry
     try:
         JOURNAL.parent.mkdir(parents=True, exist_ok=True)
         JOURNAL.write_text(json.dumps(journal, indent=2) + "\n", encoding="utf-8")
@@ -445,8 +487,9 @@ def _delete(location: CustodyLocation) -> None:
 
     if not path.exists():
         return
-    if path == REPO_ROOT / "results":
-        _empty_but_keep(path, keep={".gitkeep"})
+    if _kept_entries(path):
+        # results/ and notebooks/ are tracked directories: empty them, keep the placeholder.
+        _empty_but_keep(path, keep=_kept_entries(path))
     else:
         shutil.rmtree(path, ignore_errors=False)
 
@@ -711,6 +754,14 @@ def _location_entry(verdict: LocationVerdict, journalled: dict) -> dict:
     }
     if journalled.get("note"):
         entry["note"] = journalled["note"]
+    if journalled.get("earlier"):
+        # Only the journalled entry matching this run's before-state carries ``earlier``.
+        if _state_from_dict(journalled) == verdict.before:
+            entry["earlier_before"] = journalled["earlier"]
+            entry.setdefault("note", (
+                # Neutral on cause: a refill and a run that died mid-deletion look alike.
+                "An earlier run journalled a different, non-empty before-state here; "
+                "earlier_before is what that run found."))
     return entry
 
 
@@ -837,6 +888,11 @@ def _render_markdown(payload: dict) -> str:
     ]
     for loc in payload["locations"]:
         before = f"{loc['before']['file_count']} files, {loc['before']['total_bytes']:,} B"
+        earlier = loc.get("earlier_before")
+        while earlier:
+            before += (f" (earlier run: {earlier.get('file_count', 0)} files, "
+                       f"{earlier.get('total_bytes', 0):,} B)")
+            earlier = earlier.get("earlier")
         after = ("absent" if not loc["after"]["exists"]
                  else f"{loc['after']['file_count']} files, "
                       f"{loc['after']['total_bytes']:,} B")

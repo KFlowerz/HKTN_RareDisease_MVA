@@ -485,3 +485,110 @@ def test_the_markdown_companion_names_no_content():
     rendered = purge._render_markdown(payload)
     assert "C1" in rendered and "absent" in rendered
     purge._assert_carries_no_patient_data(rendered)
+
+
+# ------------------------------------------------------------------ kept placeholders
+#
+# The run of 2026-11-21 emptied results/ correctly, kept its .gitkeep as designed, and then
+# refused to attest because the measurement counted that .gitkeep as data. It also removed
+# notebooks/ whole, taking the tracked placeholder with it.
+
+
+def _in_repo(tmp_path, monkeypatch, name):
+    repo = tmp_path / "repo"
+    target = repo / name
+    target.mkdir(parents=True)
+    (target / ".gitkeep").write_text("", encoding="utf-8")
+    monkeypatch.setattr(purge, "REPO_ROOT", repo)
+    return target
+
+
+@pytest.mark.parametrize("name", ["results", "notebooks"])
+def test_an_emptied_repo_location_with_its_placeholder_is_clean(tmp_path, monkeypatch, name):
+    target = _in_repo(tmp_path, monkeypatch, name)
+    (target / "out").mkdir()
+    (target / "out" / "f.json").write_text("{}", encoding="utf-8")
+    location = _location(target)
+
+    purge._delete(location)
+    assert [p.name for p in target.iterdir()] == [".gitkeep"]
+    after = purge.measure(location)
+    assert (after.exists, after.file_count, after.total_bytes) == (True, 0, 0)
+
+
+def test_a_placeholder_that_holds_bytes_is_still_counted(tmp_path, monkeypatch):
+    target = _in_repo(tmp_path, monkeypatch, "results")
+    (target / ".gitkeep").write_bytes(b"x" * 5)
+    state = purge.measure(_location(target))
+    assert (state.file_count, state.total_bytes) == (1, 5)
+
+
+def test_a_placeholder_outside_the_repo_is_counted(tmp_path):
+    target = tmp_path / "custody" / "raw"
+    target.mkdir(parents=True)
+    (target / ".gitkeep").write_text("", encoding="utf-8")
+    assert purge.measure(_location(target)).file_count == 1
+
+
+def test_a_nested_placeholder_is_counted(tmp_path, monkeypatch):
+    target = _in_repo(tmp_path, monkeypatch, "results")
+    (target / "l0").mkdir()
+    (target / "l0" / ".gitkeep").write_text("", encoding="utf-8")
+    assert purge.measure(_location(target)).file_count == 1
+
+
+def test_an_emptied_location_keeps_its_journalled_before_state(tmp_path, monkeypatch):
+    """A re-run finds results/ present but empty; the journal's 242 files must survive."""
+    target = _in_repo(tmp_path, monkeypatch, "results")
+    monkeypatch.setattr(purge, "JOURNAL", tmp_path / "j.json")
+    purge._write_journal({}, "C3", purge.LocationState(True, 242, 13_105_072))
+    monkeypatch.setattr(purge, "read_register", lambda *a, **k: [_location(target, "C3")])
+    monkeypatch.setattr(purge, "_discard_freed_blocks", lambda: None)
+
+    verdict = purge.purge({}, confirm=True)[0]
+    assert verdict.before.file_count == 242
+    assert verdict.is_clean
+    assert purge._read_journal()["C3"]["file_count"] == 242
+
+
+def test_rejournalling_the_same_state_keeps_its_note(tmp_path, monkeypatch):
+    monkeypatch.setattr(purge, "JOURNAL", tmp_path / "j.json")
+    journal = {"C1": {"exists": True, "file_count": 13, "total_bytes": 1, "note": "recovered"}}
+    purge._write_journal(journal, "C1", purge.LocationState(True, 13, 1))
+    assert purge._read_journal()["C1"]["note"] == "recovered"
+
+
+def test_a_changed_state_drops_the_stale_note(tmp_path, monkeypatch):
+    monkeypatch.setattr(purge, "JOURNAL", tmp_path / "j.json")
+    journal = {"C1": {"exists": True, "file_count": 13, "total_bytes": 1, "note": "recovered"}}
+    purge._write_journal(journal, "C1", purge.LocationState(True, 14, 2))
+    assert "note" not in purge._read_journal()["C1"]
+
+
+def test_a_refilled_location_keeps_what_the_earlier_run_found(tmp_path, monkeypatch):
+    """C7 held 13 files when the first run emptied it; this session then wrote 1 more."""
+    monkeypatch.setattr(purge, "JOURNAL", tmp_path / "j.json")
+    journal = {}
+    purge._write_journal(journal, "C7", purge.LocationState(True, 13, 63_625_301))
+    purge._write_journal(journal, "C7", purge.LocationState(True, 1, 600_000))
+
+    entry = purge._read_journal()["C7"]
+    assert entry["file_count"] == 1
+    assert entry["earlier"]["file_count"] == 13
+
+    verdict = purge.LocationVerdict(
+        location=_location(tmp_path / "c7", "C7"),
+        before=purge.LocationState(True, 1, 600_000),
+        after=purge.LocationState(False, 0, 0),
+        verified_utc="2026-11-21T00:00:00Z")
+    row = purge._location_entry(verdict, entry)
+    assert row["earlier_before"]["total_bytes"] == 63_625_301
+    assert "note" in row
+
+
+def test_an_unchanged_state_keeps_its_earlier_record(tmp_path, monkeypatch):
+    monkeypatch.setattr(purge, "JOURNAL", tmp_path / "j.json")
+    journal = {"C7": {"exists": True, "file_count": 1, "total_bytes": 2,
+                      "earlier": {"exists": True, "file_count": 13, "total_bytes": 9}}}
+    purge._write_journal(journal, "C7", purge.LocationState(True, 1, 2))
+    assert purge._read_journal()["C7"]["earlier"]["file_count"] == 13
