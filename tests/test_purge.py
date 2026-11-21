@@ -310,6 +310,37 @@ def test_a_clean_payload_passes_the_outbound_scan():
         '{"id": "C1", "file_count": 13, "total_bytes": 317500000}')
 
 
+# ------------------------------------------------------------------ the pre-flight
+
+def test_preflight_rejects_a_short_revision(monkeypatch):
+    monkeypatch.setenv("MVA_ATTESTOR_NAME", "A")
+    monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")
+    assert "40-character" in (purge._preflight("abc123") or "")
+
+
+def test_preflight_rejects_an_interpreter_that_cannot_run_pytest(monkeypatch):
+    """The failure this exists for: a bare 'python' that is not on PATH, discovered only
+    after deletion, leaving no data and no attestation."""
+    monkeypatch.setenv("MVA_ATTESTOR_NAME", "A")
+    monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")
+    monkeypatch.setenv("MVA_PYTHON", "definitely-not-an-interpreter")
+    problem = purge._preflight(SHA)
+    assert problem and "definitely-not-an-interpreter" in problem
+
+
+def test_preflight_requires_a_named_attestor(monkeypatch):
+    monkeypatch.delenv("MVA_ATTESTOR_NAME", raising=False)
+    monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")
+    assert "MVA_ATTESTOR_NAME" in (purge._preflight(SHA) or "")
+
+
+def test_preflight_passes_in_this_environment(monkeypatch):
+    monkeypatch.setenv("MVA_ATTESTOR_NAME", "A")
+    monkeypatch.setenv("MVA_ATTESTOR_ROLE", "B")
+    monkeypatch.delenv("MVA_PYTHON", raising=False)
+    assert purge._preflight(SHA) is None
+
+
 def test_the_markdown_companion_names_no_content():
     payload = {
         "generated_utc": "2026-11-01T00:00:00Z",

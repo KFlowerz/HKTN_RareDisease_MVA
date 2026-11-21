@@ -55,6 +55,7 @@ import re
 import shutil
 import socket
 import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -454,6 +455,42 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _preflight(revision_sha: str) -> str | None:
+    """Everything that could make the attestation unwritable, checked before deletion.
+
+    The attestation records the *after* state, so it cannot be written until the data is
+    gone -- which means a failure there leaves no data and no record of its destruction.
+    Every such failure that can be detected in advance is detected here instead.
+
+    Returns a description of the first problem found, or ``None`` when it is safe to run.
+    """
+    if not re.fullmatch(r"[0-9a-f]{40}", revision_sha):
+        return (f"{revision_sha!r} is not a 40-character Hub revision hash. It is the only "
+                "identifier of the destroyed data the attestation carries")
+
+    interpreter = os.environ.get("MVA_PYTHON", sys.executable)
+    try:
+        done = subprocess.run([interpreter, "-m", "pytest", "--version"],
+                              capture_output=True, check=False, timeout=120)
+        if done.returncode != 0:
+            return (f"{interpreter} cannot run pytest, which the repository scan needs. "
+                    "Set MVA_PYTHON to an interpreter that can")
+    except (OSError, subprocess.SubprocessError) as exc:
+        return (f"cannot start {interpreter!r} ({exc}). Set MVA_PYTHON to the interpreter "
+                "running this environment")
+
+    attestation_dir = REPO_ROOT / "docs"
+    if not os.access(attestation_dir, os.W_OK):
+        return f"{attestation_dir} is not writable, so the attestation could not be saved"
+
+    for name, value in (("MVA_ATTESTOR_NAME", os.environ.get("MVA_ATTESTOR_NAME")),
+                        ("MVA_ATTESTOR_ROLE", os.environ.get("MVA_ATTESTOR_ROLE"))):
+        if not value:
+            return (f"{name} is not set. The attestation would carry a placeholder where a "
+                    "person's name belongs, and it is a statement someone is making")
+    return None
+
+
 def write_attestation(verdicts: list[LocationVerdict], *, revision_sha: str) -> Path:
     """Emit the destruction attestation as JSON plus a Markdown companion.
 
@@ -568,14 +605,25 @@ def _run_required_checks(verdicts: list[LocationVerdict]) -> list[dict]:
                   "terminal state",
     })
 
-    scan = subprocess.run(
-        [os.environ.get("MVA_PYTHON", "python"), "-m", "pytest", "-q", "--no-header",
-         "-p", "no:cacheprovider", "tests/test_smoke.py", "-k", "patient_data"],
-        cwd=str(REPO_ROOT), capture_output=True, text=True, check=False, timeout=900)
+    # sys.executable, not "python": the interpreter running this purge is the one that
+    # definitely exists and has pytest. Defaulting to a bare name assumed a PATH that a
+    # conda env invoked by absolute path does not have, and the failure landed *after*
+    # deletion -- data gone, attestation refused. The check reports rather than raises for
+    # the same reason.
+    try:
+        scan = subprocess.run(
+            [os.environ.get("MVA_PYTHON", sys.executable), "-m", "pytest", "-q",
+             "--no-header", "-p", "no:cacheprovider", "tests/test_smoke.py",
+             "-k", "patient_data"],
+            cwd=str(REPO_ROOT), capture_output=True, text=True, check=False, timeout=900)
+        passed, detail = scan.returncode == 0, "tests/test_smoke.py::test_no_patient_data_files_present"
+    except (OSError, subprocess.SubprocessError) as exc:
+        passed, detail = False, f"could not run the repository scan: {exc}"
     results.append({
         "name": "repo_scan_genomic_extensions",
-        "result": "pass" if scan.returncode == 0 else "fail",
-        "matches": 0 if scan.returncode == 0 else 1,
+        "result": "pass" if passed else "fail",
+        "matches": 0 if passed else 1,
+        "detail": detail,
     })
 
     cache = [v for v in verdicts if "hf cache" in v.location.method
@@ -723,6 +771,13 @@ def main(argv: list | None = None) -> int:
     if not args.revision_sha:
         print("\n--confirm needs --revision-sha (or MVA_DATASET_REVISION): the attestation")
         print("identifies the destroyed data by Hub revision and by nothing else.")
+        return 2
+
+    problem = _preflight(args.revision_sha)
+    if problem:
+        print(f"\nrefusing to start: {problem}")
+        print("Nothing was deleted. The attestation can only be written after deletion, so")
+        print("anything that would break it is checked before the first byte is removed.")
         return 2
 
     verdicts = purge({}, confirm=True)
