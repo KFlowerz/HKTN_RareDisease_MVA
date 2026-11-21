@@ -57,6 +57,16 @@ Status values: `planned` (registered, not yet created) · `active` (holds bytes)
 
 | `C8` | The organizers' Track 1 submission store — `SageBio/mva-hackathon-2026-leaderboard`, a private HF dataset | The submitted CSV: the subject's candidate variant coordinates in GRCh38, as the Track 1 answer format requires (decision D21). The local copy lives under `results/` and is covered by `C3`. | **Not purgeable by this project.** The organizers issued the data and hold the validated answer; this copy travels back to its source. Recorded for completeness, not because it can be deleted. | live once submitted |
 
+| `C9` | Published Artifacts in the maintainer's claude.ai account — `https://claude.ai/artifact/XzuNPzDbevjbBGn1D5PU2M` (the 14-slide deck), `https://claude.ai/artifact/CvYmNTTmt92D6ahmMBuLe1` (the 3-minute video cut), `https://claude.ai/artifact/Y3Pz37v7YiRL1zJy6j9zMP` (the delivery plan) | Slides and a plan page built from this project. **No patient-derived content**: the two decks were scanned when built and carry no coordinate, HGVS expression, rsID, ClinVar accession, HPO term or sample identifier, and everything in them is also in the public repository. The delivery plan is the published form of `mngmt/delivery-plan.html`, which is committed and scanned clean. | **Not purged.** They hold nothing the deletion commitment covers, so removing them would evidence nothing. Deletable from the account at any time if that changes. | retained, not patient-derived |
+
+**`C9` is listed because the register would otherwise be read as exhaustive.** Nothing in it is
+patient-derived, so it is outside the deletion commitment entirely — but a reader who later finds
+project material in the maintainer's account, unmentioned anywhere, has no way to tell whether it was
+assessed and cleared or simply missed. The row records that it was assessed. **One honest limit:** the
+two decks were verified at the point they were built and the delivery plan by scanning its committed
+source, not by re-reading the live Artifacts at purge time; they are editable pages, and the
+attestation says only what was checked.
+
 **`C8` is the one row this project cannot act on**, and it is listed for exactly that reason. A
 register that shows only the copies we can delete would overstate the reach of the deletion
 commitment in [COMPLIANCE.md](../COMPLIANCE.md). The mitigation is upstream of custody: nothing is

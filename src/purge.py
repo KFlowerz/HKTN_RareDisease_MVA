@@ -83,18 +83,25 @@ CUSTODY_STATES = ("planned", "active", "purged")
 
 #: States for rows this tool cannot act on, which the register carries anyway. ``C6`` is
 #: prevented at the source rather than purged; ``C8`` is the organizers' own copy of the
-#: Track 1 submission, which travels back to the party that issued the data. Both are
-#: terminal for ``custody_register_complete``: there is nothing left for a purge to do.
-#: They are separated from :data:`CUSTODY_STATES` rather than folded into it because a
+#: Track 1 submission, which travels back to the party that issued the data; ``C9`` holds
+#: project material that was assessed and carries nothing the deletion commitment covers.
+#: All are terminal for ``custody_register_complete``: there is nothing left for a purge to
+#: do. They are separated from :data:`CUSTODY_STATES` rather than folded into it because a
 #: register that showed only the copies we can delete would overstate the deletion
-#: commitment -- see the ``C8`` note in ``docs/data_custody.md``.
-UNPURGEABLE_STATES = ("n/a", "live once submitted")
+#: commitment, and one that showed only what it deletes would read as exhaustive when it is
+#: not -- see the ``C8`` and ``C9`` notes in ``docs/data_custody.md``.
+UNPURGEABLE_STATES = ("n/a", "live once submitted", "retained, not patient-derived")
 
 #: A register cell names a filesystem path when it is backticked, contains a separator, and
 #: begins with a root, a variable or the repository placeholder. This excludes ``C7``'s
 #: ``.jsonl`` (a suffix, no separator) and ``C8``'s ``SageBio/...`` (a Hub repo id, not a
 #: path) without either needing a special case.
-_PATH_CELL = re.compile(r"`((?:\$[A-Z_]+|<repo>|~|/|\.{1,2})[^`]*/[^`]*)`")
+#:
+#: A relative prefix must be ``./`` or ``../`` and not a bare dot run: ``C9`` once wrote its
+#: artifact links abbreviated as ``.../<id>``, which a looser pattern read as a relative path
+#: and resolved against the repository. The leading backtick anchors the match, which is what
+#: keeps a full ``https://`` URL from matching on the ``//`` inside it.
+_PATH_CELL = re.compile(r"`((?:\$[A-Z_]+|<repo>|~|/|\.{1,2}/)[^`]*/[^`]*)`")
 
 #: Placeholders a register path may carry, and where each resolves from.
 _REPO_PLACEHOLDER = "<repo>"

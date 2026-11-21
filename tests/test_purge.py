@@ -131,9 +131,45 @@ def test_the_committed_register_parses(monkeypatch, tmp_path):
     monkeypatch.setenv("HF_HOME", str(tmp_path / "mva" / "hf-cache"))
     monkeypatch.setenv("CLAUDE_PROJECTS", str(tmp_path / "claude" / "projects"))
     rows = purge.read_register()
-    assert [row.id for row in rows] == ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8"]
+    assert [row.id for row in rows] == ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"]
     assert all(row.status in purge.CUSTODY_STATES or row.status in purge.UNPURGEABLE_STATES
                for row in rows)
+
+
+@pytest.mark.parametrize("cell", [
+    "see `.../CvYmNTTmt92D6ahmMBuLe1` for the deck",      # abbreviated link, not a path
+    "at `https://claude.ai/artifact/XzuNPz` online",      # a URL, despite the // in it
+    "the `SageBio/mva-hackathon-2026-leaderboard` set",   # a Hub repo id
+    "Claude Code's local `.jsonl` store",                 # a suffix
+])
+def test_a_cell_that_only_looks_like_a_path_resolves_to_none(cell):
+    """C9's links were first written as `.../<id>`, which a looser pattern read as a
+    relative path and resolved against the repository."""
+    assert purge._resolve_path(cell, "CX") is None
+
+
+@pytest.mark.parametrize("cell", [
+    "`$MVA_DATA_ROOT/raw` on ext4",
+    "`<repo>/results/`",
+    "`~/.claude/projects/slug`",
+    "`./relative/path`",
+    "`/absolute/path`",
+])
+def test_a_real_path_cell_still_resolves(cell, monkeypatch, tmp_path):
+    monkeypatch.setenv("MVA_DATA_ROOT", str(tmp_path))
+    assert purge._resolve_path(cell, "CX") is not None
+
+
+def test_the_artifact_row_is_recorded_but_never_purged(monkeypatch, tmp_path):
+    """C9 exists so the register is not read as exhaustive. It must never be acted on: it
+    names no filesystem path and its status is outside the purgeable states."""
+    monkeypatch.setenv("MVA_DATA_ROOT", str(tmp_path / "mva"))
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "mva" / "hf-cache"))
+    monkeypatch.setenv("CLAUDE_PROJECTS", str(tmp_path / "claude" / "projects"))
+    c9 = {row.id: row for row in purge.read_register()}["C9"]
+    assert c9.path is None                  # artifact URLs are not paths
+    assert not c9.is_purgeable
+    assert c9.status == "retained, not patient-derived"
 
 
 # --------------------------------------------------------------------------- measurement
