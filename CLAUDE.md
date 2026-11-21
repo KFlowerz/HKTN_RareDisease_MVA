@@ -1,6 +1,11 @@
 # CLAUDE.md — project context
 
-Repository context for *Rare Disease, Real Kid: MVA Hackathon 2026*, **Track 2 (Drug Repurposing)**.
+Repository context for *Rare Disease, Real Kid: MVA Hackathon 2026*. Both tracks were entered and
+submitted from this repository — **Track 1 (Variant Prediction)** and **Track 2 (Drug Repurposing)** —
+from one pipeline: L0's causal-gene call is Track 1's answer and Track 2's premise. The needs analysis
+and architecture below are written from Track 2's angle because that is where the work started; the
+Track 1 deliverable is [docs/report_track1.md](docs/report_track1.md).
+
 Read the hard constraints before writing anything.
 
 ---
