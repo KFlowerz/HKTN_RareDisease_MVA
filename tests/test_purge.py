@@ -428,6 +428,48 @@ def test_preflight_passes_in_this_environment(monkeypatch):
     assert purge._preflight(SHA) is None
 
 
+# ------------------------------------------------------------------ the Hub CLI and journal
+
+
+def test_hub_cli_is_found_beside_the_interpreter(monkeypatch, tmp_path):
+    """The env's bin is not on PATH when its python is invoked by absolute path, which is
+    how the purge runs. A bare 'hf' failed there and cost a partial purge."""
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    cli = fake_bin / "hf"
+    cli.write_text("#!/bin/sh\n", encoding="utf-8")
+    cli.chmod(0o755)
+    monkeypatch.setattr(purge.sys, "executable", str(fake_bin / "python"))
+    monkeypatch.setenv("PATH", "")
+    assert purge.hub_cli() == str(cli)
+
+
+def test_hub_cli_is_none_when_absent(monkeypatch, tmp_path):
+    monkeypatch.setattr(purge.sys, "executable", str(tmp_path / "nowhere" / "python"))
+    monkeypatch.setattr(purge.shutil, "which", lambda _name: None)
+    assert purge.hub_cli() is None
+
+
+def test_the_journal_preserves_a_before_state_across_a_crash(tmp_path, monkeypatch):
+    """C1 was deleted, the run died on C2, and C1's 13 files/317 MB survived only in the
+    console. A re-run would otherwise record 'before: absent' -- a false record."""
+    monkeypatch.setattr(purge, "JOURNAL", tmp_path / "_purge_journal.json")
+    journal = {}
+    purge._write_journal(journal, "C1", purge.LocationState(True, 13, 317_500_000))
+
+    recovered = purge._read_journal()
+    assert recovered["C1"] == {"exists": True, "file_count": 13,
+                               "total_bytes": 317_500_000}
+    assert purge._state_from_dict(recovered["C1"]).file_count == 13
+
+
+def test_a_journal_that_cannot_be_written_does_not_stop_the_purge(tmp_path, monkeypatch):
+    monkeypatch.setattr(purge, "JOURNAL", tmp_path / "no" / "such" / "dir" / "j.json")
+    monkeypatch.setattr(purge.Path, "mkdir",
+                        lambda *a, **k: (_ for _ in ()).throw(OSError("read-only")))
+    purge._write_journal({}, "C1", purge.LocationState(True, 1, 1))   # must not raise
+
+
 def test_the_markdown_companion_names_no_content():
     payload = {
         "generated_utc": "2026-11-01T00:00:00Z",

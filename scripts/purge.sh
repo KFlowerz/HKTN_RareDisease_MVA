@@ -25,25 +25,45 @@ if [ ! -x "$PYTHON" ]; then
   exit 2
 fi
 
-# The dataset's Hub revision, read from the cache the download left behind. Exactly one
-# tree file must be present: zero means the data is already gone, more than one means the
-# snapshot is ambiguous and the attestation would name the wrong one.
-trees=("$MVA_DATA_ROOT"/raw/.cache/huggingface/trees/*.json)
-if [ ! -e "${trees[0]}" ]; then
-  echo "no Hub revision found under $MVA_DATA_ROOT/raw/.cache/huggingface/trees/." >&2
-  echo "If the data is already purged, pass --revision-sha yourself against the value in" >&2
-  echo "the previous attestation; do not guess it." >&2
+# The dataset's Hub revision, in order of preference:
+#   1. MVA_DATASET_REVISION, if the operator sets it deliberately
+#   2. the cache the download left behind -- authoritative while it exists
+#   3. DATA.md, which records it and is committed, so it outlives the data
+# Three is needed because the cache lives inside C1: once that is purged, the only record
+# left is the repository's own, and a resumed run must still be able to name the snapshot.
+repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+source_of_revision=""
+revision="${MVA_DATASET_REVISION:-}"
+[ -n "$revision" ] && source_of_revision="MVA_DATASET_REVISION"
+
+if [ -z "$revision" ]; then
+  trees=("$MVA_DATA_ROOT"/raw/.cache/huggingface/trees/*.json)
+  if [ -e "${trees[0]}" ]; then
+    if [ "${#trees[@]}" -ne 1 ]; then
+      echo "${#trees[@]} Hub revisions cached; cannot tell which snapshot was used." >&2
+      exit 2
+    fi
+    revision="$(basename "${trees[0]}" .json)"
+    source_of_revision="the Hub cache"
+  fi
+fi
+
+if [ -z "$revision" ]; then
+  revision="$(grep -oE '\b[0-9a-f]{40}\b' "$repo_root/DATA.md" | head -1 || true)"
+  source_of_revision="DATA.md (the cache is gone with C1)"
+fi
+
+if [ -z "$revision" ]; then
+  echo "no Hub revision available: not in MVA_DATASET_REVISION, no cache under" >&2
+  echo "$MVA_DATA_ROOT/raw/.cache/huggingface/trees/, and none recorded in DATA.md." >&2
+  echo "Do not guess it -- the attestation identifies the destroyed data by it alone." >&2
   exit 2
 fi
-if [ "${#trees[@]}" -ne 1 ]; then
-  echo "${#trees[@]} Hub revisions cached; cannot tell which snapshot was used." >&2
-  exit 2
-fi
-revision="$(basename "${trees[0]}" .json)"
 
 echo "dataset revision: $revision"
+echo "  from          : $source_of_revision"
 echo "attestor        : $MVA_ATTESTOR_NAME ($MVA_ATTESTOR_ROLE)"
 echo
 
-cd "$(dirname "$0")/.."
+cd "$repo_root"
 exec "$PYTHON" -m src.purge --revision-sha "$revision" "$@"

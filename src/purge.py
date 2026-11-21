@@ -339,13 +339,24 @@ def purge(config: dict, *, confirm: bool = False) -> list[LocationVerdict]:
     """
     locations = read_register()
     verdicts: list[LocationVerdict] = []
+    journal = _read_journal()
 
     for location in locations:
         if not location.is_purgeable:
             continue
         _assert_deletable(location)
         before = measure(location)
-        if confirm and before.exists:
+
+        # A location already empty may have been emptied by an earlier run that died before
+        # writing its record. The journal is written before any deletion for exactly this
+        # case: without it the attestation would report "before: absent" for something that
+        # held 317 MB twenty minutes ago, which is a false destruction record.
+        if not before.exists and location.id in journal:
+            before = _state_from_dict(journal[location.id])
+
+        if confirm:
+            _write_journal(journal, location.id, before)
+        if confirm and measure(location).exists:
             _delete(location)
         after = measure(location) if confirm else before
         verdicts.append(LocationVerdict(
@@ -358,6 +369,38 @@ def purge(config: dict, *, confirm: bool = False) -> list[LocationVerdict]:
     if confirm:
         _discard_freed_blocks()
     return verdicts
+
+
+#: Before-states, written before anything is deleted so a crash cannot take them with it.
+#:
+#: Deliberately **not** under ``results/``: that is ``C3``, which this tool empties, so a
+#: journal kept there would be destroyed by the very run it exists to make recoverable. It
+#: sits beside the attestation instead and carries the same kind of content the attestation
+#: publishes -- aggregate counts and byte totals, never a filename.
+JOURNAL = REPO_ROOT / "docs" / "purge_journal.json"
+
+
+def _read_journal() -> dict:
+    try:
+        return json.loads(JOURNAL.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_journal(journal: dict, location_id: str, state: LocationState) -> None:
+    """Record one location's before-state immediately, before it is touched."""
+    journal[location_id] = _state_dict(state)
+    try:
+        JOURNAL.parent.mkdir(parents=True, exist_ok=True)
+        JOURNAL.write_text(json.dumps(journal, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        pass        # a journal that cannot be written must not stop the purge itself
+
+
+def _state_from_dict(data: dict) -> LocationState:
+    return LocationState(exists=bool(data.get("exists")),
+                         file_count=int(data.get("file_count", 0)),
+                         total_bytes=int(data.get("total_bytes", 0)))
 
 
 def _assert_deletable(location: CustodyLocation) -> None:
@@ -412,10 +455,39 @@ def _looks_like_hub_cache(path: Path) -> bool:
     return (path / "blobs").is_dir() or (path / "hub").is_dir() or path.name == "hf-cache"
 
 
+def hub_cli() -> str | None:
+    """The Hub CLI, looked for beside this interpreter before falling back to ``PATH``.
+
+    This module is run by an environment's interpreter by absolute path, without that
+    environment being activated, so its ``bin`` directory is **not** on ``PATH``. A bare
+    ``"hf"`` therefore fails even though the CLI is installed right next to the Python
+    running the purge. That assumption cost a partial purge on 2026-11-21: ``C1`` was
+    deleted, ``C2`` raised ``FileNotFoundError: 'hf'``, and the run died before any
+    attestation. The same mistake had already been fixed for ``pytest`` four functions
+    away; it is resolved the same way here, and :func:`_preflight` now checks it.
+    """
+    beside = Path(sys.executable).parent
+    for name in ("hf", "huggingface-cli"):
+        candidate = beside / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    for name in ("hf", "huggingface-cli"):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
+
+
 def _run_hf_cache_cleanup(path: Path) -> None:
     """``hf cache rm`` then ``hf cache prune``; a missing CLI is reported, not swallowed."""
+    cli = hub_cli()
+    if cli is None:
+        raise RuntimeError(
+            "no Hub CLI found beside this interpreter or on PATH. The Hub cache keeps "
+            ".incomplete partial blobs that a tree removal leaves behind, so this step is "
+            "not optional; install huggingface_hub in this environment and re-run")
     env = dict(os.environ, HF_HOME=str(path))
-    for args in (["hf", "cache", "rm", "--all", "--yes"], ["hf", "cache", "prune", "--yes"]):
+    for args in ([cli, "cache", "rm", "--all", "--yes"], [cli, "cache", "prune", "--yes"]):
         try:
             subprocess.run(args, env=env, check=False, capture_output=True, timeout=600)
         except (OSError, subprocess.SubprocessError) as exc:
@@ -502,6 +574,12 @@ def _preflight(revision_sha: str) -> str | None:
     if not re.fullmatch(r"[0-9a-f]{40}", revision_sha):
         return (f"{revision_sha!r} is not a 40-character Hub revision hash. It is the only "
                 "identifier of the destroyed data the attestation carries")
+
+    if hub_cli() is None:
+        return ("no Hub CLI (hf) beside this interpreter or on PATH. C2's declared method "
+                "needs it, and the delete path raises without it -- which on 2026-11-21 "
+                "left C1 deleted, C2 untouched and no attestation written. Install "
+                "huggingface_hub in this environment")
 
     interpreter = os.environ.get("MVA_PYTHON", sys.executable)
     try:
@@ -595,14 +673,7 @@ def write_attestation(verdicts: list[LocationVerdict], *, revision_sha: str) -> 
         },
         "environment": _environment(),
         "locations": [
-            {
-                "id": v.location.id,
-                "path": str(v.location.path),
-                "method": v.location.method,
-                "before": _state_dict(v.before),
-                "after": _state_dict(v.after),
-                "verified_utc": v.verified_utc,
-            }
+            _location_entry(v, _read_journal().get(v.location.id, {}))
             for v in verdicts
         ],
         "checks": checks,
@@ -621,6 +692,26 @@ def write_attestation(verdicts: list[LocationVerdict], *, revision_sha: str) -> 
     out.write_text(serialized + "\n", encoding="utf-8")
     out.with_suffix(".md").write_text(_render_markdown(payload), encoding="utf-8")
     return out
+
+
+def _location_entry(verdict: LocationVerdict, journalled: dict) -> dict:
+    """One location's row in the attestation, carrying any caveat the journal recorded.
+
+    A ``note`` survives from the journal into the record because some before-states are
+    known less precisely than others, and a destruction record that presents a recovered
+    figure as a fresh measurement is overstating what was verified.
+    """
+    entry = {
+        "id": verdict.location.id,
+        "path": str(verdict.location.path),
+        "method": verdict.location.method,
+        "before": _state_dict(verdict.before),
+        "after": _state_dict(verdict.after),
+        "verified_utc": verdict.verified_utc,
+    }
+    if journalled.get("note"):
+        entry["note"] = journalled["note"]
+    return entry
 
 
 def _state_dict(state: LocationState) -> dict:
